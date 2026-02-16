@@ -48,18 +48,29 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
         if (signUpError) throw signUpError;
         
         if (authData.session) {
+          // If immediate session (no email verification required)
           onSuccess();
         } else {
           setSignUpSuccess(true);
         }
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
-        onSuccess();
+        
+        if (data.user) {
+          onSuccess();
+        } else {
+          throw new Error("Login failed. Please check your network connection.");
+        }
       }
     } catch (err: any) {
-      console.error("Auth Error:", err);
-      setError(err.message || "An unexpected error occurred. Please try again.");
+      console.error("Auth Exception:", err);
+      // Clean up common Supabase error messages
+      let msg = err.message || "An unexpected error occurred.";
+      if (msg.includes("Failed to fetch")) msg = "Network error. Check your connection or Supabase settings.";
+      if (msg.includes("Invalid login credentials")) msg = "Invalid email or password.";
+      
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -111,7 +122,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
           {error && (
             <div className="bg-red-50 text-red-600 p-3 rounded-xl text-[10px] font-bold border border-red-100 flex items-center gap-2">
               <i className="fa-solid fa-circle-exclamation"></i>
-              <span>{error}</span>
+              <span className="flex-1">{error}</span>
             </div>
           )}
           

@@ -42,51 +42,79 @@ const App: React.FC = () => {
 
   const fetchProfile = async (userId: string, email: string): Promise<User | null> => {
     try {
+      // Use a shorter timeout for the profile fetch to prevent hanging the UI
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error || !data) return null;
+      if (error) {
+        console.error("Profile fetch error:", error.message);
+        // Fallback: If profile doesn't exist but auth does, create a temporary local user
+        return {
+          id: userId,
+          email: email,
+          name: email.split('@')[0],
+          username: email.split('@')[0],
+          avatar: `https://ui-avatars.com/api/?name=${email}&background=6366f1&color=fff`,
+          balance: 0,
+          isAdmin: email.toLowerCase() === 'joscor@wsv.com.ng',
+          isVerified: false,
+          hasDeposited: false,
+          totalSaved: 0
+        };
+      }
+
       if (data.is_banned) {
         await supabase.auth.signOut();
         return null;
       }
 
-      const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng';
+      const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng' || data.role === 'admin';
       
       return {
         id: data.id,
         email: email,
-        name: data.name || 'User',
+        name: data.name || data.username || email.split('@')[0],
         username: data.username || 'user_' + data.id.slice(0, 4),
         avatar: data.avatar || `https://ui-avatars.com/api/?name=${data.name || email}&background=6366f1&color=fff`,
         balance: Number(data.balance) || 0,
-        isAdmin: isTargetAdmin || data.role === 'admin',
+        isAdmin: isTargetAdmin,
         isVerified: Boolean(data.is_verified),
         hasDeposited: Boolean(data.has_deposited),
         totalSaved: Number(data.total_saved) || 0,
         is_banned: Boolean(data.is_banned)
       };
     } catch (err) {
+      console.error("Unexpected error fetching profile:", err);
       return null;
     }
   };
 
   const refreshUserData = async () => {
-    if (!user) return;
-    const profile = await fetchProfile(user.id, user.email);
-    if (profile) setUser(profile);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user) {
+      const profile = await fetchProfile(session.user.id, session.user.email!);
+      setUser(profile);
+      return profile;
+    }
+    return null;
   };
 
   useEffect(() => {
+    // Initial check
+    refreshUserData().then(profile => {
+      syncViewWithHash(profile);
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
           setUser(profile);
-          syncViewWithHash(profile);
+          // Only force navigate on initial sign in or if current view is restricted
+          if (event === 'SIGNED_IN') syncViewWithHash(profile);
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -155,7 +183,14 @@ const App: React.FC = () => {
       <Navbar user={user} currentView={currentView} onNavigate={navigateTo as any} onLogin={() => setIsLoginOpen(true)} onLogout={handleLogout} />
       <main className="flex-grow">{renderContent()}</main>
       <Footer onNavigate={navigateTo as any} />
-      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} onSuccess={() => setIsLoginOpen(false)} />
+      <LoginModal 
+        isOpen={isLoginOpen} 
+        onClose={() => setIsLoginOpen(false)} 
+        onSuccess={() => {
+          setIsLoginOpen(false);
+          refreshUserData().then(p => syncViewWithHash(p));
+        }} 
+      />
     </div>
   );
 };

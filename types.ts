@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'user';
 
 export interface User {
@@ -12,9 +11,11 @@ export interface User {
   isVerified: boolean;
   hasDeposited: boolean;
   totalSaved: number;
-  is_banned?: boolean; // New: Access control
+  is_banned?: boolean;
   merchantRating?: number;
 }
+
+export type FulfillmentType = 'Password' | 'Invite Link' | 'OTP / Instruction';
 
 export interface MasterAccount {
   id: string;
@@ -30,6 +31,7 @@ export interface MasterAccount {
   category: string;
   owner_id?: string;
   features?: string[];
+  fulfillment_type?: FulfillmentType;
   owner?: {
     username: string;
     is_verified: boolean;
