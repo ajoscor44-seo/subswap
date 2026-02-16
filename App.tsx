@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from './lib/supabase';
 import { User } from './types';
 
@@ -23,8 +22,8 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const authInitialized = useRef(false);
 
-  // Helper to sync view with hash without triggering re-renders in middle of render cycle
   const syncViewWithHash = useCallback((targetUser: User | null) => {
     const hash = window.location.hash.replace('#/', '') as ViewState;
     const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'];
@@ -50,7 +49,10 @@ const App: React.FC = () => {
         .eq('id', userId)
         .single();
 
-      if (error || !data) return null;
+      if (error || !data) {
+        console.warn("Profile fetch failed or missing:", error?.message);
+        return null;
+      }
 
       if (data.is_banned) {
         await supabase.auth.signOut();
@@ -73,7 +75,7 @@ const App: React.FC = () => {
         is_banned: Boolean(data.is_banned)
       };
     } catch (err) {
-      console.error("Profile sync exception:", err);
+      console.error("Critical Profile Error:", err);
       return null;
     }
   };
@@ -81,55 +83,42 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    const initializeAuth = async () => {
-      // Safety timeout to prevent stuck preloader if Supabase hangs
-      const timeoutId = setTimeout(() => {
-        if (mounted && isAuthLoading) setIsAuthLoading(false);
-      }, 5000);
-
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session?.user && mounted) {
-          const profile = await fetchProfile(session.user.id, session.user.email!);
-          if (profile) {
-            setUser(profile);
-            syncViewWithHash(profile);
-          } else {
-            syncViewWithHash(null);
-          }
-        } else if (mounted) {
-          syncViewWithHash(null);
-        }
-      } catch (e) {
-        console.error("Auth init error", e);
-      } finally {
-        clearTimeout(timeoutId);
-        if (mounted) setIsAuthLoading(false);
+    // EMERGENCY FAIL-SAFE: Don't let the preloader hang more than 3.5 seconds
+    const failSafeTimer = setTimeout(() => {
+      if (mounted && isAuthLoading) {
+        console.log("Preloader: Triggering fail-safe mount");
+        setIsAuthLoading(false);
       }
-    };
-
-    initializeAuth();
+    }, 3500);
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
-
-      if (event === 'SIGNED_IN' && session?.user) {
-        setIsAuthLoading(true);
-        const profile = await fetchProfile(session.user.id, session.user.email!);
-        setUser(profile);
-        syncViewWithHash(profile);
-        setIsAuthLoading(false);
-      } else if (event === 'SIGNED_OUT') {
+      
+      // We only care about initial load and auth changes
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        if (session?.user) {
+          const profile = await fetchProfile(session.user.id, session.user.email!);
+          if (mounted) {
+            setUser(profile);
+            syncViewWithHash(profile);
+            setIsAuthLoading(false);
+          }
+        } else if (mounted) {
+          setIsAuthLoading(false);
+          syncViewWithHash(null);
+        }
+      } else if (event === 'SIGNED_OUT' && mounted) {
         setUser(null);
         setCurrentView('home');
         window.location.hash = '';
+        setIsAuthLoading(false);
       }
     });
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
+      clearTimeout(failSafeTimer);
     };
   }, [syncViewWithHash]);
 
@@ -144,14 +133,19 @@ const App: React.FC = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-slate-100 rounded-full"></div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
+        <div className="relative mb-8">
+          <div className="w-16 h-16 border-4 border-slate-50 rounded-full"></div>
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
         </div>
-        <div className="text-center">
-          <h2 className="text-sm font-black text-slate-900 uppercase tracking-[0.3em]">SubSwap</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verifying Secure Session...</p>
+        <div className="text-center space-y-2">
+          <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">SubSwap</h2>
+          <div className="flex items-center justify-center gap-1">
+             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
+             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
+             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce"></span>
+          </div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-4">Securing Connection...</p>
         </div>
       </div>
     );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, ProductCategory } from '../types';
+import { User, Transaction } from '../types';
 import { Marketplace } from './Marketplace';
+import TransactionHistory from './TransactionHistory';
 import { supabase } from '../lib/supabase';
 
 interface DashboardProps {
@@ -9,8 +10,9 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'stacks' | 'explore' | 'wallet' | 'settings'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'stacks' | 'explore' | 'wallet' | 'history' | 'settings'>('overview');
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
 
@@ -20,25 +22,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
   useEffect(() => {
-    const fetchUserSubs = async () => {
+    const fetchData = async () => {
       setIsLoading(true);
       try {
-        const { data, error } = await supabase
+        // Fetch Subs
+        const { data: subs } = await supabase
           .from('user_subscriptions')
           .select('*, master_accounts(*)')
           .eq('user_id', user.id);
-        
-        if (data) setSubscriptions(data);
-        if (error) throw error;
+        if (subs) setSubscriptions(subs);
+
+        // Fetch Recent Transactions
+        const { data: txs } = await supabase
+          .from('transactions')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(3);
+        if (txs) setRecentTransactions(txs);
+
       } catch (err: any) {
-        console.error("Error fetching subscriptions:", err);
+        console.error("Error fetching dashboard data:", err);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchUserSubs();
-  }, [user.id]);
+    fetchData();
+  }, [user.id, activeTab]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -49,7 +60,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
     { id: 'overview', label: 'Overview', icon: 'fa-house-chimney' },
     { id: 'stacks', label: 'My Stacks', icon: 'fa-layer-group' },
     { id: 'explore', label: 'Marketplace', icon: 'fa-compass' },
-    { id: 'wallet', label: 'Wallet & Fund', icon: 'fa-wallet' },
+    { id: 'wallet', label: 'Wallet', icon: 'fa-wallet' },
+    { id: 'history', label: 'History', icon: 'fa-receipt' },
   ] as const;
 
   return (
@@ -170,11 +182,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                    </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Recent Activity Mini Widget */}
+                  <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                      <h4 className="font-black text-slate-900 text-lg">Recent Activity</h4>
+                      <button onClick={() => setActiveTab('history')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600">View All</button>
+                    </div>
+                    <div className="space-y-4">
+                      {recentTransactions.length > 0 ? recentTransactions.map(tx => (
+                        <div key={tx.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100/50">
+                          <div className="flex items-center gap-3">
+                            <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs ${tx.amount > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-200 text-slate-600'}`}>
+                              <i className={`fa-solid ${tx.amount > 0 ? 'fa-arrow-down' : 'fa-arrow-up'}`}></i>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-black text-slate-900 line-clamp-1">{tx.description}</p>
+                              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{new Date(tx.created_at).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          <span className={`text-[10px] font-black ${tx.amount > 0 ? 'text-emerald-500' : 'text-slate-900'}`}>
+                            {tx.amount > 0 ? '+' : ''}₦{Math.abs(tx.amount).toLocaleString()}
+                          </span>
+                        </div>
+                      )) : (
+                        <p className="text-[10px] text-slate-400 font-bold uppercase py-4 text-center">No recent activity</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Active Slots Snapshot */}
+                  <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-6">
+                      <h4 className="font-black text-slate-900 text-lg">Active Stacks</h4>
+                      <button onClick={() => setActiveTab('stacks')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600">My Stacks</button>
+                    </div>
+                    <div className="flex -space-x-3 overflow-hidden mb-6">
+                      {subscriptions.map((sub, i) => (
+                        <img key={i} src={sub.master_accounts?.icon_url} className="inline-block h-10 w-10 rounded-full ring-4 ring-white object-cover" alt="" />
+                      ))}
+                      {subscriptions.length === 0 && <p className="text-[10px] text-slate-400 font-bold uppercase py-4">No active stacks yet</p>}
+                    </div>
+                    <p className="text-[10px] text-slate-500 font-medium">You have {subscriptions.length} active premium subscriptions.</p>
+                  </div>
+                </div>
+
                 <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
                    <div className="flex items-center justify-between mb-8">
                       <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Marketplace</h3>
-                        <p className="text-slate-500 text-sm font-medium">Verified premium slots.</p>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Quick Join</h3>
+                        <p className="text-slate-500 text-sm font-medium">Join a new group in seconds.</p>
                       </div>
                    </div>
                    <Marketplace user={user} onAuthRequired={() => {}} />
@@ -273,6 +330,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       </div>
                    </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'history' && (
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+                <TransactionHistory user={user} isDashboardView={true} />
               </div>
             )}
           </div>

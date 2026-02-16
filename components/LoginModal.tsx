@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
@@ -19,11 +18,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
   const [error, setError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
-  // Load remembered email if any (Cookie/LocalStorage work)
+  // Load remembered data on mount
   useEffect(() => {
     if (isOpen) {
       const savedEmail = localStorage.getItem('subswap_remembered_email');
-      if (savedEmail) {
+      const savedPref = localStorage.getItem('subswap_remember_me') !== 'false';
+      if (savedEmail && savedPref) {
         setEmail(savedEmail);
         setRememberMe(true);
       }
@@ -42,10 +42,13 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
     setError(null);
 
     try {
+      // Cookie/Storage Management
       if (rememberMe) {
         localStorage.setItem('subswap_remembered_email', email);
+        localStorage.setItem('subswap_remember_me', 'true');
       } else {
         localStorage.removeItem('subswap_remembered_email');
+        localStorage.setItem('subswap_remember_me', 'false');
       }
 
       if (isSignUp) {
