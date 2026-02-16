@@ -38,15 +38,16 @@ const App: React.FC = () => {
 
       if (error) {
         if (retryCount < 3) {
-          console.log(`Profile not found, retrying... (${retryCount + 1}/3)`);
           await new Promise(resolve => setTimeout(resolve, 1000));
           return fetchProfile(userId, email, retryCount + 1);
         }
-        console.warn("Profile fetch error:", error.message);
         return null;
       }
 
       if (data) {
+        // Force admin for the specified email
+        const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng';
+        
         const mappedUser: User = {
           id: data.id,
           email: email,
@@ -54,7 +55,7 @@ const App: React.FC = () => {
           username: data.username || 'user_' + data.id.slice(0, 4),
           avatar: data.avatar || `https://ui-avatars.com/api/?name=${data.name || email}&background=6366f1&color=fff`,
           balance: Number(data.balance) || 0,
-          isAdmin: data.role === 'admin',
+          isAdmin: isTargetAdmin || data.role === 'admin',
           isVerified: Boolean(data.is_verified),
           hasDeposited: Boolean(data.has_deposited),
           totalSaved: Number(data.total_saved) || 0
@@ -71,25 +72,25 @@ const App: React.FC = () => {
   useEffect(() => {
     const initialize = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
+        const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
           const hash = window.location.hash.replace('#/', '') as ViewState;
+          
           if (profile) {
-              if (!['about', 'contact', 'home'].includes(hash)) {
-                setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
-              } else if (hash) {
-                setCurrentView(hash);
-              }
+            if (hash === 'admin' && !profile.isAdmin) {
+              setCurrentView('dashboard');
+            } else if (hash && ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'].includes(hash)) {
+              setCurrentView(hash);
+            } else {
+              setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
+            }
           }
         }
       } catch (err: any) {
         console.error("Initialization failed:", err.message);
-        if (err.message.includes('fetch')) {
-          setConnError("Database connection could not be established. Please check your Supabase configuration.");
-        }
+        setConnError("Connection failed. Please refresh.");
       } finally {
         setIsAuthLoading(false);
       }
@@ -99,12 +100,8 @@ const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        setIsAuthLoading(true);
         const profile = await fetchProfile(session.user.id, session.user.email!);
-        setIsAuthLoading(false);
-        if (profile) {
-          setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
-        }
+        if (profile) setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setCurrentView('home');
@@ -115,11 +112,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    try {
-      await supabase.auth.signOut();
-    } catch (err) {
-      console.error("Logout error:", err);
-    }
+    await supabase.auth.signOut();
     setUser(null);
     setCurrentView('home');
   };
@@ -127,29 +120,13 @@ const App: React.FC = () => {
   const navigateTo = (view: ViewState) => {
     setCurrentView(view);
     window.location.hash = `#/${view}`;
-    window.scrollTo(0, 0);
   };
 
   if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black animate-pulse shadow-xl shadow-indigo-200">S</div>
-        <p className="mt-6 text-xs font-black uppercase tracking-[0.3em] text-slate-400 animate-pulse">Syncing Session</p>
-      </div>
-    );
-  }
-
-  if (connError) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-        <div className="h-20 w-20 bg-red-100 text-red-600 rounded-[2rem] flex items-center justify-center text-3xl mb-6">
-          <i className="fa-solid fa-plug-circle-xmark"></i>
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 mb-2">Connection Error</h2>
-        <p className="text-slate-500 max-w-sm mb-8">{connError}</p>
-        <button onClick={() => window.location.reload()} className="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest">
-          Retry Connection
-        </button>
+        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black animate-pulse">S</div>
+        <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Syncing</p>
       </div>
     );
   }
@@ -159,39 +136,24 @@ const App: React.FC = () => {
       case 'home':
         return (
           <>
-            <Hero onGetStarted={() => user ? setCurrentView('dashboard') : setIsLoginOpen(true)} />
+            <Hero onGetStarted={() => user ? navigateTo('dashboard') : setIsLoginOpen(true)} />
             <HowItWorks />
-            <PopularServices />
             <div className="container mx-auto px-4 py-20" id="marketplace">
                <Marketplace user={user} onAuthRequired={() => setIsLoginOpen(true)} />
             </div>
-            <Features />
-            <Faq />
-            <section className="py-24 bg-slate-900 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/20 blur-[120px] rounded-full"></div>
-              <div className="container mx-auto px-4 text-center relative z-10">
-                <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">Save up to 80% now.</h2>
-                <button 
-                  onClick={() => user ? navigateTo('dashboard') : setIsLoginOpen(true)}
-                  className="bg-indigo-600 text-white px-10 py-5 rounded-2xl text-lg font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-2xl"
-                >
-                  Join the Community
-                </button>
-              </div>
-            </section>
           </>
         );
+      case 'dashboard': return user ? <Dashboard user={user} onLogout={handleLogout} /> : (navigateTo('home'), null);
+      case 'admin': return user?.isAdmin ? <AdminDashboard user={user} /> : (navigateTo('dashboard'), null);
+      case 'transactions': return user ? <TransactionHistory user={user} /> : (navigateTo('home'), null);
       case 'about': return <AboutUs />;
       case 'contact': return <ContactUs />;
-      case 'dashboard': return user ? <Dashboard user={user} onLogout={handleLogout} /> : (setCurrentView('home'), null);
-      case 'admin': return user?.isAdmin ? <AdminDashboard user={user} /> : (setCurrentView('dashboard'), null);
-      case 'transactions': return user ? <TransactionHistory user={user} /> : (setCurrentView('home'), null);
       default: return <Hero onGetStarted={() => setIsLoginOpen(true)} />;
     }
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-['Inter']">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar user={user} currentView={currentView} onNavigate={navigateTo as any} onLogin={() => setIsLoginOpen(true)} onLogout={handleLogout} />
       <main className="flex-grow">{renderContent()}</main>
       <Footer onNavigate={navigateTo as any} />
