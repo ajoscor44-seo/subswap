@@ -129,7 +129,12 @@ const App: React.FC = () => {
   }, [syncViewWithHash]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    // Force clear session to prevent cookie staleness
+    await supabase.auth.signOut({ scope: 'global' });
+    setUser(null);
+    setCurrentView('home');
+    window.location.hash = '';
+    window.location.reload(); // Hard reload on logout to ensure absolute clean state
   };
 
   const navigateTo = (view: ViewState, tab?: string) => {
@@ -202,8 +207,11 @@ const App: React.FC = () => {
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)} 
         onSuccess={() => {
-          setIsLoginOpen(false);
-          refreshUserData().then(p => syncViewWithHash(p));
+          // Small delay ensures Supabase has finished its internal cookie storage updates
+          setTimeout(() => {
+            setIsLoginOpen(false);
+            refreshUserData().then(p => syncViewWithHash(p));
+          }, 100);
         }} 
       />
     </div>

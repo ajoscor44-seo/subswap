@@ -29,6 +29,9 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
     setError(null);
 
     try {
+      // Step 0: Clear any potential stale session to avoid cookie conflicts
+      await supabase.auth.signOut({ scope: 'local' });
+
       if (isSignUp) {
         if (!validateUsername(username)) {
           throw new Error("Username must be at least 3 characters (letters, numbers, or underscores only).");
@@ -48,7 +51,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
         if (signUpError) throw signUpError;
         
         if (authData.session) {
-          // If immediate session (no email verification required)
+          // Explicitly set the session in the client
+          await supabase.auth.setSession(authData.session);
           onSuccess();
         } else {
           setSignUpSuccess(true);
@@ -57,19 +61,19 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
         const { data, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
         
-        if (data.user) {
+        if (data.user && data.session) {
+          // Explicitly set the session to ensure local storage and cookies are synced immediately
+          await supabase.auth.setSession(data.session);
           onSuccess();
         } else {
-          throw new Error("Login failed. Please check your network connection.");
+          throw new Error("Login failed. Profile could not be established.");
         }
       }
     } catch (err: any) {
       console.error("Auth Exception:", err);
-      // Clean up common Supabase error messages
       let msg = err.message || "An unexpected error occurred.";
-      if (msg.includes("Failed to fetch")) msg = "Network error. Check your connection or Supabase settings.";
+      if (msg.includes("Failed to fetch")) msg = "Network error. Please refresh and try again.";
       if (msg.includes("Invalid login credentials")) msg = "Invalid email or password.";
-      
       setError(msg);
     } finally {
       setLoading(false);
