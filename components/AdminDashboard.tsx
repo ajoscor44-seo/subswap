@@ -4,6 +4,7 @@ import { MasterAccount, User, Transaction, ProductCategory, FulfillmentType } fr
 
 interface AdminDashboardProps {
   user: User;
+  onRefreshUser?: () => void;
 }
 
 interface Feedback {
@@ -34,7 +35,7 @@ const INITIAL_FORM: Partial<MasterAccount> = {
   features: []
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onRefreshUser }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'inventory' | 'users' | 'transactions'>('stats');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,24 +53,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     setTimeout(() => setFeedback(null), 4000);
   };
 
-  const fetchData = async () => {
+  const fetchData = async (forceAll = false) => {
     setIsLoading(true);
     try {
-      if (activeTab === 'inventory' || activeTab === 'stats') {
-        const { data, error } = await supabase.from('master_accounts').select('*').order('created_at', { ascending: false });
-        if (data) setAccounts(data);
-        if (error) throw error;
+      // stats needs everything, users needs profiles, inventory needs accounts, transactions needs transactions
+      const fetchAccounts = activeTab === 'inventory' || activeTab === 'stats' || forceAll;
+      const fetchProfiles = activeTab === 'users' || activeTab === 'stats' || forceAll;
+      const fetchTransactions = activeTab === 'transactions' || activeTab === 'stats' || forceAll;
+
+      const promises = [];
+
+      if (fetchAccounts) {
+        promises.push(supabase.from('master_accounts').select('*').order('created_at', { ascending: false }).then(({data}) => data && setAccounts(data)));
       }
-      if (activeTab === 'transactions') {
-        const { data, error } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-        if (data) setTransactions(data);
-        if (error) throw error;
+      if (fetchProfiles) {
+        promises.push(supabase.from('profiles').select('*').order('created_at', { ascending: false }).then(({data}) => data && setAllUsers(data)));
       }
-      if (activeTab === 'users') {
-        const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        if (data) setAllUsers(data);
-        if (error) throw error;
+      if (fetchTransactions) {
+        promises.push(supabase.from('transactions').select('*').order('created_at', { ascending: false }).then(({data}) => data && setTransactions(data)));
       }
+
+      await Promise.all(promises);
     } catch (err: any) {
       showFeedback(err.message, 'error');
     } finally {
@@ -93,7 +97,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     setIsLoading(true);
     try {
       const { data: profile } = await supabase.from('profiles').select('balance').eq('id', targetId).single();
-      const newBalance = (profile?.balance || 0) + amount;
+      const newBalance = (Number(profile?.balance) || 0) + amount;
       
       const { error: updateError } = await supabase.from('profiles').update({ balance: newBalance }).eq('id', targetId);
       if (updateError) throw updateError;
@@ -107,7 +111,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
       showFeedback(`₦${amount.toLocaleString()} credited to @${username}`);
       setFundAmount({ ...fundAmount, [targetId]: '' });
-      fetchData();
+      
+      // Update local and global state
+      await fetchData(true);
+      if (onRefreshUser && targetId === user.id) {
+        onRefreshUser();
+      }
     } catch (err: any) {
       showFeedback(err.message, "error");
     } finally {
@@ -124,7 +133,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const { error } = await supabase.from('profiles').update({ is_banned: !currentStatus }).eq('id', targetId);
       if (error) throw error;
       showFeedback(`User ${username} ${action}ned successfully.`);
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       showFeedback(err.message, "error");
     } finally {
@@ -152,7 +161,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       setShowForm(false);
       setEditingId(null);
       setFormData(INITIAL_FORM);
-      fetchData();
+      fetchData(true);
       showFeedback(editingId ? "Account updated." : "New log added to marketplace.");
     } catch (err: any) {
       showFeedback(err.message, "error");
@@ -175,7 +184,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
       const { error } = await supabase.from('master_accounts').delete().eq('id', id);
       if (error) throw error;
       showFeedback("Log deleted.");
-      fetchData();
+      fetchData(true);
     } catch (err: any) {
       showFeedback(err.message, "error");
     } finally {
@@ -187,7 +196,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
     const q = searchQuery.toLowerCase();
     if (activeTab === 'inventory') return accounts.filter(a => a.service_name.toLowerCase().includes(q) || a.master_email.toLowerCase().includes(q));
     if (activeTab === 'users') return allUsers.filter(u => u.username?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
-    return transactions;
+    if (activeTab === 'transactions') return transactions.filter(tx => tx.description.toLowerCase().includes(q) || tx.type.toLowerCase().includes(q));
+    return [];
   }, [searchQuery, accounts, allUsers, transactions, activeTab]);
 
   return (
@@ -235,7 +245,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
               />
             </div>
             <div className="flex gap-3 w-full md:w-auto">
-              <button onClick={fetchData} className="flex-1 md:flex-none bg-white border border-slate-200 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50">
+              <button onClick={() => fetchData(true)} className="flex-1 md:flex-none bg-white border border-slate-200 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50">
                 <i className="fa-solid fa-rotate mr-2"></i> Sync
               </button>
               <button
@@ -527,12 +537,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
              <p className="text-slate-500 font-medium mb-8">All slots are automatically managed. When a user buys, inventory deducts in real-time.</p>
              <div className="flex justify-center gap-12">
                 <div className="flex flex-col items-center">
-                   <span className="text-emerald-400 text-2xl font-black">{accounts.reduce((a, b) => a + b.available_slots, 0)}</span>
+                   <span className="text-emerald-400 text-2xl font-black">{accounts.reduce((a, b) => a + (Number(b.available_slots) || 0), 0)}</span>
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Slots Available</span>
                 </div>
                 <div className="h-10 w-px bg-slate-800"></div>
                 <div className="flex flex-col items-center">
-                   <span className="text-indigo-400 text-2xl font-black">{accounts.reduce((a, b) => a + b.total_slots, 0)}</span>
+                   <span className="text-indigo-400 text-2xl font-black">{accounts.reduce((a, b) => a + (Number(b.total_slots) || 0), 0)}</span>
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total Capacity</span>
                 </div>
              </div>
@@ -544,7 +554,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
         <div className="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden animate-in fade-in duration-300 shadow-sm">
           <div className="p-8 border-b border-slate-100 flex justify-between items-center">
              <h2 className="text-xl font-black text-slate-900">Global Financial Log</h2>
-             <button onClick={fetchData} className="text-xs font-black text-indigo-600 uppercase tracking-widest"><i className="fa-solid fa-rotate mr-2"></i> Refresh</button>
+             <button onClick={() => fetchData(true)} className="text-xs font-black text-indigo-600 uppercase tracking-widest"><i className="fa-solid fa-rotate mr-2"></i> Refresh</button>
           </div>
           <div className="overflow-x-auto">
              <table className="w-full text-left">

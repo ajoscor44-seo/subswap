@@ -13,6 +13,9 @@ import Footer from './components/Footer';
 import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
 import { HowItWorks } from './components/HowItWorks';
+import { Features } from './components/Features';
+import { Faq } from './components/Faq';
+import { PopularServices } from './components/PopularServices';
 import TransactionHistory from './components/TransactionHistory';
 
 type ViewState = 'home' | 'dashboard' | 'admin' | 'settings' | 'about' | 'contact' | 'transactions';
@@ -25,24 +28,24 @@ const App: React.FC = () => {
   
   const syncViewWithHash = useCallback((targetUser: User | null) => {
     const hash = window.location.hash.replace('#/', '') as ViewState;
-    const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'];
+    const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions', 'settings'];
     
     if (hash && validViews.includes(hash)) {
       if (hash === 'admin' && !targetUser?.isAdmin) {
         setCurrentView('dashboard');
-      } else if ((hash === 'dashboard' || hash === 'transactions') && !targetUser) {
+      } else if ((hash === 'dashboard' || hash === 'transactions' || hash === 'settings') && !targetUser) {
         setCurrentView('home');
       } else {
         setCurrentView(hash);
       }
     } else {
+      // Default behavior: If no hash, keep on home if not logged in, or go to dashboard if logged in
       setCurrentView(targetUser ? (targetUser.isAdmin ? 'admin' : 'dashboard') : 'home');
     }
   }, []);
 
   const fetchProfile = async (userId: string, email: string): Promise<User | null> => {
     try {
-      // Use a shorter timeout for the profile fetch to prevent hanging the UI
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -51,7 +54,6 @@ const App: React.FC = () => {
 
       if (error) {
         console.error("Profile fetch error:", error.message);
-        // Fallback: If profile doesn't exist but auth does, create a temporary local user
         return {
           id: userId,
           email: email,
@@ -103,7 +105,6 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    // Initial check
     refreshUserData().then(profile => {
       syncViewWithHash(profile);
     });
@@ -113,7 +114,6 @@ const App: React.FC = () => {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
           setUser(profile);
-          // Only force navigate on initial sign in or if current view is restricted
           if (event === 'SIGNED_IN') syncViewWithHash(profile);
         }
       } else if (event === 'SIGNED_OUT') {
@@ -136,6 +136,7 @@ const App: React.FC = () => {
     setCurrentView(view);
     if (tab) setDashboardTab(tab);
     window.location.hash = `#/${view}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handlePurchaseSuccess = () => {
@@ -147,34 +148,48 @@ const App: React.FC = () => {
     switch (currentView) {
       case 'home':
         return (
-          <>
+          <div className="animate-in fade-in duration-700">
             <Hero onGetStarted={() => user ? navigateTo('dashboard') : setIsLoginOpen(true)} />
+            <PopularServices />
             <HowItWorks />
+            <Features />
             <div className="container mx-auto px-4 py-20" id="marketplace">
+               <div className="text-center mb-16 max-w-2xl mx-auto">
+                 <h2 className="text-sm font-black text-indigo-600 uppercase tracking-[0.3em] mb-4">Marketplace</h2>
+                 <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">Available Premium Stacks</h3>
+               </div>
                <Marketplace 
                  user={user} 
                  onAuthRequired={() => setIsLoginOpen(true)} 
                  onPurchaseSuccess={handlePurchaseSuccess}
                />
             </div>
-          </>
+            <Faq />
+          </div>
         );
       case 'dashboard': 
+      case 'settings':
         return user ? (
           <Dashboard 
             user={user} 
             onLogout={handleLogout} 
-            initialTab={dashboardTab as any} 
+            initialTab={(currentView === 'settings' ? 'settings' : dashboardTab) as any} 
             onPurchaseSuccess={handlePurchaseSuccess}
           />
         ) : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
       case 'admin': 
-        return user?.isAdmin ? <AdminDashboard user={user} /> : <Dashboard user={user!} onLogout={handleLogout} />;
+        return user?.isAdmin ? (
+          <AdminDashboard user={user} onRefreshUser={refreshUserData} />
+        ) : (
+          user ? <Dashboard user={user} onLogout={handleLogout} /> : <Hero onGetStarted={() => setIsLoginOpen(true)} />
+        );
       case 'transactions': 
         return user ? <TransactionHistory user={user} /> : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
       case 'about': return <AboutUs />;
       case 'contact': return <ContactUs />;
-      default: return <Hero onGetStarted={() => setIsLoginOpen(true)} />;
+      default: return (
+        <Hero onGetStarted={() => user ? navigateTo('dashboard') : setIsLoginOpen(true)} />
+      );
     }
   };
 
