@@ -22,8 +22,8 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const authInitialized = useRef(false);
-
+  const [dashboardTab, setDashboardTab] = useState<string>('overview');
+  
   const syncViewWithHash = useCallback((targetUser: User | null) => {
     const hash = window.location.hash.replace('#/', '') as ViewState;
     const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'];
@@ -49,11 +49,7 @@ const App: React.FC = () => {
         .eq('id', userId)
         .single();
 
-      if (error || !data) {
-        console.warn("Profile fetch failed or missing:", error?.message);
-        return null;
-      }
-
+      if (error || !data) return null;
       if (data.is_banned) {
         await supabase.auth.signOut();
         return null;
@@ -75,26 +71,25 @@ const App: React.FC = () => {
         is_banned: Boolean(data.is_banned)
       };
     } catch (err) {
-      console.error("Critical Profile Error:", err);
       return null;
     }
   };
 
+  const refreshUserData = async () => {
+    if (!user) return;
+    const profile = await fetchProfile(user.id, user.email);
+    if (profile) setUser(profile);
+  };
+
   useEffect(() => {
     let mounted = true;
-
-    // EMERGENCY FAIL-SAFE: Don't let the preloader hang more than 3.5 seconds
     const failSafeTimer = setTimeout(() => {
-      if (mounted && isAuthLoading) {
-        console.log("Preloader: Triggering fail-safe mount");
-        setIsAuthLoading(false);
-      }
-    }, 3500);
+      if (mounted && isAuthLoading) setIsAuthLoading(false);
+    }, 2000); // Faster fail-safe
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
       
-      // We only care about initial load and auth changes
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
@@ -126,26 +121,27 @@ const App: React.FC = () => {
     await supabase.auth.signOut();
   };
 
-  const navigateTo = (view: ViewState) => {
+  const navigateTo = (view: ViewState, tab?: string) => {
     setCurrentView(view);
+    if (tab) setDashboardTab(tab);
     window.location.hash = `#/${view}`;
+  };
+
+  const handlePurchaseSuccess = () => {
+    refreshUserData();
+    navigateTo('dashboard', 'stacks');
   };
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6">
-        <div className="relative mb-8">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 animate-out fade-out duration-500">
+        <div className="relative mb-8 scale-125">
           <div className="w-16 h-16 border-4 border-slate-50 rounded-full"></div>
           <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">SubSwap</h2>
-          <div className="flex items-center justify-center gap-1">
-             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-             <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce"></span>
-          </div>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest pt-4">Securing Connection...</p>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] pt-4">Authenticating Session...</p>
         </div>
       </div>
     );
@@ -159,12 +155,23 @@ const App: React.FC = () => {
             <Hero onGetStarted={() => user ? navigateTo('dashboard') : setIsLoginOpen(true)} />
             <HowItWorks />
             <div className="container mx-auto px-4 py-20" id="marketplace">
-               <Marketplace user={user} onAuthRequired={() => setIsLoginOpen(true)} />
+               <Marketplace 
+                 user={user} 
+                 onAuthRequired={() => setIsLoginOpen(true)} 
+                 onPurchaseSuccess={handlePurchaseSuccess}
+               />
             </div>
           </>
         );
       case 'dashboard': 
-        return user ? <Dashboard user={user} onLogout={handleLogout} /> : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
+        return user ? (
+          <Dashboard 
+            user={user} 
+            onLogout={handleLogout} 
+            initialTab={dashboardTab as any} 
+            onPurchaseSuccess={handlePurchaseSuccess}
+          />
+        ) : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
       case 'admin': 
         return user?.isAdmin ? <AdminDashboard user={user} /> : <Dashboard user={user!} onLogout={handleLogout} />;
       case 'transactions': 

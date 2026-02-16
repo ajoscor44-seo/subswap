@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { ProductCategory, User, MasterAccount } from '../types';
 import { supabase } from '../lib/supabase';
@@ -8,7 +7,13 @@ interface Toast {
   type: 'success' | 'error';
 }
 
-export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => void }> = ({ user, onAuthRequired }) => {
+interface MarketplaceProps {
+  user: User | null;
+  onAuthRequired: () => void;
+  onPurchaseSuccess?: () => void;
+}
+
+export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, onPurchaseSuccess }) => {
   const [dbProducts, setDbProducts] = useState<MasterAccount[]>([]);
   const [filter, setFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
@@ -80,10 +85,14 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
 
       if (error) throw error;
 
-      showToast(`Welcome to ${account.service_name}! Check 'My Stacks' for details.`);
-      // Smoothly update local state instead of hard reload if possible, 
-      // but for now hard reload ensures DB sync for complex transactions.
-      setTimeout(() => window.location.reload(), 2000);
+      showToast(`Success! Taking you to your new stack...`);
+      
+      // Call parent success handler for smooth internal navigation
+      if (onPurchaseSuccess) {
+        setTimeout(() => onPurchaseSuccess(), 1500);
+      } else {
+        setTimeout(() => window.location.reload(), 2000);
+      }
     } catch (err: any) {
       showToast(err.message || "Purchase failed. Please try again.", "error");
     } finally {
@@ -95,7 +104,6 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
     if (!user) return;
     setIsProcessing('funding');
     try {
-      // Record Deposit
       const { error: txError } = await supabase.from('transactions').insert({
         user_id: user.id,
         amount: amount,
@@ -104,7 +112,6 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
       });
       if (txError) throw txError;
 
-      // Update Balance
       const { error: balError } = await supabase.from('profiles').update({
         balance: user.balance + amount
       }).eq('id', user.id);
@@ -113,10 +120,13 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
       showToast(`₦${amount.toLocaleString()} added successfully!`);
       setShowFundModal(false);
       
+      // If we now have enough, proceed to join
       if (activeAccount && (user.balance + amount) >= activeAccount.price) {
         handleJoin(activeAccount);
       } else {
-        setTimeout(() => window.location.reload(), 1500);
+        // Just refresh the data locally if possible, or trigger success handler
+        if (onPurchaseSuccess) onPurchaseSuccess();
+        else window.location.reload();
       }
     } catch (err: any) {
       showToast(err.message, "error");
@@ -201,7 +211,7 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
               </div>
             </div>
             
-            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by 256-bit encryption</p>
+            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by Paystack</p>
           </div>
         </div>
       )}

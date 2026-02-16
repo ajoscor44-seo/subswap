@@ -7,47 +7,52 @@ import { supabase } from '../lib/supabase';
 interface DashboardProps {
   user: User;
   onLogout: () => void;
+  initialTab?: 'overview' | 'stacks' | 'explore' | 'wallet' | 'history' | 'settings';
+  onPurchaseSuccess?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'stacks' | 'explore' | 'wallet' | 'history' | 'settings'>('overview');
+export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab = 'overview', onPurchaseSuccess }) => {
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+
+  // Sync state with prop if it changes externally
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   const showStatus = (text: string, type: 'success' | 'error' = 'success') => {
     setStatusMsg({ text, type });
     setTimeout(() => setStatusMsg(null), 4000);
   };
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const { data: subs } = await supabase
+        .from('user_subscriptions')
+        .select('*, master_accounts(*)')
+        .eq('user_id', user.id);
+      if (subs) setSubscriptions(subs);
+
+      const { data: txs } = await supabase
+        .from('transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(3);
+      if (txs) setRecentTransactions(txs);
+
+    } catch (err: any) {
+      console.error("Dashboard sync error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      try {
-        // Fetch Subs
-        const { data: subs } = await supabase
-          .from('user_subscriptions')
-          .select('*, master_accounts(*)')
-          .eq('user_id', user.id);
-        if (subs) setSubscriptions(subs);
-
-        // Fetch Recent Transactions
-        const { data: txs } = await supabase
-          .from('transactions')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(3);
-        if (txs) setRecentTransactions(txs);
-
-      } catch (err: any) {
-        console.error("Error fetching dashboard data:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchData();
   }, [user.id, activeTab]);
 
@@ -102,7 +107,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                     {navItems.map((item) => (
                       <button 
                         key={item.id}
-                        onClick={() => setActiveTab(item.id)}
+                        onClick={() => setActiveTab(item.id as any)}
                         className={`whitespace-nowrap flex-shrink-0 lg:w-full text-left px-4 md:px-5 py-3 rounded-xl flex items-center gap-3 transition-all ${
                           activeTab === item.id 
                             ? 'bg-indigo-50 text-indigo-600 font-black' 
@@ -234,7 +239,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                         <p className="text-slate-500 text-sm font-medium">Join a new group in seconds.</p>
                       </div>
                    </div>
-                   <Marketplace user={user} onAuthRequired={() => {}} />
+                   <Marketplace user={user} onAuthRequired={() => {}} onPurchaseSuccess={onPurchaseSuccess} />
                 </div>
               </div>
             )}
@@ -289,7 +294,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
             {activeTab === 'explore' && (
               <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <Marketplace user={user} onAuthRequired={() => {}} />
+                <Marketplace user={user} onAuthRequired={() => {}} onPurchaseSuccess={onPurchaseSuccess} />
               </div>
             )}
 
