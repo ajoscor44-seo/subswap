@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 
 interface LoginModalProps {
@@ -10,12 +11,24 @@ interface LoginModalProps {
 const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+
+  // Load remembered email if any (Cookie/LocalStorage work)
+  useEffect(() => {
+    if (isOpen) {
+      const savedEmail = localStorage.getItem('subswap_remembered_email');
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -29,6 +42,12 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
     setError(null);
 
     try {
+      if (rememberMe) {
+        localStorage.setItem('subswap_remembered_email', email);
+      } else {
+        localStorage.removeItem('subswap_remembered_email');
+      }
+
       if (isSignUp) {
         if (!validateUsername(username)) {
           throw new Error("Username must be at least 3 characters and contain only letters, numbers, or underscores.");
@@ -112,7 +131,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
           {error && (
             <div className="bg-red-50 text-red-600 p-4 rounded-xl text-[10px] md:text-xs font-bold border border-red-100 flex items-start gap-3">
               <i className="fa-solid fa-triangle-exclamation mt-0.5"></i>
-              <span>{error}</span>
+              <span className="flex-1">{error}</span>
             </div>
           )}
           
@@ -164,6 +183,28 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
                 <i className={`fa-solid ${showPassword ? 'fa-eye-slash' : 'fa-eye'}`}></i>
               </button>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center gap-2 cursor-pointer group">
+              <div className="relative">
+                <input 
+                  type="checkbox" 
+                  className="sr-only" 
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
+                <div className={`w-10 h-5 rounded-full transition-colors ${rememberMe ? 'bg-indigo-600' : 'bg-slate-200'}`}></div>
+                <div className={`absolute top-1 left-1 w-3 h-3 bg-white rounded-full transition-transform ${rememberMe ? 'translate-x-5' : 'translate-x-0'}`}></div>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover:text-slate-600 transition-colors">Remember Me</span>
+            </label>
+            
+            {!isSignUp && (
+              <button type="button" className="text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:underline">
+                Forgot Password?
+              </button>
+            )}
           </div>
 
           <button 

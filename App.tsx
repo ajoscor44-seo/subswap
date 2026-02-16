@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from './lib/supabase';
 import { User } from './types';
 
@@ -24,7 +24,25 @@ const App: React.FC = () => {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-  const fetchProfile = async (userId: string, email: string, retryCount = 0): Promise<User | null> => {
+  // Helper to sync view with hash without triggering re-renders in middle of render cycle
+  const syncViewWithHash = useCallback((targetUser: User | null) => {
+    const hash = window.location.hash.replace('#/', '') as ViewState;
+    const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'];
+    
+    if (hash && validViews.includes(hash)) {
+      if (hash === 'admin' && !targetUser?.isAdmin) {
+        setCurrentView('dashboard');
+      } else if ((hash === 'dashboard' || hash === 'transactions') && !targetUser) {
+        setCurrentView('home');
+      } else {
+        setCurrentView(hash);
+      }
+    } else {
+      setCurrentView(targetUser ? (targetUser.isAdmin ? 'admin' : 'dashboard') : 'home');
+    }
+  }, []);
+
+  const fetchProfile = async (userId: string, email: string): Promise<User | null> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -32,91 +50,91 @@ const App: React.FC = () => {
         .eq('id', userId)
         .single();
 
-      if (error) {
-        if (retryCount < 2) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          return fetchProfile(userId, email, retryCount + 1);
-        }
+      if (error || !data) return null;
+
+      if (data.is_banned) {
+        await supabase.auth.signOut();
         return null;
       }
 
-      if (data) {
-        // If user is banned, force signout
-        if (data.is_banned) {
-          await supabase.auth.signOut();
-          alert("Your account has been suspended for violating terms of service.");
-          setUser(null);
-          setCurrentView('home');
-          return null;
-        }
-
-        const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng';
-        
-        const mappedUser: User = {
-          id: data.id,
-          email: email,
-          name: data.name || 'User',
-          username: data.username || 'user_' + data.id.slice(0, 4),
-          avatar: data.avatar || `https://ui-avatars.com/api/?name=${data.name || email}&background=6366f1&color=fff`,
-          balance: Number(data.balance) || 0,
-          isAdmin: isTargetAdmin || data.role === 'admin',
-          isVerified: Boolean(data.is_verified),
-          hasDeposited: Boolean(data.has_deposited),
-          totalSaved: Number(data.total_saved) || 0,
-          is_banned: Boolean(data.is_banned)
-        };
-        setUser(mappedUser);
-        return mappedUser;
-      }
+      const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng';
+      
+      return {
+        id: data.id,
+        email: email,
+        name: data.name || 'User',
+        username: data.username || 'user_' + data.id.slice(0, 4),
+        avatar: data.avatar || `https://ui-avatars.com/api/?name=${data.name || email}&background=6366f1&color=fff`,
+        balance: Number(data.balance) || 0,
+        isAdmin: isTargetAdmin || data.role === 'admin',
+        isVerified: Boolean(data.is_verified),
+        hasDeposited: Boolean(data.has_deposited),
+        totalSaved: Number(data.total_saved) || 0,
+        is_banned: Boolean(data.is_banned)
+      };
     } catch (err) {
       console.error("Profile sync exception:", err);
+      return null;
     }
-    return null;
   };
 
   useEffect(() => {
-    const initialize = async () => {
+    let mounted = true;
+
+    const initializeAuth = async () => {
+      // Safety timeout to prevent stuck preloader if Supabase hangs
+      const timeoutId = setTimeout(() => {
+        if (mounted && isAuthLoading) setIsAuthLoading(false);
+      }, 5000);
+
       try {
         const { data: { session } } = await supabase.auth.getSession();
         
-        if (session?.user) {
+        if (session?.user && mounted) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
-          const hash = window.location.hash.replace('#/', '') as ViewState;
-          
           if (profile) {
-            if (hash === 'admin' && !profile.isAdmin) {
-              setCurrentView('dashboard');
-            } else if (hash && ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions'].includes(hash)) {
-              setCurrentView(hash);
-            } else {
-              setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
-            }
+            setUser(profile);
+            syncViewWithHash(profile);
+          } else {
+            syncViewWithHash(null);
           }
+        } else if (mounted) {
+          syncViewWithHash(null);
         }
+      } catch (e) {
+        console.error("Auth init error", e);
       } finally {
-        setIsAuthLoading(false);
+        clearTimeout(timeoutId);
+        if (mounted) setIsAuthLoading(false);
       }
     };
 
-    initialize();
+    initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
       if (event === 'SIGNED_IN' && session?.user) {
+        setIsAuthLoading(true);
         const profile = await fetchProfile(session.user.id, session.user.email!);
-        if (profile) setCurrentView(profile.isAdmin ? 'admin' : 'dashboard');
+        setUser(profile);
+        syncViewWithHash(profile);
+        setIsAuthLoading(false);
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setCurrentView('home');
+        window.location.hash = '';
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [syncViewWithHash]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    setUser(null);
-    setCurrentView('home');
   };
 
   const navigateTo = (view: ViewState) => {
@@ -126,8 +144,15 @@ const App: React.FC = () => {
 
   if (isAuthLoading) {
     return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-slate-100 rounded-full"></div>
+          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+        </div>
+        <div className="text-center">
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-[0.3em]">SubSwap</h2>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Verifying Secure Session...</p>
+        </div>
       </div>
     );
   }
@@ -144,9 +169,12 @@ const App: React.FC = () => {
             </div>
           </>
         );
-      case 'dashboard': return user ? <Dashboard user={user} onLogout={handleLogout} /> : (navigateTo('home'), null);
-      case 'admin': return user?.isAdmin ? <AdminDashboard user={user} /> : (navigateTo('dashboard'), null);
-      case 'transactions': return user ? <TransactionHistory user={user} /> : (navigateTo('home'), null);
+      case 'dashboard': 
+        return user ? <Dashboard user={user} onLogout={handleLogout} /> : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
+      case 'admin': 
+        return user?.isAdmin ? <AdminDashboard user={user} /> : <Dashboard user={user!} onLogout={handleLogout} />;
+      case 'transactions': 
+        return user ? <TransactionHistory user={user} /> : <Hero onGetStarted={() => setIsLoginOpen(true)} />;
       case 'about': return <AboutUs />;
       case 'contact': return <ContactUs />;
       default: return <Hero onGetStarted={() => setIsLoginOpen(true)} />;

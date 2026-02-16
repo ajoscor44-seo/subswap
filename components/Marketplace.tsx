@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { ProductCategory, User, MasterAccount } from '../types';
 import { supabase } from '../lib/supabase';
@@ -79,8 +80,9 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
 
       if (error) throw error;
 
-      showToast(`Welcome to ${account.service_name}! Check 'My Stacks' for your login details.`);
-      // Refresh balance and slots
+      showToast(`Welcome to ${account.service_name}! Check 'My Stacks' for details.`);
+      // Smoothly update local state instead of hard reload if possible, 
+      // but for now hard reload ensures DB sync for complex transactions.
       setTimeout(() => window.location.reload(), 2000);
     } catch (err: any) {
       showToast(err.message || "Purchase failed. Please try again.", "error");
@@ -108,10 +110,9 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
       }).eq('id', user.id);
       if (balError) throw balError;
 
-      showToast(`₦${amount.toLocaleString()} added to your wallet!`);
+      showToast(`₦${amount.toLocaleString()} added successfully!`);
       setShowFundModal(false);
       
-      // Auto-retry purchase if amount covers it
       if (activeAccount && (user.balance + amount) >= activeAccount.price) {
         handleJoin(activeAccount);
       } else {
@@ -162,14 +163,18 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
 
             <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
                <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                 <span>Price</span>
-                 <span>₦{activeAccount?.price.toLocaleString()}</span>
+                 <span>Plan Price</span>
+                 <span className="text-slate-900">₦{activeAccount?.price.toLocaleString()}</span>
                </div>
                <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden mb-4">
-                 <div className="h-full bg-indigo-600 w-[40%]"></div>
+                 <div 
+                   className="h-full bg-indigo-600 transition-all duration-700" 
+                   style={{ width: `${Math.min(100, (user?.balance || 0) / (activeAccount?.price || 1) * 100)}%` }}
+                 ></div>
                </div>
                <div className="flex justify-between text-xs font-black">
-                 <span className="text-slate-400">Current Balance: ₦{user?.balance.toLocaleString()}</span>
+                 <span className="text-slate-400">Balance: ₦{user?.balance.toLocaleString()}</span>
+                 <span className="text-indigo-600">Missing: ₦{neededAmount.toLocaleString()}</span>
                </div>
             </div>
 
@@ -177,10 +182,10 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
               <button 
                 onClick={() => handleQuickFund(neededAmount)}
                 disabled={isProcessing === 'funding'}
-                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all"
+                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95"
               >
                 {isProcessing === 'funding' ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-bolt"></i>}
-                Top up exact ₦{neededAmount.toLocaleString()}
+                Pay ₦{neededAmount.toLocaleString()} via Paystack
               </button>
               
               <div className="grid grid-cols-2 gap-3">
@@ -188,7 +193,7 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
                   <button 
                     key={amt}
                     onClick={() => handleQuickFund(amt)}
-                    className="py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all"
+                    className="py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all active:scale-95"
                   >
                     +₦{amt.toLocaleString()}
                   </button>
@@ -196,7 +201,7 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
               </div>
             </div>
             
-            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secure Payment via Paystack</p>
+            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by 256-bit encryption</p>
           </div>
         </div>
       )}
@@ -227,9 +232,15 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-          <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Syncing Marketplace...</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {[1,2,3].map(i => (
+            <div key={i} className="bg-white rounded-[2.5rem] p-8 border-2 border-slate-50 animate-pulse">
+               <div className="h-48 bg-slate-100 rounded-2xl mb-6"></div>
+               <div className="h-6 bg-slate-100 rounded-full w-2/3 mb-4"></div>
+               <div className="h-4 bg-slate-100 rounded-full w-full mb-8"></div>
+               <div className="h-12 bg-slate-100 rounded-xl"></div>
+            </div>
+          ))}
         </div>
       ) : filteredProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -285,7 +296,10 @@ export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => vo
         </div>
       ) : (
         <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-          <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No results found</p>
+          <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-4 text-xl">
+             <i className="fa-solid fa-magnifying-glass"></i>
+          </div>
+          <p className="text-slate-400 font-black text-sm uppercase tracking-widest">No active slots found</p>
         </div>
       )}
     </div>
