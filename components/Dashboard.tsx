@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, ProductCategory } from '../types';
 import { Marketplace } from './Marketplace';
@@ -56,10 +55,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   return (
     <div className="min-h-screen bg-slate-50">
       {statusMsg && (
-        <div className={`fixed bottom-6 left-6 right-6 md:left-auto md:bottom-8 md:right-8 z-[200] px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 duration-300 flex items-center gap-3 border ${
+        <div className={`fixed top-24 right-6 z-[300] flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-right-4 border ${
           statusMsg.type === 'success' ? 'bg-slate-900 border-slate-700 text-white' : 'bg-red-500 border-red-400 text-white'
         }`}>
-           <i className={`fa-solid ${statusMsg.type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-triangle-exclamation text-white'}`}></i>
+           <i className={`fa-solid ${statusMsg.type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-triangle-exclamation'}`}></i>
            <p className="font-black text-[10px] uppercase tracking-widest">{statusMsg.text}</p>
         </div>
       )}
@@ -174,12 +173,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                 <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
                    <div className="flex items-center justify-between mb-8">
                       <div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Ready for you</h3>
-                        <p className="text-slate-500 text-sm font-medium">Top categories based on your location.</p>
+                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">Marketplace</h3>
+                        <p className="text-slate-500 text-sm font-medium">Verified premium slots.</p>
                       </div>
-                      <button onClick={() => setActiveTab('explore')} className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">See all <i className="fa-solid fa-arrow-right ml-1"></i></button>
                    </div>
-                   
                    <Marketplace user={user} onAuthRequired={() => {}} />
                 </div>
               </div>
@@ -203,7 +200,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                           <img src={sub.master_accounts?.icon_url} className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white shadow-sm object-cover" alt="" />
                           <div>
                             <h4 className="font-black text-slate-900 text-sm md:text-base">{sub.master_accounts?.service_name}</h4>
-                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">Active - Oct Renewal</p>
+                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">Active Access</p>
                           </div>
                         </div>
                         <div className="space-y-3 mb-6">
@@ -214,24 +211,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                                 <button onClick={() => copyToClipboard(sub.master_accounts?.master_email)} className="text-indigo-600 hover:text-indigo-800 flex-shrink-0"><i className="fa-solid fa-copy"></i></button>
                               </div>
                            </div>
-                           <div className="flex justify-between items-center text-[10px] md:text-xs">
-                              <span className="text-slate-400 font-bold uppercase tracking-widest text-[8px] md:text-[9px]">My Profile</span>
-                              <span className="text-slate-700 font-bold truncate">{sub.assigned_profile_name}</span>
-                           </div>
                         </div>
                         <button 
                           onClick={() => copyToClipboard(sub.master_accounts?.master_password)}
                           className="w-full bg-slate-900 text-white py-3 md:py-3.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all"
                         >
-                           Copy Account Password
+                           Copy Password
                         </button>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <div className="text-center py-12 md:py-20 bg-slate-50/50 rounded-[2rem] border-2 border-dashed border-slate-200">
-                    <p className="text-slate-400 font-medium text-sm">You don't have any active subscriptions yet.</p>
-                    <button onClick={() => setActiveTab('explore')} className="mt-4 bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest">Go to Marketplace</button>
+                    <p className="text-slate-400 font-medium text-sm">No active subscriptions yet.</p>
+                    <button onClick={() => setActiveTab('explore')} className="mt-4 bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest">Marketplace</button>
                   </div>
                 )}
               </div>
@@ -251,34 +244,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                         <i className="fa-solid fa-naira-sign"></i>
                       </div>
                       <div>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-900">Wallet Funding</h3>
-                        <p className="text-slate-500 text-xs md:text-sm font-medium">Add Naira to your wallet via Paystack secure gateway.</p>
+                        <h3 className="text-xl md:text-2xl font-black text-slate-900">Wallet</h3>
+                        <p className="text-slate-500 text-xs md:text-sm font-medium">Add Naira to your wallet.</p>
                       </div>
                    </div>
-                   <button 
-                     onClick={() => window.location.hash = '#/transactions'}
-                     className="px-6 py-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all"
-                   >
-                     View History
-                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col justify-between">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Available Balance</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Balance</p>
                         <h4 className="text-4xl md:text-5xl font-black tracking-tighter">₦{user.balance.toLocaleString()}</h4>
                       </div>
-                      <p className="mt-8 text-[9px] font-bold text-slate-400 italic">Auto-funding available with bank transfer.</p>
                    </div>
 
                    <div className="space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Select Amount</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Amount</p>
                       <div className="grid grid-cols-2 gap-3">
                          {[2000, 5000, 10000, 20000].map(amt => (
                            <button 
                              key={amt}
-                             onClick={() => showStatus(`Initiating ₦${amt.toLocaleString()} funding...`, "success")}
+                             onClick={() => showStatus(`Redirecting to payment for ₦${amt.toLocaleString()}...`)}
                              className="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
                            >
                              ₦{amt.toLocaleString()}
@@ -287,40 +273,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
                       </div>
                    </div>
                 </div>
-
-                <div className="bg-indigo-50 border border-indigo-100 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6">
-                   <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 bg-indigo-600 text-white rounded-full flex items-center justify-center shadow-lg">
-                        <i className="fa-solid fa-bolt"></i>
-                      </div>
-                      <p className="text-sm font-black text-indigo-900">Custom Funding Amount</p>
-                   </div>
-                   <div className="flex gap-2 w-full md:w-auto">
-                      <input type="number" placeholder="Enter amount" className="bg-white border border-indigo-200 p-3 rounded-xl font-bold w-full md:w-32 focus:ring-2 focus:ring-indigo-600 outline-none" />
-                      <button onClick={() => showStatus("Redirecting to Paystack...")} className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-200">Proceed</button>
-                   </div>
-                </div>
               </div>
             )}
-
-            {activeTab === 'settings' && (
-              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h3 className="text-xl md:text-2xl font-black text-slate-900 mb-6 md:mb-8">Profile Settings</h3>
-                <div className="space-y-6 max-w-md">
-                   <div className="space-y-1">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Display Name</label>
-                      <input type="text" defaultValue={user.name} className="w-full bg-slate-50 border border-slate-100 p-3 md:p-4 rounded-xl font-bold" />
-                   </div>
-                   <button 
-                    onClick={() => showStatus("Settings saved successfully!")}
-                    className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all"
-                   >
-                     Update Information
-                   </button>
-                </div>
-              </div>
-            )}
-
           </div>
         </div>
       </div>
