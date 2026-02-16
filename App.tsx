@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from './lib/supabase';
 import { User } from './types';
 
@@ -20,7 +20,6 @@ type ViewState = 'home' | 'dashboard' | 'admin' | 'settings' | 'about' | 'contac
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [currentView, setCurrentView] = useState<ViewState>('home');
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<string>('overview');
   
@@ -82,38 +81,22 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    let mounted = true;
-    const failSafeTimer = setTimeout(() => {
-      if (mounted && isAuthLoading) setIsAuthLoading(false);
-    }, 2000); // Faster fail-safe
-
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      
       if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
-          if (mounted) {
-            setUser(profile);
-            syncViewWithHash(profile);
-            setIsAuthLoading(false);
-          }
-        } else if (mounted) {
-          setIsAuthLoading(false);
-          syncViewWithHash(null);
+          setUser(profile);
+          syncViewWithHash(profile);
         }
-      } else if (event === 'SIGNED_OUT' && mounted) {
+      } else if (event === 'SIGNED_OUT') {
         setUser(null);
         setCurrentView('home');
         window.location.hash = '';
-        setIsAuthLoading(false);
       }
     });
 
     return () => {
-      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(failSafeTimer);
     };
   }, [syncViewWithHash]);
 
@@ -131,21 +114,6 @@ const App: React.FC = () => {
     refreshUserData();
     navigateTo('dashboard', 'stacks');
   };
-
-  if (isAuthLoading) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 animate-out fade-out duration-500">
-        <div className="relative mb-8 scale-125">
-          <div className="w-16 h-16 border-4 border-slate-50 rounded-full"></div>
-          <div className="w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
-        </div>
-        <div className="text-center space-y-2">
-          <h2 className="text-xl font-black text-slate-900 tracking-tighter uppercase">SubSwap</h2>
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] pt-4">Authenticating Session...</p>
-        </div>
-      </div>
-    );
-  }
 
   const renderContent = () => {
     switch (currentView) {
