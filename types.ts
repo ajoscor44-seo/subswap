@@ -9,10 +9,11 @@ export interface User {
   avatar: string;
   balance: number;
   isAdmin: boolean;
-  isVerified: boolean; // New
+  isVerified: boolean;
   hasDeposited: boolean;
   totalSaved: number;
-  merchantRating?: number; // New
+  is_banned?: boolean; // New: Access control
+  merchantRating?: number;
 }
 
 export interface MasterAccount {
@@ -23,37 +24,17 @@ export interface MasterAccount {
   total_slots: number;
   available_slots: number;
   price: number;
-  original_price?: number; // New
+  original_price?: number;
   description: string;
   icon_url: string;
   category: string;
-  owner_id?: string; // New
-  features?: string[]; // New
-  // Added owner property to match Supabase join results
+  owner_id?: string;
+  features?: string[];
   owner?: {
     username: string;
     is_verified: boolean;
     avatar: string;
     merchant_rating?: number;
-  };
-}
-
-export interface Product {
-  id: string;
-  name: string;
-  category: ProductCategory;
-  price: number;
-  originalPrice: number;
-  description: string;
-  image: string;
-  totalSlots: number;
-  takenSlots: number;
-  features: string[];
-  owner?: {
-    username: string;
-    is_verified: boolean;
-    avatar: string;
-    rating?: number;
   };
 }
 

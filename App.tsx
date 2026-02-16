@@ -14,9 +14,6 @@ import Footer from './components/Footer';
 import AboutUs from './components/AboutUs';
 import ContactUs from './components/ContactUs';
 import { HowItWorks } from './components/HowItWorks';
-import { Features } from './components/Features';
-import { Faq } from './components/Faq';
-import { PopularServices } from './components/PopularServices';
 import TransactionHistory from './components/TransactionHistory';
 
 type ViewState = 'home' | 'dashboard' | 'admin' | 'settings' | 'about' | 'contact' | 'transactions';
@@ -26,7 +23,6 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [connError, setConnError] = useState<string | null>(null);
 
   const fetchProfile = async (userId: string, email: string, retryCount = 0): Promise<User | null> => {
     try {
@@ -37,15 +33,23 @@ const App: React.FC = () => {
         .single();
 
       if (error) {
-        if (retryCount < 3) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        if (retryCount < 2) {
+          await new Promise(resolve => setTimeout(resolve, 500));
           return fetchProfile(userId, email, retryCount + 1);
         }
         return null;
       }
 
       if (data) {
-        // Force admin for the specified email
+        // If user is banned, force signout
+        if (data.is_banned) {
+          await supabase.auth.signOut();
+          alert("Your account has been suspended for violating terms of service.");
+          setUser(null);
+          setCurrentView('home');
+          return null;
+        }
+
         const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng';
         
         const mappedUser: User = {
@@ -58,7 +62,8 @@ const App: React.FC = () => {
           isAdmin: isTargetAdmin || data.role === 'admin',
           isVerified: Boolean(data.is_verified),
           hasDeposited: Boolean(data.has_deposited),
-          totalSaved: Number(data.total_saved) || 0
+          totalSaved: Number(data.total_saved) || 0,
+          is_banned: Boolean(data.is_banned)
         };
         setUser(mappedUser);
         return mappedUser;
@@ -88,9 +93,6 @@ const App: React.FC = () => {
             }
           }
         }
-      } catch (err: any) {
-        console.error("Initialization failed:", err.message);
-        setConnError("Connection failed. Please refresh.");
       } finally {
         setIsAuthLoading(false);
       }
@@ -125,8 +127,7 @@ const App: React.FC = () => {
   if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
-        <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-3xl font-black animate-pulse">S</div>
-        <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Syncing</p>
+        <div className="w-12 h-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }

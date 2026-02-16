@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { Product, ProductCategory, User, MasterAccount } from '../types';
+// Fixed: Removed non-existent Product type from imports
+import { ProductCategory, User, MasterAccount } from '../types';
 import { supabase } from '../lib/supabase';
 
 export const Marketplace: React.FC<{ user: User | null; onAuthRequired: () => void }> = ({ user, onAuthRequired }) => {
