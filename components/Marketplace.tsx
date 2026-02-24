@@ -90,8 +90,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
       // Call parent success handler for smooth internal navigation
       if (onPurchaseSuccess) {
         setTimeout(() => onPurchaseSuccess(), 1500);
-      } else {
-        setTimeout(() => window.location.reload(), 2000);
       }
     } catch (err: any) {
       showToast(err.message || "Purchase failed. Please try again.", "error");
@@ -126,7 +124,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
       } else {
         // Just refresh the data locally if possible, or trigger success handler
         if (onPurchaseSuccess) onPurchaseSuccess();
-        else window.location.reload();
       }
     } catch (err: any) {
       showToast(err.message, "error");

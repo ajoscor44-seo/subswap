@@ -60,7 +60,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user, isDashboa
         )}
 
         <div className={`overflow-hidden ${isDashboardView ? "" : "bg-white rounded-[2.5rem] border border-slate-200 shadow-sm"}`}>
-          <div className="overflow-x-auto">
+          {/* Desktop Table View */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100">
@@ -129,6 +130,59 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({ user, isDashboa
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="md:hidden divide-y divide-slate-100">
+            {isLoading ? (
+              [...Array(3)].map((_, i) => (
+                <div key={i} className="p-6 animate-pulse space-y-3">
+                  <div className="h-4 bg-slate-100 rounded-full w-1/3"></div>
+                  <div className="h-4 bg-slate-100 rounded-full w-full"></div>
+                </div>
+              ))
+            ) : transactions.length > 0 ? (
+              transactions.map((tx) => (
+                <div key={tx.id} className="p-6 space-y-4 hover:bg-slate-50 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${
+                      tx.type === 'Deposit' ? 'bg-emerald-50 text-emerald-600' :
+                      tx.type === 'Purchase' ? 'bg-indigo-50 text-indigo-600' :
+                      tx.type === 'Withdrawal' ? 'bg-red-50 text-red-600' :
+                      'bg-slate-50 text-slate-600'
+                    }`}>
+                      {tx.type}
+                    </span>
+                    <span className={`font-black text-sm ${tx.amount < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                      {tx.amount < 0 ? '-' : '+'}₦{Math.abs(tx.amount).toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-700 font-bold leading-relaxed">
+                      {tx.description || 'No description provided'}
+                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                      <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">
+                        {new Date(tx.created_at).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </span>
+                      {user.isAdmin && (
+                        <span className="font-mono text-[9px] text-slate-400">
+                          ID: ...{tx.user_id.slice(-6)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-16 text-slate-400 font-bold uppercase tracking-widest text-[10px]">
+                No transactions found
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -22,6 +22,7 @@ type ViewState = 'home' | 'dashboard' | 'admin' | 'settings' | 'about' | 'contac
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<string>('overview');
@@ -105,16 +106,24 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    refreshUserData().then(profile => {
+    const initApp = async () => {
+      setLoading(true);
+      const profile = await refreshUserData();
       syncViewWithHash(profile);
-    });
+      setLoading(false);
+    };
+
+    initApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         if (session?.user) {
           const profile = await fetchProfile(session.user.id, session.user.email!);
           setUser(profile);
-          if (event === 'SIGNED_IN') syncViewWithHash(profile);
+          if (event === 'SIGNED_IN') {
+            syncViewWithHash(profile);
+            setIsLoginOpen(false);
+          }
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
@@ -134,7 +143,6 @@ const App: React.FC = () => {
     setUser(null);
     setCurrentView('home');
     window.location.hash = '';
-    window.location.reload(); // Hard reload on logout to ensure absolute clean state
   };
 
   const navigateTo = (view: ViewState, tab?: string) => {
@@ -150,6 +158,14 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex-grow flex items-center justify-center">
+          <div className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      );
+    }
+
     switch (currentView) {
       case 'home':
         return (
@@ -207,11 +223,12 @@ const App: React.FC = () => {
         isOpen={isLoginOpen} 
         onClose={() => setIsLoginOpen(false)} 
         onSuccess={() => {
-          // Small delay ensures Supabase has finished its internal cookie storage updates
-          setTimeout(() => {
+          // Modal closing is now handled by onAuthStateChange for SIGNED_IN
+          // but we keep this as a fallback and to refresh data if needed
+          refreshUserData().then(p => {
+            syncViewWithHash(p);
             setIsLoginOpen(false);
-            refreshUserData().then(p => syncViewWithHash(p));
-          }, 100);
+          });
         }} 
       />
     </div>

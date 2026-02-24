@@ -29,9 +29,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
     setError(null);
 
     try {
-      // Step 0: Clear any potential stale session to avoid cookie conflicts
-      await supabase.auth.signOut({ scope: 'local' });
-
       if (isSignUp) {
         if (!validateUsername(username)) {
           throw new Error("Username must be at least 3 characters (letters, numbers, or underscores only).");
@@ -51,8 +48,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
         if (signUpError) throw signUpError;
         
         if (authData.session) {
-          // Explicitly set the session in the client
-          await supabase.auth.setSession(authData.session);
           onSuccess();
         } else {
           setSignUpSuccess(true);
@@ -62,8 +57,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ isOpen, onClose, onSuccess }) =
         if (signInError) throw signInError;
         
         if (data.user && data.session) {
-          // Explicitly set the session to ensure local storage and cookies are synced immediately
-          await supabase.auth.setSession(data.session);
           onSuccess();
         } else {
           throw new Error("Login failed. Profile could not be established.");
