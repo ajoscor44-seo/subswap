@@ -3,6 +3,7 @@ import { User, Transaction } from '../types';
 import { Marketplace } from './Marketplace';
 import TransactionHistory from './TransactionHistory';
 import { supabase } from '../lib/supabase';
+import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
 interface DashboardProps {
   user: User;
@@ -17,6 +18,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
+  const [fundAmount, setFundAmount] = useState(0);
+
+  const fwConfig = {
+    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X',
+    tx_ref: Date.now().toString(),
+    amount: fundAmount,
+    currency: 'NGN',
+    payment_options: 'card,mobilemoney,ussd',
+    customer: {
+      email: user.email,
+      phone_number: '',
+      name: user.name || user.username,
+    },
+    customizations: {
+      title: 'SubSwap Wallet Top-up',
+      description: `Payment for ₦${fundAmount.toLocaleString()} wallet credit`,
+      logo: 'https://ui-avatars.com/api/?name=SubSwap&background=6366f1&color=fff',
+    },
+  };
+
+  const handleFlutterPayment = useFlutterwave(fwConfig);
 
   // Sync state with prop if it changes externally
   useEffect(() => {
@@ -59,6 +81,43 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     showStatus("Copied to clipboard!");
+  };
+
+  const handleFlutterwavePayment = (amount: number) => {
+    setFundAmount(amount);
+    
+    handleFlutterPayment({
+      callback: async (response) => {
+        if (response.status === "successful") {
+          try {
+            const { error: txError } = await supabase.from('transactions').insert({
+              user_id: user.id,
+              amount: amount,
+              type: 'Deposit',
+              description: `Flutterwave Top-up: ₦${amount.toLocaleString()}`
+            });
+            if (txError) throw txError;
+
+            const { error: balError } = await supabase.from('profiles').update({
+              balance: user.balance + amount
+            }).eq('id', user.id);
+            if (balError) throw balError;
+
+            showStatus(`₦${amount.toLocaleString()} added successfully!`, 'success');
+            fetchData();
+            if (onPurchaseSuccess) onPurchaseSuccess();
+          } catch (err: any) {
+            showStatus(err.message, 'error');
+          }
+        } else {
+          showStatus("Payment was not successful", "error");
+        }
+        closePaymentModal();
+      },
+      onClose: () => {
+        console.log("Payment modal closed");
+      },
+    });
   };
 
   const navItems = [
@@ -312,47 +371,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                   <div className="bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] p-8 md:p-10 text-white flex flex-col justify-between relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-8 opacity-5">
-                        <i className="fa-solid fa-naira-sign text-[8rem] rotate-12"></i>
-                      </div>
-                      <div className="relative z-10">
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Current Balance</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col justify-between">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Balance</p>
                         <h4 className="text-4xl md:text-5xl font-black tracking-tighter">₦{user.balance.toLocaleString()}</h4>
-                      </div>
-                      <div className="mt-12 relative z-10">
-                        <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Secure Wallet ID</p>
-                        <p className="text-[10px] font-mono text-slate-400">...{user.id.slice(-12)}</p>
                       </div>
                    </div>
 
-                   <div className="space-y-6">
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 mb-3">Select Top-up Amount</p>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3">
-                           {[2000, 5000, 10000, 20000].map(amt => (
-                             <button 
-                               key={amt}
-                               onClick={() => showStatus(`Redirecting to payment for ₦${amt.toLocaleString()}...`)}
-                               className="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm active:scale-95 text-xs md:text-sm"
-                             >
-                               ₦{amt.toLocaleString()}
-                             </button>
-                           ))}
-                        </div>
-                      </div>
-
-                      <div className="p-6 bg-indigo-50 rounded-3xl border border-indigo-100">
-                        <div className="flex items-start gap-4">
-                          <div className="h-10 w-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 shadow-sm flex-shrink-0">
-                            <i className="fa-solid fa-shield-check"></i>
-                          </div>
-                          <div>
-                            <p className="text-xs font-black text-slate-900 uppercase tracking-tight">Instant Funding</p>
-                            <p className="text-[10px] text-slate-500 font-medium mt-1 leading-relaxed">Payments are processed securely via Paystack. Your wallet will be credited instantly after a successful transaction.</p>
-                          </div>
-                        </div>
+                   <div className="space-y-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Amount</p>
+                      <div className="grid grid-cols-2 gap-3">
+                         {[2000, 5000, 10000, 20000].map(amt => (
+                           <button 
+                             key={amt}
+                             onClick={() => handleFlutterwavePayment(amt)}
+                             className="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
+                           >
+                             ₦{amt.toLocaleString()}
+                           </button>
+                         ))}
                       </div>
                    </div>
                 </div>

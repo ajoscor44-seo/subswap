@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { ProductCategory, User, MasterAccount } from '../types';
 import { supabase } from '../lib/supabase';
+import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 
 interface Toast {
   message: string;
@@ -25,6 +26,26 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
   const [showFundModal, setShowFundModal] = useState(false);
   const [neededAmount, setNeededAmount] = useState(0);
   const [activeAccount, setActiveAccount] = useState<MasterAccount | null>(null);
+
+  const fwConfig = {
+    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X',
+    tx_ref: Date.now().toString(),
+    amount: neededAmount,
+    currency: 'NGN',
+    payment_options: 'card,mobilemoney,ussd',
+    customer: {
+      email: user?.email || '',
+      phone_number: '',
+      name: user?.name || user?.username || '',
+    },
+    customizations: {
+      title: 'SubSwap Wallet Top-up',
+      description: `Quick Fund for ${activeAccount?.service_name || 'Marketplace'}`,
+      logo: 'https://ui-avatars.com/api/?name=SubSwap&background=6366f1&color=fff',
+    },
+  };
+
+  const handleFlutterPayment = useFlutterwave(fwConfig);
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -98,38 +119,47 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
     }
   };
 
-  const handleQuickFund = async (amount: number) => {
+  const handleFlutterwavePayment = (amount: number) => {
     if (!user) return;
-    setIsProcessing('funding');
-    try {
-      const { error: txError } = await supabase.from('transactions').insert({
-        user_id: user.id,
-        amount: amount,
-        type: 'Deposit',
-        description: `Quick Fund for ${activeAccount?.service_name || 'Marketplace'}`
-      });
-      if (txError) throw txError;
+    
+    handleFlutterPayment({
+      callback: async (response) => {
+        if (response.status === "successful") {
+          try {
+            const { error: txError } = await supabase.from('transactions').insert({
+              user_id: user.id,
+              amount: amount,
+              type: 'Deposit',
+              description: `Quick Fund for ${activeAccount?.service_name || 'Marketplace'}`
+            });
+            if (txError) throw txError;
 
-      const { error: balError } = await supabase.from('profiles').update({
-        balance: user.balance + amount
-      }).eq('id', user.id);
-      if (balError) throw balError;
+            const { error: balError } = await supabase.from('profiles').update({
+              balance: user.balance + amount
+            }).eq('id', user.id);
+            if (balError) throw balError;
 
-      showToast(`₦${amount.toLocaleString()} added successfully!`);
-      setShowFundModal(false);
-      
-      // If we now have enough, proceed to join
-      if (activeAccount && (user.balance + amount) >= activeAccount.price) {
-        handleJoin(activeAccount);
-      } else {
-        // Just refresh the data locally if possible, or trigger success handler
-        if (onPurchaseSuccess) onPurchaseSuccess();
-      }
-    } catch (err: any) {
-      showToast(err.message, "error");
-    } finally {
-      setIsProcessing(null);
-    }
+            showToast(`₦${amount.toLocaleString()} added successfully!`);
+            setShowFundModal(false);
+            
+            // If we now have enough, proceed to join
+            if (activeAccount && (user.balance + amount) >= activeAccount.price) {
+              handleJoin(activeAccount);
+            } else {
+              if (onPurchaseSuccess) onPurchaseSuccess();
+            }
+          } catch (err: any) {
+            showToast(err.message, "error");
+          }
+        } else {
+          showToast("Payment was not successful", "error");
+        }
+        closePaymentModal();
+      },
+      onClose: () => {
+        console.log("Payment modal closed");
+      },
+    });
   };
 
   const filteredProducts = useMemo(() => {
@@ -187,19 +217,19 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
 
             <div className="space-y-3">
               <button 
-                onClick={() => handleQuickFund(neededAmount)}
+                onClick={() => handleFlutterwavePayment(neededAmount)}
                 disabled={isProcessing === 'funding'}
                 className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95"
               >
                 {isProcessing === 'funding' ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-bolt"></i>}
-                Pay ₦{neededAmount.toLocaleString()} via Paystack
+                Pay ₦{neededAmount.toLocaleString()} via Flutterwave
               </button>
               
               <div className="grid grid-cols-2 gap-3">
                 {[2000, 5000].map(amt => (
                   <button 
                     key={amt}
-                    onClick={() => handleQuickFund(amt)}
+                    onClick={() => handleFlutterwavePayment(amt)}
                     className="py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all active:scale-95"
                   >
                     +₦{amt.toLocaleString()}
@@ -208,7 +238,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
               </div>
             </div>
             
-            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by Paystack</p>
+            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by Flutterwave</p>
           </div>
         </div>
       )}

@@ -27,15 +27,24 @@ const App: React.FC = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<string>('overview');
   
+  useEffect(() => {
+    console.log("App State: User updated ->", user?.email, "isAdmin:", user?.isAdmin);
+  }, [user]);
+
   const syncViewWithHash = useCallback((targetUser: User | null) => {
     const hash = window.location.hash.replace('#/', '') as ViewState;
     const validViews: ViewState[] = ['home', 'dashboard', 'admin', 'about', 'contact', 'transactions', 'settings'];
     
+    console.log("syncViewWithHash: Hash:", hash, "User:", targetUser?.email, "isAdmin:", targetUser?.isAdmin);
+
     if (hash && validViews.includes(hash)) {
       if (hash === 'admin' && !targetUser?.isAdmin) {
         setCurrentView('dashboard');
       } else if ((hash === 'dashboard' || hash === 'transactions' || hash === 'settings') && !targetUser) {
         setCurrentView('home');
+      } else if (hash === 'home' && targetUser) {
+        // If logged in and on home, redirect to dashboard by default
+        setCurrentView(targetUser.isAdmin ? 'admin' : 'dashboard');
       } else {
         setCurrentView(hash);
       }
@@ -46,6 +55,7 @@ const App: React.FC = () => {
   }, []);
 
   const fetchProfile = async (userId: string, email: string): Promise<User | null> => {
+    console.log("fetchProfile: Fetching for", email);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -54,8 +64,8 @@ const App: React.FC = () => {
         .single();
 
       if (error) {
-        console.error("Profile fetch error:", error.message);
-        return {
+        console.warn("fetchProfile: Profile not found in DB, using fallback for", email, error.message);
+        const fallback: User = {
           id: userId,
           email: email,
           name: email.split('@')[0],
@@ -67,16 +77,19 @@ const App: React.FC = () => {
           hasDeposited: false,
           totalSaved: 0
         };
+        console.log("fetchProfile: Fallback profile created", fallback);
+        return fallback;
       }
 
       if (data.is_banned) {
+        console.warn("fetchProfile: User is banned", email);
         await supabase.auth.signOut();
         return null;
       }
 
       const isTargetAdmin = email.toLowerCase() === 'joscor@wsv.com.ng' || data.role === 'admin';
       
-      return {
+      const profile: User = {
         id: data.id,
         email: email,
         name: data.name || data.username || email.split('@')[0],
@@ -89,8 +102,10 @@ const App: React.FC = () => {
         totalSaved: Number(data.total_saved) || 0,
         is_banned: Boolean(data.is_banned)
       };
+      console.log("fetchProfile: Profile successfully built", profile.email, "isAdmin:", profile.isAdmin);
+      return profile;
     } catch (err) {
-      console.error("Unexpected error fetching profile:", err);
+      console.error("fetchProfile: Unexpected error", err);
       return null;
     }
   };
@@ -106,24 +121,50 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log("CONNECTED to SubSwap Services");
     const initApp = async () => {
+      console.log("initApp: Starting...");
       setLoading(true);
-      const profile = await refreshUserData();
-      syncViewWithHash(profile);
-      setLoading(false);
+      
+      // Safety timeout: don't block the app for more than 6 seconds
+      const timeoutId = setTimeout(() => {
+        if (loading) {
+          console.warn("initApp: Safety timeout reached, forcing loading to false");
+          setLoading(false);
+        }
+      }, 6000);
+
+      try {
+        const profile = await refreshUserData();
+        console.log("initApp: Profile fetched", profile?.email);
+        syncViewWithHash(profile);
+      } catch (err) {
+        console.error("initApp: Error during initialization", err);
+      } finally {
+        clearTimeout(timeoutId);
+        setLoading(false);
+        console.log("initApp: Finished, loading set to false");
+      }
     };
 
     initApp();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) {
+      console.log("Auth Event:", event, session?.user?.email);
+      if (session?.user) {
+        try {
           const profile = await fetchProfile(session.user.id, session.user.email!);
+          console.log("AuthChange: Setting user to", profile?.email);
           setUser(profile);
-          if (event === 'SIGNED_IN') {
+          
+          // On initial load or sign in, sync the view
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            console.log("AuthChange: Syncing view for", profile?.email);
             syncViewWithHash(profile);
-            setIsLoginOpen(false);
+            if (event === 'SIGNED_IN') setIsLoginOpen(false);
           }
+        } catch (err) {
+          console.error("AuthChange: Error fetching profile", err);
         }
       } else if (event === 'SIGNED_OUT') {
         setUser(null);
