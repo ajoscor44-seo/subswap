@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { User, Transaction } from '../types';
 import { Marketplace } from './Marketplace';
 import TransactionHistory from './TransactionHistory';
@@ -20,6 +20,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const [fundAmount, setFundAmount] = useState(0);
   const [customAmount, setCustomAmount] = useState('');
+
+  const activeSubscriptions = useMemo(() => {
+    return subscriptions.filter(sub => {
+      if (sub.status === 'Expired' || sub.status === 'Cancelled') return false;
+      
+      const date = sub.purchased_at || sub.created_at;
+      if (!date) return true;
+
+      const purchaseDate = new Date(date);
+      const expiryDate = new Date(purchaseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      return expiryDate > new Date();
+    });
+  }, [subscriptions]);
+
+  const getTimeRemaining = (dateStr: string) => {
+    const purchaseDate = new Date(dateStr);
+    const expiryDate = new Date(purchaseDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const now = new Date();
+    const diff = expiryDate.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Expired';
+    
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    
+    if (days > 0) return `${days}d ${hours}h left`;
+    return `${hours}h left`;
+  };
 
   const fwConfig = {
     public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X',
@@ -283,12 +311,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                       <button onClick={() => setActiveTab('stacks')} className="text-[10px] font-black uppercase tracking-widest text-indigo-600">My Stacks</button>
                     </div>
                     <div className="flex -space-x-3 overflow-hidden mb-6">
-                      {subscriptions.map((sub, i) => (
+                      {activeSubscriptions.map((sub, i) => (
                         <img key={i} src={sub.master_accounts?.icon_url} className="inline-block h-10 w-10 rounded-full ring-4 ring-white object-cover" alt="" />
                       ))}
-                      {subscriptions.length === 0 && <p className="text-[10px] text-slate-400 font-bold uppercase py-4">No active stacks yet</p>}
+                      {activeSubscriptions.length === 0 && <p className="text-[10px] text-slate-400 font-bold uppercase py-4">No active stacks yet</p>}
                     </div>
-                    <p className="text-[10px] text-slate-500 font-medium">You have {subscriptions.length} active premium subscriptions.</p>
+                    <p className="text-[10px] text-slate-500 font-medium">You have {activeSubscriptions.length} active premium subscriptions.</p>
                   </div>
                 </div>
 
@@ -314,30 +342,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                   <div className="text-center py-20">
                     <i className="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
                   </div>
-                ) : subscriptions.length > 0 ? (
-                  <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 md:gap-6">
-                    {subscriptions.map(sub => (
-                      <div key={sub.id} className="p-4 md:p-6 bg-slate-50 rounded-2xl md:rounded-3xl border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-300">
-                        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-4 md:mb-6">
-                          <img src={sub.master_accounts?.icon_url} className="h-10 w-10 md:h-14 md:w-14 rounded-lg md:rounded-2xl bg-white shadow-sm object-cover" alt="" />
-                          <div>
-                            <h4 className="font-black text-slate-900 text-[10px] md:text-base truncate max-w-[100px] md:max-w-none">{sub.master_accounts?.service_name}</h4>
-                            <p className="text-[7px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">Active</p>
-                          </div>
-                        </div>
-                        <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
-                           <div className="flex justify-between items-center text-[8px] md:text-xs">
-                              <span className="text-slate-400 font-bold uppercase tracking-widest text-[7px] md:text-[9px]">ID</span>
-                              <div className="flex items-center gap-1 md:gap-2 max-w-[60%]">
-                                <span className="text-slate-700 font-mono font-bold truncate">{sub.master_accounts?.master_email}</span>
+                ) : activeSubscriptions.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {activeSubscriptions.map(sub => (
+                      <div key={sub.id} className="p-6 md:p-8 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                           <div className="flex items-center gap-4">
+                              <img src={sub.master_accounts?.icon_url} className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-white shadow-sm object-cover" alt="" />
+                              <div>
+                                <h4 className="font-black text-slate-900 text-base md:text-lg">{sub.master_accounts?.service_name}</h4>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest">Active</span>
+                                  <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest flex items-center gap-1">
+                                    <i className="fa-regular fa-clock"></i>
+                                    {getTimeRemaining(sub.purchased_at || sub.created_at || '')}
+                                  </span>
+                                </div>
                               </div>
                            </div>
                         </div>
+                        
+                        <div className="bg-white/50 rounded-2xl p-4 mb-6 border border-slate-100/50 space-y-3">
+                           <div className="flex justify-between items-center text-xs">
+                              <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Account ID</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-700 font-mono font-bold truncate max-w-[150px]">{sub.master_accounts?.master_email}</span>
+                                <button onClick={() => copyToClipboard(sub.master_accounts?.master_email)} className="text-indigo-600 hover:text-indigo-800"><i className="fa-solid fa-copy"></i></button>
+                              </div>
+                           </div>
+                        </div>
+
                         <button 
                           onClick={() => copyToClipboard(sub.master_accounts?.master_password)}
-                          className="w-full bg-slate-900 text-white py-2.5 md:py-3.5 rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all"
+                          className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all shadow-lg active:scale-95"
                         >
-                           Password
+                           <i className="fa-solid fa-key mr-2"></i> Copy Password
                         </button>
                       </div>
                     ))}
