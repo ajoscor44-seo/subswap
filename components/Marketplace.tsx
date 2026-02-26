@@ -269,44 +269,43 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1,2,3].map(i => (
-            <div key={i} className="bg-white rounded-[2.5rem] p-8 border-2 border-slate-50 animate-pulse">
-               <div className="h-48 bg-slate-100 rounded-2xl mb-6"></div>
-               <div className="h-6 bg-slate-100 rounded-full w-2/3 mb-4"></div>
-               <div className="h-4 bg-slate-100 rounded-full w-full mb-8"></div>
-               <div className="h-12 bg-slate-100 rounded-xl"></div>
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border-2 border-slate-50 animate-pulse">
+               <div className="h-24 md:h-48 bg-slate-100 rounded-xl md:rounded-2xl mb-4 md:mb-6"></div>
+               <div className="h-4 bg-slate-100 rounded-full w-2/3 mb-2 md:mb-4"></div>
+               <div className="h-3 bg-slate-100 rounded-full w-full mb-4 md:mb-8"></div>
+               <div className="h-8 md:h-12 bg-slate-100 rounded-lg md:rounded-xl"></div>
             </div>
           ))}
         </div>
       ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
           {filteredProducts.map(account => (
-            <div key={account.id} className="bg-white rounded-[2.5rem] border-2 border-slate-50 overflow-hidden group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
-              <div className="h-56 relative overflow-hidden">
+            <div key={account.id} className="bg-white rounded-2xl md:rounded-[2.5rem] border-2 border-slate-50 overflow-hidden group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full">
+              <div className="h-32 md:h-56 relative overflow-hidden">
                 <img src={account.icon_url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={account.service_name} />
-                <div className="absolute top-4 left-4 bg-white/95 backdrop-blur px-4 py-2.5 rounded-2xl shadow-xl border border-slate-100">
-                  <p className="text-xl font-black text-slate-900 leading-none">₦{account.price.toLocaleString()}</p>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-400 mt-1">Per Month</p>
+                <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-white/95 backdrop-blur px-2 md:px-4 py-1.5 md:py-2.5 rounded-lg md:rounded-2xl shadow-xl border border-slate-100">
+                  <p className="text-xs md:text-xl font-black text-slate-900 leading-none">₦{account.price.toLocaleString()}</p>
+                  <p className="text-[6px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mt-0.5 md:mt-1">/ Month</p>
                 </div>
               </div>
               
-              <div className="p-8 flex flex-col flex-grow">
-                <div className="flex-grow space-y-6">
+              <div className="p-3 md:p-8 flex flex-col flex-grow">
+                <div className="flex-grow space-y-3 md:space-y-6">
                   <div>
-                    <h3 className="text-xl font-black text-slate-900 mb-2">{account.service_name}</h3>
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="bg-indigo-50 text-indigo-600 px-3 py-1 rounded-lg font-black text-[9px] uppercase tracking-widest">{account.category}</span>
-                      <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[9px] uppercase tracking-widest">Verified</span>
+                    <h3 className="text-xs md:text-xl font-black text-slate-900 mb-1 md:mb-2 truncate">{account.service_name}</h3>
+                    <div className="flex items-center gap-1 md:gap-2 mb-2 md:mb-4">
+                      <span className="bg-indigo-50 text-indigo-600 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg font-black text-[6px] md:text-[9px] uppercase tracking-widest">{account.category}</span>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest">
-                       <span className="text-slate-400">Availability</span>
-                       <span className="text-indigo-600">{account.available_slots} Slots left</span>
+                  <div className="space-y-1.5 md:space-y-2">
+                    <div className="flex items-center justify-between text-[6px] md:text-[9px] font-black uppercase tracking-widest">
+                       <span className="text-slate-400">Slots</span>
+                       <span className="text-indigo-600">{account.available_slots} left</span>
                     </div>
-                    <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
+                    <div className="h-1.5 md:h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
                       <div 
                         className="h-full bg-indigo-600 rounded-full transition-all duration-1000" 
                         style={{ width: `${((account.total_slots - account.available_slots) / account.total_slots) * 100}%` }}
@@ -318,14 +317,14 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
                 <button 
                   disabled={isProcessing === account.id}
                   onClick={() => handleJoin(account)}
-                  className={`w-full mt-8 py-4.5 rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-[10px] transition-all shadow-xl active:scale-95 disabled:opacity-50 ${
+                  className={`w-full mt-4 md:mt-8 py-2.5 md:py-4.5 rounded-xl md:rounded-[1.5rem] font-black uppercase tracking-widest md:tracking-[0.2em] text-[8px] md:text-[10px] transition-all shadow-xl active:scale-95 disabled:opacity-50 ${
                     user && user.balance < account.price 
                     ? 'bg-amber-500 text-white hover:bg-amber-600' 
                     : 'bg-slate-900 text-white hover:bg-indigo-600'
                   }`}
                 >
-                  {isProcessing === account.id ? <i className="fa-solid fa-spinner fa-spin mr-2"></i> : null}
-                  {user && user.balance < account.price ? 'Fund to Join' : `Join for ₦${account.price.toLocaleString()}`}
+                  {isProcessing === account.id ? <i className="fa-solid fa-spinner fa-spin mr-1 md:mr-2"></i> : null}
+                  {user && user.balance < account.price ? 'Fund' : `Join`}
                 </button>
               </div>
             </div>

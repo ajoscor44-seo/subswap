@@ -19,6 +19,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
   const [isLoading, setIsLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
   const [fundAmount, setFundAmount] = useState(0);
+  const [customAmount, setCustomAmount] = useState('');
 
   const fwConfig = {
     public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || 'FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X',
@@ -162,31 +163,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                </div>
                
                <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-slate-50">
-                  <div className="flex lg:flex-col overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 gap-1 no-scrollbar">
+                  <div className="grid grid-cols-2 lg:grid-cols-1 gap-2 md:gap-1">
                     {navItems.map((item) => (
                       <button 
                         key={item.id}
                         onClick={() => setActiveTab(item.id as any)}
-                        className={`whitespace-nowrap flex-shrink-0 lg:w-full text-left px-4 md:px-5 py-3 rounded-xl flex items-center gap-3 transition-all ${
+                        className={`text-left px-3 md:px-5 py-3 rounded-xl flex items-center gap-2 md:gap-3 transition-all ${
                           activeTab === item.id 
                             ? 'bg-indigo-50 text-indigo-600 font-black' 
                             : 'text-slate-500 font-bold hover:bg-slate-50'
                         }`}
                       >
-                        <i className={`fa-solid ${item.icon} w-5`}></i>
-                        <span className="text-xs md:text-sm">{item.label}</span>
+                        <i className={`fa-solid ${item.icon} w-4 md:w-5 text-xs md:text-base`}></i>
+                        <span className="text-[10px] md:text-sm truncate">{item.label}</span>
                       </button>
                     ))}
                     <button 
                       onClick={() => setActiveTab('settings')}
-                      className={`whitespace-nowrap flex-shrink-0 lg:w-full text-left px-4 md:px-5 py-3 rounded-xl flex items-center gap-3 transition-all ${
+                      className={`text-left px-3 md:px-5 py-3 rounded-xl flex items-center gap-2 md:gap-3 transition-all ${
                         activeTab === 'settings' 
                           ? 'bg-indigo-50 text-indigo-600 font-black' 
                           : 'text-slate-500 font-bold hover:bg-slate-50'
                       }`}
                     >
-                      <i className="fa-solid fa-gear w-5"></i>
-                      <span className="text-xs md:text-sm">Settings</span>
+                      <i className="fa-solid fa-gear w-4 md:w-5 text-xs md:text-base"></i>
+                      <span className="text-[10px] md:text-sm truncate">Settings</span>
                     </button>
                   </div>
                </div>
@@ -203,7 +204,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
           <div className="lg:col-span-9 space-y-6 md:space-y-8">
             
             {activeTab === 'overview' && (
-              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 md:space-y-8">
+              <div className="animate-in fade-in duration-500 space-y-6 md:space-y-8">
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                    <div className="md:col-span-2 bg-slate-900 rounded-[2.5rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl">
@@ -304,7 +305,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
             )}
 
             {activeTab === 'stacks' && (
-              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between mb-8 md:mb-10">
                   <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">My Active Access</h3>
                   <button onClick={() => setActiveTab('explore')} className="text-xs font-black text-indigo-600">Buy New +</button>
@@ -314,30 +315,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                     <i className="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
                   </div>
                 ) : subscriptions.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                  <div className="grid grid-cols-2 lg:grid-cols-2 gap-3 md:gap-6">
                     {subscriptions.map(sub => (
-                      <div key={sub.id} className="p-5 md:p-6 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-300">
-                        <div className="flex items-center gap-4 mb-6">
-                          <img src={sub.master_accounts?.icon_url} className="h-12 w-12 md:h-14 md:w-14 rounded-xl md:rounded-2xl bg-white shadow-sm object-cover" alt="" />
+                      <div key={sub.id} className="p-4 md:p-6 bg-slate-50 rounded-2xl md:rounded-3xl border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-300">
+                        <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 mb-4 md:mb-6">
+                          <img src={sub.master_accounts?.icon_url} className="h-10 w-10 md:h-14 md:w-14 rounded-lg md:rounded-2xl bg-white shadow-sm object-cover" alt="" />
                           <div>
-                            <h4 className="font-black text-slate-900 text-sm md:text-base">{sub.master_accounts?.service_name}</h4>
-                            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">Active Access</p>
+                            <h4 className="font-black text-slate-900 text-[10px] md:text-base truncate max-w-[100px] md:max-w-none">{sub.master_accounts?.service_name}</h4>
+                            <p className="text-[7px] md:text-[10px] font-black uppercase tracking-widest text-emerald-500">Active</p>
                           </div>
                         </div>
-                        <div className="space-y-3 mb-6">
-                           <div className="flex justify-between items-center text-[10px] md:text-xs">
-                              <span className="text-slate-400 font-bold uppercase tracking-widest text-[8px] md:text-[9px]">Account ID</span>
-                              <div className="flex items-center gap-2 max-w-[60%]">
+                        <div className="space-y-2 md:space-y-3 mb-4 md:mb-6">
+                           <div className="flex justify-between items-center text-[8px] md:text-xs">
+                              <span className="text-slate-400 font-bold uppercase tracking-widest text-[7px] md:text-[9px]">ID</span>
+                              <div className="flex items-center gap-1 md:gap-2 max-w-[60%]">
                                 <span className="text-slate-700 font-mono font-bold truncate">{sub.master_accounts?.master_email}</span>
-                                <button onClick={() => copyToClipboard(sub.master_accounts?.master_email)} className="text-indigo-600 hover:text-indigo-800 flex-shrink-0"><i className="fa-solid fa-copy"></i></button>
                               </div>
                            </div>
                         </div>
                         <button 
                           onClick={() => copyToClipboard(sub.master_accounts?.master_password)}
-                          className="w-full bg-slate-900 text-white py-3 md:py-3.5 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all"
+                          className="w-full bg-slate-900 text-white py-2.5 md:py-3.5 rounded-lg md:rounded-xl font-black text-[8px] md:text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all"
                         >
-                           Copy Password
+                           Password
                         </button>
                       </div>
                     ))}
@@ -352,13 +352,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
             )}
 
             {activeTab === 'explore' && (
-              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <Marketplace user={user} onAuthRequired={() => {}} onPurchaseSuccess={onPurchaseSuccess} />
               </div>
             )}
 
             {activeTab === 'wallet' && (
-              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between mb-6 md:mb-12">
                    <div className="flex items-center gap-3 md:gap-6">
                       <div className="h-10 w-10 md:h-16 md:w-16 bg-indigo-50 text-indigo-600 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-xl md:text-3xl">
@@ -379,18 +379,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
                       </div>
                    </div>
 
-                   <div className="space-y-4">
-                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">Select Amount</p>
-                      <div className="grid grid-cols-2 gap-2 md:gap-3">
-                         {[2000, 5000, 10000, 20000].map(amt => (
-                           <button 
-                             key={amt}
-                             onClick={() => handleFlutterwavePayment(amt)}
-                             className="p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl font-black text-xs md:text-base text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
-                           >
-                             ₦{amt.toLocaleString()}
-                           </button>
-                         ))}
+                   <div className="space-y-6">
+                      <div className="space-y-3">
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">Custom Amount</p>
+                        <div className="flex gap-2">
+                          <div className="relative flex-grow">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">₦</span>
+                            <input 
+                              type="number" 
+                              value={customAmount}
+                              onChange={(e) => setCustomAmount(e.target.value)}
+                              placeholder="Enter amount"
+                              className="w-full pl-8 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
+                            />
+                          </div>
+                          <button 
+                            onClick={() => {
+                              const amt = parseInt(customAmount);
+                              if (amt > 0) handleFlutterwavePayment(amt);
+                              else showStatus("Please enter a valid amount", "error");
+                            }}
+                            className="px-8 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                          >
+                            Fund
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">Quick Select</p>
+                        <div className="grid grid-cols-2 gap-2 md:gap-3">
+                          {[2000, 5000, 10000, 20000].map(amt => (
+                            <button 
+                              key={amt}
+                              onClick={() => handleFlutterwavePayment(amt)}
+                              className="p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl font-black text-xs md:text-base text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
+                            >
+                              ₦{amt.toLocaleString()}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                    </div>
                 </div>
@@ -398,8 +426,69 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
             )}
 
             {activeTab === 'history' && (
-              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden">
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-500 overflow-hidden">
                 <TransactionHistory user={user} isDashboardView={true} />
+              </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
+                <div className="mb-8 md:mb-12">
+                  <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">Account Settings</h3>
+                  <p className="text-slate-500 text-sm font-medium">Manage your profile and preferences.</p>
+                </div>
+
+                <div className="max-w-xl space-y-8">
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Profile Information</p>
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Display Name</label>
+                        <input 
+                          type="text" 
+                          defaultValue={user.name}
+                          className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
+                          placeholder="Your full name"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">Username</label>
+                        <input 
+                          type="text" 
+                          defaultValue={user.username}
+                          className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
+                          placeholder="username"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security</p>
+                    <div className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-black text-slate-900 text-sm">Email Address</h4>
+                        <p className="text-slate-500 text-xs font-medium">{user.email}</p>
+                      </div>
+                      <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[8px] uppercase tracking-widest">Verified</span>
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-slate-50 flex flex-col sm:flex-row gap-3">
+                    <button 
+                      onClick={() => showStatus("Profile updated successfully!")}
+                      className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
+                    >
+                      Save Changes
+                    </button>
+                    <button 
+                      onClick={onLogout}
+                      className="px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
