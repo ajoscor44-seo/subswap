@@ -55,29 +55,41 @@ const App: React.FC = () => {
   }, []);
 
   const fetchProfile = async (userId: string, email: string): Promise<User | null> => {
-    console.log("fetchProfile: Fetching for", email);
+    console.log("fetchProfile: Starting for", email, "ID:", userId);
+    const fallback: User = {
+      id: userId,
+      email: email,
+      name: email.split('@')[0],
+      username: email.split('@')[0],
+      avatar: `https://ui-avatars.com/api/?name=${email}&background=6366f1&color=fff`,
+      balance: 0,
+      isAdmin: email.toLowerCase() === 'joscor@wsv.com.ng',
+      isVerified: false,
+      hasDeposited: false,
+      totalSaved: 0
+    };
+
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
+      console.log("fetchProfile: Executing Supabase query with timeout...");
+      
+      // Create a promise that rejects after 5 seconds
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Supabase query timed out")), 5000)
+      );
+
+      const { data, error } = await Promise.race([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single(),
+        timeoutPromise as any
+      ]);
+      
+      console.log("fetchProfile: Query returned", { data: !!data, error: error?.message });
 
       if (error) {
-        console.warn("fetchProfile: Profile not found in DB, using fallback for", email, error.message);
-        const fallback: User = {
-          id: userId,
-          email: email,
-          name: email.split('@')[0],
-          username: email.split('@')[0],
-          avatar: `https://ui-avatars.com/api/?name=${email}&background=6366f1&color=fff`,
-          balance: 0,
-          isAdmin: email.toLowerCase() === 'joscor@wsv.com.ng',
-          isVerified: false,
-          hasDeposited: false,
-          totalSaved: 0
-        };
-        console.log("fetchProfile: Fallback profile created", fallback);
+        console.warn("fetchProfile: Profile not found in DB or query error, using fallback for", email, error.message);
         return fallback;
       }
 
@@ -105,19 +117,33 @@ const App: React.FC = () => {
       console.log("fetchProfile: Profile successfully built", profile.email, "isAdmin:", profile.isAdmin);
       return profile;
     } catch (err) {
-      console.error("fetchProfile: Unexpected error", err);
-      return null;
+      console.error("fetchProfile: Unexpected error or timeout, using fallback", err);
+      return fallback;
     }
   };
 
   const refreshUserData = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.user) {
-      const profile = await fetchProfile(session.user.id, session.user.email!);
-      setUser(profile);
-      return profile;
+    console.log("refreshUserData: Getting session...");
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error("refreshUserData: Session error", sessionError);
+        return null;
+      }
+      
+      if (session?.user) {
+        console.log("refreshUserData: Session found for", session.user.email);
+        const profile = await fetchProfile(session.user.id, session.user.email!);
+        console.log("refreshUserData: Profile loaded", profile?.email);
+        setUser(profile);
+        return profile;
+      }
+      console.log("refreshUserData: No session found");
+      return null;
+    } catch (err) {
+      console.error("refreshUserData: Unexpected error", err);
+      return null;
     }
-    return null;
   };
 
   useEffect(() => {
