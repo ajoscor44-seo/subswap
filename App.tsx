@@ -131,14 +131,16 @@ const App: React.FC = () => {
         return null;
       }
       
-      if (session?.user) {
-        console.log("refreshUserData: Session found for", session.user.email);
-        const profile = await fetchProfile(session.user.id, session.user.email!);
+      const currentUser = session?.user || (await supabase.auth.getUser()).data.user;
+
+      if (currentUser) {
+        console.log("refreshUserData: User found for", currentUser.email);
+        const profile = await fetchProfile(currentUser.id, currentUser.email!);
         console.log("refreshUserData: Profile loaded", profile?.email);
         setUser(profile);
         return profile;
       }
-      console.log("refreshUserData: No session found");
+      console.log("refreshUserData: No session or user found");
       return null;
     } catch (err) {
       console.error("refreshUserData: Unexpected error", err);

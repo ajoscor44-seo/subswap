@@ -122,7 +122,18 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
   const handleFlutterwavePayment = (amount: number) => {
     if (!user) return;
     
+    const config = {
+      ...fwConfig,
+      amount: amount,
+      tx_ref: `tx-qf-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      customizations: {
+        ...fwConfig.customizations,
+        description: `Quick Fund for ${activeAccount?.service_name || 'Marketplace'}`,
+      }
+    };
+
     handleFlutterPayment({
+      ...config,
       callback: async (response) => {
         if (response.status === "successful") {
           try {

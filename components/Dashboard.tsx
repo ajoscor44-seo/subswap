@@ -113,9 +113,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
   };
 
   const handleFlutterwavePayment = (amount: number) => {
-    setFundAmount(amount);
+    const config = {
+      ...fwConfig,
+      amount: amount,
+      tx_ref: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      customizations: {
+        ...fwConfig.customizations,
+        description: `Payment for ₦${amount.toLocaleString()} wallet credit`,
+      }
+    };
     
     handleFlutterPayment({
+      ...config,
       callback: async (response) => {
         if (response.status === "successful") {
           try {
@@ -179,7 +188,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
             <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-sm border border-slate-100 text-center relative overflow-hidden">
                <div className="flex lg:flex-col items-center gap-4 lg:gap-0">
                   <div className="relative inline-block lg:mb-4 flex-shrink-0">
-                      <img src={user.avatar} className="h-16 w-16 md:h-24 md:w-24 rounded-[1.5rem] md:rounded-[2rem] border-4 border-white shadow-xl object-cover" alt={user.username} />
+                      <img 
+                        src={user.avatar} 
+                        className="h-16 w-16 md:h-24 md:w-24 rounded-[1.5rem] md:rounded-[2rem] border-4 border-white shadow-xl object-cover" 
+                        alt={user.username} 
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${user.username}&background=6366f1&color=fff`;
+                        }}
+                      />
                       <div className="absolute -bottom-1 -right-1 h-6 w-6 md:h-8 md:w-8 bg-emerald-500 rounded-lg md:rounded-xl border-2 md:border-4 border-white flex items-center justify-center text-white text-[8px] md:text-[10px]">
                         <i className="fa-solid fa-check"></i>
                       </div>
