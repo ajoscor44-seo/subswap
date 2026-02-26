@@ -22,7 +22,7 @@ type ViewState = 'home' | 'dashboard' | 'admin' | 'settings' | 'about' | 'contac
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>('home');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [dashboardTab, setDashboardTab] = useState<string>('overview');
@@ -225,14 +225,6 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
-      return (
-        <div className="flex-grow flex items-center justify-center">
-          <div className="h-12 w-12 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      );
-    }
-
     switch (currentView) {
       case 'home':
         return (

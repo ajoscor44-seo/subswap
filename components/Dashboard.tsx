@@ -359,34 +359,34 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, initialTab
 
             {activeTab === 'wallet' && (
               <div className="bg-white rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center justify-between mb-8 md:mb-12">
-                   <div className="flex items-center gap-4 md:gap-6">
-                      <div className="h-12 w-12 md:h-16 md:w-16 bg-indigo-50 text-indigo-600 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-2xl md:text-3xl">
+                <div className="flex items-center justify-between mb-6 md:mb-12">
+                   <div className="flex items-center gap-3 md:gap-6">
+                      <div className="h-10 w-10 md:h-16 md:w-16 bg-indigo-50 text-indigo-600 rounded-xl md:rounded-[1.5rem] flex items-center justify-center text-xl md:text-3xl">
                         <i className="fa-solid fa-naira-sign"></i>
                       </div>
                       <div>
-                        <h3 className="text-xl md:text-2xl font-black text-slate-900">Wallet</h3>
-                        <p className="text-slate-500 text-xs md:text-sm font-medium">Add Naira to your wallet.</p>
+                        <h3 className="text-lg md:text-2xl font-black text-slate-900">Wallet</h3>
+                        <p className="text-slate-500 text-[10px] md:text-sm font-medium">Add Naira to your wallet.</p>
                       </div>
                    </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="bg-slate-900 rounded-[2.5rem] p-8 text-white flex flex-col justify-between">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                   <div className="bg-slate-900 rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 text-white flex flex-col justify-between min-h-[140px] md:min-h-0">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-2">Balance</p>
-                        <h4 className="text-4xl md:text-5xl font-black tracking-tighter">₦{user.balance.toLocaleString()}</h4>
+                        <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-slate-500 mb-1 md:mb-2">Balance</p>
+                        <h4 className="text-3xl md:text-5xl font-black tracking-tighter">₦{user.balance.toLocaleString()}</h4>
                       </div>
                    </div>
 
                    <div className="space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select Amount</p>
-                      <div className="grid grid-cols-2 gap-3">
+                      <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">Select Amount</p>
+                      <div className="grid grid-cols-2 gap-2 md:gap-3">
                          {[2000, 5000, 10000, 20000].map(amt => (
                            <button 
                              key={amt}
                              onClick={() => handleFlutterwavePayment(amt)}
-                             className="p-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
+                             className="p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl font-black text-xs md:text-base text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
                            >
                              ₦{amt.toLocaleString()}
                            </button>

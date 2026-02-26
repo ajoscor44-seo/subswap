@@ -185,31 +185,31 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
       {/* Quick Fund Modal */}
       {showFundModal && (
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 md:p-10 shadow-2xl animate-in zoom-in-95 relative border border-slate-100">
-            <button onClick={() => setShowFundModal(false)} className="absolute top-6 right-6 text-slate-400 hover:text-slate-900 transition-colors">
+          <div className="bg-white w-full max-w-md rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl animate-in zoom-in-95 relative border border-slate-100">
+            <button onClick={() => setShowFundModal(false)} className="absolute top-4 right-4 md:top-6 md:right-6 text-slate-400 hover:text-slate-900 transition-colors">
               <i className="fa-solid fa-xmark text-lg"></i>
             </button>
             
-            <div className="text-center mb-8">
-              <div className="h-16 w-16 bg-amber-50 text-amber-500 rounded-2xl flex items-center justify-center text-2xl mx-auto mb-4">
+            <div className="text-center mb-6 md:mb-8">
+              <div className="h-12 w-12 md:h-16 md:w-16 bg-amber-50 text-amber-500 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl mx-auto mb-4">
                 <i className="fa-solid fa-wallet"></i>
               </div>
-              <h3 className="text-2xl font-black text-slate-900 tracking-tight">Top-up Required</h3>
-              <p className="text-slate-500 text-sm font-medium mt-1">You need ₦{neededAmount.toLocaleString()} more to join this plan.</p>
+              <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">Top-up Required</h3>
+              <p className="text-slate-500 text-xs md:text-sm font-medium mt-1">You need ₦{neededAmount.toLocaleString()} more to join this plan.</p>
             </div>
 
-            <div className="bg-slate-50 rounded-2xl p-6 mb-8 border border-slate-100">
-               <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            <div className="bg-slate-50 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-slate-100">
+               <div className="flex justify-between text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
                  <span>Plan Price</span>
                  <span className="text-slate-900">₦{activeAccount?.price.toLocaleString()}</span>
                </div>
-               <div className="h-2.5 bg-slate-200 rounded-full overflow-hidden mb-4">
+               <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-3 md:mb-4">
                  <div 
                    className="h-full bg-indigo-600 transition-all duration-700" 
                    style={{ width: `${Math.min(100, (user?.balance || 0) / (activeAccount?.price || 1) * 100)}%` }}
                  ></div>
                </div>
-               <div className="flex justify-between text-xs font-black">
+               <div className="flex justify-between text-[10px] md:text-xs font-black">
                  <span className="text-slate-400">Balance: ₦{user?.balance.toLocaleString()}</span>
                  <span className="text-indigo-600">Missing: ₦{neededAmount.toLocaleString()}</span>
                </div>
@@ -219,18 +219,18 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
               <button 
                 onClick={() => handleFlutterwavePayment(neededAmount)}
                 disabled={isProcessing === 'funding'}
-                className="w-full bg-indigo-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95"
+                className="w-full bg-indigo-600 text-white py-3.5 md:py-4 rounded-xl font-black uppercase text-[9px] md:text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95"
               >
                 {isProcessing === 'funding' ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-bolt"></i>}
                 Pay ₦{neededAmount.toLocaleString()} via Flutterwave
               </button>
               
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2 md:gap-3">
                 {[2000, 5000].map(amt => (
                   <button 
                     key={amt}
                     onClick={() => handleFlutterwavePayment(amt)}
-                    className="py-3 bg-white border border-slate-200 rounded-xl font-black text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all active:scale-95"
+                    className="py-2.5 md:py-3 bg-white border border-slate-200 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all active:scale-95"
                   >
                     +₦{amt.toLocaleString()}
                   </button>
@@ -238,7 +238,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({ user, onAuthRequired, 
               </div>
             </div>
             
-            <p className="text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by Flutterwave</p>
+            <p className="text-[8px] md:text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">Secured by Flutterwave</p>
           </div>
         </div>
       )}
