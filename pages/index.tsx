@@ -11,10 +11,10 @@ import ComingSoon from "./ComingSoon";
 import { SyncLoader } from "react-spinners";
 
 const View = () => {
-  const { currentView } = useNavigator();
+  const { currentView, isReady } = useNavigator();
   const { user, logout, refreshSession, loading } = useAuth();
 
-  if (loading) {
+  if (loading || !isReady) {
     return (
       <div className="flex items-center justify-center flex-1">
         <SyncLoader color="#4F46E5" />

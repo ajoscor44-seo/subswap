@@ -13,68 +13,84 @@ import { pageViews } from "@/constants/data";
 const NavigatorContext = createContext<{
   dashboardTab: string;
   currentView: TViewState;
+  isReady: boolean;
   goTo: (view: TViewState) => void;
-  changeView: (view: TViewState) => void;
   changeTab: (tab: string) => void;
 }>({
-  dashboardTab: "subscriptions",
+  dashboardTab: "overview",
   currentView: "home",
+  isReady: false,
   goTo: () => {},
-  changeView: () => {},
   changeTab: () => {},
 });
 
+const PROTECTED: TViewState[] = [
+  "dashboard",
+  "transactions",
+  "settings",
+  "admin",
+];
+
+const parseHash = (): TViewState | null => {
+  const raw = window.location.hash.replace(/^#\/?/, "").trim() as TViewState;
+  return pageViews.includes(raw) ? raw : null;
+};
+
+const resolveView = (
+  hash: TViewState | null,
+  user: ReturnType<typeof useAuth>["user"],
+): TViewState => {
+  if (!hash) {
+    return user ? (user.isAdmin ? "admin" : "dashboard") : "home";
+  }
+
+  if (hash === "admin") {
+    if (!user) return "home";
+    if (!user.isAdmin) return "dashboard";
+    return "admin";
+  }
+
+  if (PROTECTED.includes(hash) && !user) return "home";
+
+  return hash;
+};
+
 export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [currentView, setCurrentView] = useState<TViewState>("home");
   const [dashboardTab, setDashboardTab] = useState<string>("overview");
+  const [isReady, setIsReady] = useState(false);
 
-  const goTo = (id: string) => {
-    window.location.hash = `#/${id}`;
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const changeView = (view: TViewState) => {
-    goTo(view);
-    setCurrentView(view);
-  };
-
-  const changeTab = (tab: string) => {
-    setDashboardTab(tab);
-  };
-
-  const syncViewWithHash = useCallback(() => {
-    const hash = window.location.hash.replace("#/", "") as TViewState;
-
-    if (hash && pageViews.includes(hash)) {
-      if (hash === "admin" && !user?.isAdmin) {
-        changeView("dashboard");
-      } else if (hash === "marketplace") {
-        changeView("marketplace");
-      } else if (hash === "home" && !user) {
-        changeView("home");
-      } else if (hash === "about") {
-        changeView("about");
-      } else {
-        changeView(hash);
-      }
-    } else {
-      changeView(user ? (user.isAdmin ? "admin" : "dashboard") : "home");
-    }
+  const syncView = useCallback(() => {
+    const resolved = resolveView(parseHash(), user);
+    setCurrentView(resolved);
   }, [user]);
 
   useEffect(() => {
-    syncViewWithHash();
-    window.addEventListener("hashchange", syncViewWithHash);
+    if (authLoading) return;
+    syncView();
+    setIsReady(true);
+  }, [authLoading, syncView]);
 
-    return () => {
-      window.removeEventListener("hashchange", syncViewWithHash);
-    };
-  }, [user]);
+  useEffect(() => {
+    window.addEventListener("hashchange", syncView);
+    return () => window.removeEventListener("hashchange", syncView);
+  }, [syncView]);
+
+  const goTo = useCallback(
+    (view: TViewState) => {
+      const resolved = resolveView(view, user);
+      window.location.hash = `#/${resolved}`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [user],
+  );
+
+  const changeTab = useCallback((tab: string) => setDashboardTab(tab), []);
 
   return (
     <NavigatorContext.Provider
-      value={{ currentView, dashboardTab, goTo, changeView, changeTab }}
+      value={{ currentView, dashboardTab, isReady, goTo, changeTab }}
     >
       {children}
     </NavigatorContext.Provider>

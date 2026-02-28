@@ -5,7 +5,7 @@ import Logo from "./Logo";
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { currentView, changeView, changeTab } = useNavigator();
+  const { currentView, goTo, changeTab } = useNavigator();
   const { openLoginModal, logout, user, loading } = useAuth();
 
   return (
@@ -17,20 +17,20 @@ const Navbar: React.FC = () => {
 
             <div className="hidden lg:flex items-center gap-1">
               <button
-                onClick={() => changeView("marketplace")}
+                onClick={() => goTo("marketplace")}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentView === "marketplace" ? "bg-indigo-50 text-indigo-600" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"}`}
               >
                 Marketplace
               </button>
               <button
-                onClick={() => changeView("about")}
+                onClick={() => goTo("about")}
                 className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentView === "about" ? "bg-indigo-50 text-indigo-600" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"}`}
               >
                 About Us
               </button>
               {user && (
                 <button
-                  onClick={() => changeView("dashboard")}
+                  onClick={() => goTo("dashboard")}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${currentView === "dashboard" ? "bg-indigo-50 text-indigo-600" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"}`}
                 >
                   My Dashboard
@@ -38,7 +38,7 @@ const Navbar: React.FC = () => {
               )}
               {user?.isAdmin && (
                 <button
-                  onClick={() => changeView("admin")}
+                  onClick={() => goTo("admin")}
                   className={`px-4 py-2 rounded-lg text-sm font-black transition-all ${currentView === "admin" ? "bg-slate-900 text-white shadow-lg" : "text-indigo-600 hover:bg-indigo-50"}`}
                 >
                   <i className="fa-solid fa-shield-halved mr-2"></i>
@@ -59,7 +59,7 @@ const Navbar: React.FC = () => {
                   <div className="flex items-center gap-2 md:gap-4">
                     <button
                       onClick={() => {
-                        changeView("dashboard");
+                        goTo("dashboard");
                         changeTab("wallet");
                       }}
                       className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 font-black text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
@@ -103,7 +103,7 @@ const Navbar: React.FC = () => {
                           </div>
                           <button
                             onClick={() => {
-                              changeView("dashboard");
+                              goTo("dashboard");
                               changeTab("wallet");
                               setIsDropdownOpen(false);
                             }}
@@ -114,7 +114,7 @@ const Navbar: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              changeView("dashboard");
+                              goTo("dashboard");
                               changeTab("history");
                               setIsDropdownOpen(false);
                             }}
@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              changeView("dashboard");
+                              goTo("dashboard");
                               changeTab("stacks");
                               setIsDropdownOpen(false);
                             }}
@@ -136,7 +136,7 @@ const Navbar: React.FC = () => {
                           {user.isAdmin && (
                             <button
                               onClick={() => {
-                                changeView("admin");
+                                goTo("admin");
                                 setIsDropdownOpen(false);
                               }}
                               className="w-full text-left px-4 py-2.5 text-sm font-black text-indigo-600 hover:bg-indigo-50 transition-colors"

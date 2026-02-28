@@ -76,6 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
     });
+    window.location.href = "/#/dashboard";
 
     return error;
   };
@@ -96,11 +97,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    window.location.href = "/#/dashboard";
 
     return error;
   };
 
-  const logout = async () => await supabase.auth.signOut({ scope: "global" });
+  const logout = async () => {
+    await supabase.auth.signOut({ scope: "global" });
+    window.location.href = "/#/home";
+  };
 
   const refreshSession = async () => {
     const {

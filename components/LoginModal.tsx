@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { validateUsername } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
-import { useNavigator } from "@/providers/navigator";
 import toast from "react-hot-toast";
 
 interface FormState {
@@ -65,7 +64,6 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
 
 const LoginModal: React.FC = () => {
   const { signUp, login, closeLoginModal } = useAuth();
-  const { changeView } = useNavigator();
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
