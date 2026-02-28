@@ -30,18 +30,7 @@ const View = () => {
       return <ComingSoon />;
     case "dashboard":
     case "settings":
-      return user ? (
-        <Dashboard
-          user={user}
-          onLogout={logout}
-          initialTab={
-            (currentView === "settings" ? "settings" : dashboardTab) as any
-          }
-          // onPurchaseSuccess={handlePurchaseSuccess}
-        />
-      ) : (
-        <Hero />
-      );
+      return user ? <Dashboard /> : <Hero />;
     case "admin":
       return user?.isAdmin ? (
         <AdminDashboard user={user} onRefreshUser={refreshSession} />
