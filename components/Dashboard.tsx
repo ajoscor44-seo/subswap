@@ -82,9 +82,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
       name: user.name || user.username,
     },
     customizations: {
-      title: "SubSwap Wallet Top-up",
+      title: "DiscountZAR Wallet Top-up",
       description: `Payment for ₦${fundAmount.toLocaleString()} wallet credit`,
-      logo: "https://ui-avatars.com/api/?name=SubSwap&background=6366f1&color=fff",
+      logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
     },
   };
 
@@ -330,7 +330,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                       </h5>
                       <p className="text-slate-500 text-sm font-medium">
                         You've saved ₦{user.totalSaved.toLocaleString()} using
-                        SubSwap.
+                        DiscountZAR.
                       </p>
                     </div>
                     <div className="pt-6 border-t border-slate-50">

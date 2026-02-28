@@ -47,9 +47,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       name: user?.name || user?.username || "",
     },
     customizations: {
-      title: "SubSwap Wallet Top-up",
+      title: "DiscountZAR Wallet Top-up",
       description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
-      logo: "https://ui-avatars.com/api/?name=SubSwap&background=6366f1&color=fff",
+      logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
     },
   };
 

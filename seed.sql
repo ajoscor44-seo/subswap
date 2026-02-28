@@ -5,7 +5,7 @@ UPDATE public.profiles
 SET role = 'admin', is_verified = TRUE
 WHERE email = 'joscor@wsv.com.ng';
 
--- SUBSWAP DEMO DATA SEED
+-- DiscountZAR DEMO DATA SEED
 -- These accounts are created as "Official" entries (owner_id is NULL)
 -- This avoids foreign key constraint errors with auth.users.
 
@@ -25,7 +25,7 @@ INSERT INTO public.master_accounts (
 ) VALUES 
 (
     'Netflix Premium 4K', 
-    'netflix@subswap.com', 
+    'netflix@discountzar.com', 
     'password123', 
     5, 
     5, 
@@ -39,7 +39,7 @@ INSERT INTO public.master_accounts (
 ),
 (
     'Spotify Premium', 
-    'spotify@subswap.com', 
+    'spotify@discountzar.com', 
     'musicpass', 
     6, 
     6, 
@@ -53,7 +53,7 @@ INSERT INTO public.master_accounts (
 ),
 (
     'Canva Pro Yearly', 
-    'canva@subswap.com', 
+    'canva@discountzar.com', 
     'designlife', 
     10, 
     8, 
@@ -67,7 +67,7 @@ INSERT INTO public.master_accounts (
 ),
 (
     'ChatGPT Plus', 
-    'openai@subswap.com', 
+    'openai@discountzar.com', 
     'gpt4pass', 
     3, 
     2, 

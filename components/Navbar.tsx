@@ -20,7 +20,7 @@ const Navbar: React.FC = () => {
                 S
               </div>
               <span className="text-xl font-black text-slate-900 tracking-tighter hidden sm:inline">
-                SUBSWAP
+                DiscountZAR
               </span>
             </div>
 

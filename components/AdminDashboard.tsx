@@ -327,7 +327,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
             Admin Console
           </h1>
           <p className="text-slate-500 font-medium">
-            Master control for SubSwap inventory and members.
+            Master control for DiscountZAR inventory and members.
           </p>
         </div>
         <div className="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar">
