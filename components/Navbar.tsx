@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigator } from "@/providers/navigator";
 import { useAuth } from "@/providers/auth";
+import Logo from "./Logo";
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -12,17 +13,7 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-20">
           <div className="flex items-center gap-6 lg:gap-10">
-            <div
-              onClick={() => changeView("home")}
-              className="flex items-center gap-2 cursor-pointer group"
-            >
-              <div className="h-10 w-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black text-xl transition-transform group-hover:scale-110">
-                S
-              </div>
-              <span className="text-xl font-black text-slate-900 tracking-tighter hidden sm:inline">
-                DiscountZAR
-              </span>
-            </div>
+            <Logo />
 
             <div className="hidden lg:flex items-center gap-1">
               <button
