@@ -287,7 +287,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
             </div>
           </div>
 
-          <div className="lg:col-span-9 space-y-6 md:space-y-8">
+          <div className="z-20 lg:col-span-9 space-y-6 md:space-y-8">
             {dashboardTab === "overview" && (
               <div className="animate-in fade-in duration-500 space-y-6 md:space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -320,7 +320,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                     </div>
                   </div>
 
-                  <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
+                  <div className="bg-white z-20 rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
                     <div>
                       <div className="h-12 w-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mb-4">
                         <i className="fa-solid fa-piggy-bank"></i>
@@ -703,7 +703,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       Security
                     </p>
-                    <div className="p-6 bg-slate-50 rounded-4xl border border-slate-100 flex items-center justify-between">
+                    <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
                       <div>
                         <h4 className="font-black text-slate-900 text-sm">
                           Email Address

@@ -67,7 +67,10 @@ const Navbar: React.FC = () => {
                 {user ? (
                   <div className="flex items-center gap-2 md:gap-4">
                     <button
-                      onClick={() => changeView("dashboard")}
+                      onClick={() => {
+                        changeView("dashboard");
+                        changeTab("wallet");
+                      }}
                       className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 font-black text-xs uppercase tracking-widest hover:bg-emerald-100 transition-all"
                     >
                       <i className="fa-solid fa-plus-circle"></i>

@@ -45,7 +45,7 @@ export const Faq: React.FC = () => {
     {
       question: "How do I get my access credentials?",
       answer:
-        "Once you purchase a slot, navigate to your 'My Access' dashboard. Your private profile credentials and login instructions will be available there instantly.",
+        "Once you purchase a slot, navigate to the 'My Stacks' tab in your dashboard. Your private profile credentials and login instructions will be available there instantly.",
     },
     {
       question: "Can I cancel my slot at any time?",

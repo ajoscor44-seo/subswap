@@ -122,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .single();
 
     if (error) {
-      toast.error("Error fetching user profile");
+      console.error("Error fetching user profile");
       return null;
     }
 
