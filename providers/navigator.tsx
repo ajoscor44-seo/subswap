@@ -27,7 +27,7 @@ const NavigatorContext = createContext<{
 export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<TViewState>("home");
-  const [dashboardTab, setDashboardTab] = useState<string>("subscriptions");
+  const [dashboardTab, setDashboardTab] = useState<string>("overview");
 
   const goTo = (id: string) => {
     window.location.hash = `#/${id}`;

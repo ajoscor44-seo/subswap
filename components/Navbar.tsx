@@ -4,7 +4,7 @@ import { useAuth } from "@/providers/auth";
 
 const Navbar: React.FC = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { currentView, changeView } = useNavigator();
+  const { currentView, changeView, changeTab } = useNavigator();
   const { openLoginModal, logout, user, loading } = useAuth();
 
   return (
@@ -110,6 +110,7 @@ const Navbar: React.FC = () => {
                           <button
                             onClick={() => {
                               changeView("dashboard");
+                              changeTab("wallet");
                               setIsDropdownOpen(false);
                             }}
                             className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -119,7 +120,8 @@ const Navbar: React.FC = () => {
                           </button>
                           <button
                             onClick={() => {
-                              changeView("transactions");
+                              changeView("dashboard");
+                              changeTab("history");
                               setIsDropdownOpen(false);
                             }}
                             className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -129,6 +131,7 @@ const Navbar: React.FC = () => {
                           <button
                             onClick={() => {
                               changeView("dashboard");
+                              changeTab("stacks");
                               setIsDropdownOpen(false);
                             }}
                             className="w-full text-left px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors"

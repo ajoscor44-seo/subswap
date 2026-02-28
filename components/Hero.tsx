@@ -1,8 +1,10 @@
 import { useAuth } from "@/providers/auth";
+import { useNavigator } from "@/providers/navigator";
 import React from "react";
 
 export const Hero: React.FC<{ onGetStarted: () => void }> = () => {
-  const { openLoginModal } = useAuth();
+  const { openLoginModal, user } = useAuth();
+  const { changeView } = useNavigator();
 
   return (
     <section className="relative pt-24 pb-32 overflow-hidden bg-white">
@@ -35,8 +37,14 @@ export const Hero: React.FC<{ onGetStarted: () => void }> = () => {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <button
-              onClick={openLoginModal}
-              className="w-full sm:w-auto bg-slate-900 text-white px-12 py-6 rounded-2xl text-base font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-2xl shadow-slate-300 flex items-center justify-center gap-3 active:scale-95"
+              onClick={() => {
+                if (user) {
+                  changeView("dashboard");
+                } else {
+                  openLoginModal();
+                }
+              }}
+              className="w-full sm:w-auto bg-slate-900 text-white px-12 py-6 rounded-2xl text-base font-black tracking-widest hover:bg-indigo-600 transition-all shadow-2xl shadow-slate-300 flex items-center justify-center gap-3 active:scale-95"
             >
               Start Saving Now
               <i className="fa-solid fa-arrow-right text-xs"></i>

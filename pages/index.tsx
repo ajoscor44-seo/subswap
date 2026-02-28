@@ -3,7 +3,6 @@ import Home from "./Home";
 import { Dashboard } from "@/components/Dashboard";
 import { Hero } from "@/components/Hero";
 import AdminDashboard from "@/components/AdminDashboard";
-import TransactionHistory from "@/components/TransactionHistory";
 import AboutUs from "@/components/AboutUs";
 import ContactUs from "@/components/ContactUs";
 import { useNavigator } from "@/providers/navigator";
@@ -12,7 +11,7 @@ import ComingSoon from "./ComingSoon";
 import { SyncLoader } from "react-spinners";
 
 const View = () => {
-  const { currentView, dashboardTab } = useNavigator();
+  const { currentView } = useNavigator();
   const { user, logout, refreshSession, loading } = useAuth();
 
   if (loading) {
@@ -39,8 +38,6 @@ const View = () => {
       ) : (
         <Hero />
       );
-    case "transactions":
-      return user ? <TransactionHistory user={user} /> : <Hero />;
     case "about":
       return <AboutUs />;
     case "contact":

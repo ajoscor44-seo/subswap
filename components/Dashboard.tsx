@@ -20,14 +20,10 @@ interface DashboardProps {
   onPurchaseSuccess?: () => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({
-  initialTab = "overview",
-  onPurchaseSuccess,
-}) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
   const { user, logout } = useAuth();
   const { dashboardTab, changeTab } = useNavigator();
 
-  const [activeTab, setActiveTab] = useState(initialTab);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
@@ -94,11 +90,6 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const handleFlutterPayment = useFlutterwave(fwConfig);
 
-  // Sync state with prop if it changes externally
-  useEffect(() => {
-    setActiveTab(initialTab);
-  }, [initialTab]);
-
   const showStatus = (text: string, type: "success" | "error" = "success") => {
     setStatusMsg({ text, type });
     setTimeout(() => setStatusMsg(null), 4000);
@@ -129,7 +120,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   useEffect(() => {
     fetchData();
-  }, [user.id, activeTab]);
+  }, [user.id, dashboardTab]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -193,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const navItems = [
     { id: "overview", label: "Overview", icon: "fa-house-chimney" },
     { id: "stacks", label: "My Stacks", icon: "fa-layer-group" },
-    { id: "explore", label: "Marketplace", icon: "fa-compass" },
+    { id: "explore", label: "Explore", icon: "fa-compass" },
     { id: "wallet", label: "Wallet", icon: "fa-wallet" },
     { id: "history", label: "History", icon: "fa-receipt" },
   ] as const;
@@ -256,9 +247,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   {navItems.map((item) => (
                     <button
                       key={item.id}
-                      onClick={() => setActiveTab(item.id as any)}
+                      onClick={() => changeTab(item.id as any)}
                       className={`text-left px-3 md:px-5 py-3 rounded-xl flex items-center gap-2 md:gap-3 transition-all ${
-                        activeTab === item.id
+                        dashboardTab === item.id
                           ? "bg-indigo-50 text-indigo-600 font-black"
                           : "text-slate-500 font-bold hover:bg-slate-50"
                       }`}
@@ -272,9 +263,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </button>
                   ))}
                   <button
-                    onClick={() => setActiveTab("settings")}
+                    onClick={() => changeTab("settings")}
                     className={`text-left px-3 md:px-5 py-3 rounded-xl flex items-center gap-2 md:gap-3 transition-all ${
-                      activeTab === "settings"
+                      dashboardTab === "settings"
                         ? "bg-indigo-50 text-indigo-600 font-black"
                         : "text-slate-500 font-bold hover:bg-slate-50"
                     }`}
@@ -297,7 +288,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           <div className="lg:col-span-9 space-y-6 md:space-y-8">
-            {activeTab === "overview" && (
+            {dashboardTab === "overview" && (
               <div className="animate-in fade-in duration-500 space-y-6 md:space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="md:col-span-2 bg-slate-900 rounded-[2.5rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl">
@@ -314,13 +305,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
                       <div className="flex flex-wrap gap-3">
                         <button
-                          onClick={() => setActiveTab("wallet")}
+                          onClick={() => changeTab("wallet")}
                           className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-xl shadow-indigo-900/40"
                         >
                           <i className="fa-solid fa-plus mr-2"></i> Fund Wallet
                         </button>
                         <button
-                          onClick={() => setActiveTab("explore")}
+                          onClick={() => changeTab("explore")}
                           className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all"
                         >
                           Find Slots
@@ -361,7 +352,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         Recent Activity
                       </h4>
                       <button
-                        onClick={() => setActiveTab("history")}
+                        onClick={() => changeTab("history")}
                         className="text-[10px] font-black uppercase tracking-widest text-indigo-600"
                       >
                         View All
@@ -414,7 +405,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                         Active Stacks
                       </h4>
                       <button
-                        onClick={() => setActiveTab("stacks")}
+                        onClick={() => changeTab("stacks")}
                         className="text-[10px] font-black uppercase tracking-widest text-indigo-600"
                       >
                         My Stacks
@@ -462,14 +453,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             )}
 
-            {activeTab === "stacks" && (
+            {dashboardTab === "stacks" && (
               <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between mb-8 md:mb-10">
                   <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
                     My Active Access
                   </h3>
                   <button
-                    onClick={() => setActiveTab("explore")}
+                    onClick={() => changeTab("explore")}
                     className="text-xs font-black text-indigo-600"
                   >
                     Buy New +
@@ -555,16 +546,16 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     </p>
                     <button
                       onClick={() => changeTab("explore")}
-                      className="mt-4 bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest"
+                      className="mt-4 bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] cursor-pointer tracking-widest"
                     >
-                      Marketplace
+                      Start a new subscription
                     </button>
                   </div>
                 )}
               </div>
             )}
 
-            {activeTab === "explore" && (
+            {dashboardTab === "explore" && (
               <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <Marketplace
                   user={user}
@@ -574,7 +565,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             )}
 
-            {activeTab === "wallet" && (
+            {dashboardTab === "wallet" && (
               <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <div className="flex items-center justify-between mb-6 md:mb-12">
                   <div className="flex items-center gap-3 md:gap-6">
@@ -660,13 +651,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
               </div>
             )}
 
-            {activeTab === "history" && (
+            {dashboardTab === "history" && (
               <div className="bg-white rounded-4xl md:rounded-[2.5rem] shadow-sm border border-slate-100 animate-in fade-in duration-500 overflow-hidden">
                 <TransactionHistory user={user} isDashboardView={true} />
               </div>
             )}
 
-            {activeTab === "settings" && (
+            {dashboardTab === "settings" && (
               <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
                 <div className="mb-8 md:mb-12">
                   <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
