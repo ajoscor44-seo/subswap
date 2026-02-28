@@ -1,15 +1,13 @@
 import { useNavigator } from "@/providers/navigator";
 import React from "react";
-import zarLogo from "@/assets/zar-logo.png";
 import discountZarWhiteLogo from "@/assets/discount-zar-white.png";
-import discountZarBlackLogo from "@/assets/discount-zar-black.png";
 
 const Logo = () => {
-  const { changeView } = useNavigator();
+  const { goTo } = useNavigator();
 
   return (
     <div
-      onClick={() => changeView("home")}
+      onClick={() => goTo("home")}
       className="flex items-center gap-2 cursor-pointer group"
     >
       <img
