@@ -6,7 +6,7 @@ import {
   Transaction,
   ProductCategory,
   FulfillmentType,
-} from "../types";
+} from "@/constants/types";
 
 interface AdminDashboardProps {
   user: User;

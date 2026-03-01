@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { User, Transaction } from "../types";
+import { User, Transaction } from "@/constants/types";
 import { Marketplace } from "./Marketplace";
 import TransactionHistory from "./TransactionHistory";
 import { supabase } from "../lib/supabase";

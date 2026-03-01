@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 // Fixed: Using User instead of non-existent Profile
-import { UserSubscription, User } from "../types";
+import { UserSubscription, User } from "@/constants/types";
 
 // Mock data for purchased subscriptions
 const MOCK_SUBSCRIPTIONS: UserSubscription[] = [
