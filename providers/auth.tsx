@@ -5,7 +5,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { User } from "../types";
+import { User } from "@/constants/types";
 import LoginModal from "@/components/LoginModal";
 import { supabase } from "@/lib/supabase";
 import { ISignUp } from "@/constants/interfaces";

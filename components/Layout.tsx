@@ -1,6 +1,5 @@
 import React from "react";
-// Fixed: User is the exported member from types
-import { User } from "../types";
+import { User } from "@/constants/types";
 
 interface LayoutProps {
   children: React.ReactNode;

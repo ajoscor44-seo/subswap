@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ProductCategory, User, MasterAccount } from "../types";
+import { ProductCategory, User, MasterAccount } from "@/constants/types";
 import { supabase } from "../lib/supabase";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 
