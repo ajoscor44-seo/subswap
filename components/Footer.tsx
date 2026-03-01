@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
           </div>
         </div>
         <div className="text-center text-[10px] font-black text-slate-300 uppercase tracking-[0.5em] pt-10 border-t border-slate-100">
-          &copy; {currentYear} DiscountZAR INC. ALL RIGHTS RESERVED.
+          &copy; {currentYear} Gigsflix Digitals. ALL RIGHTS RESERVED.
         </div>
       </div>
     </footer>
