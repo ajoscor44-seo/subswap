@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { validateUsername } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
 import toast from "react-hot-toast";
+import Logo from "./Logo";
 
 interface FormState {
   email: string;
@@ -133,10 +134,8 @@ const LoginModal: React.FC = () => {
           <i className="fa-solid fa-xmark" />
         </button>
 
-        <div className="text-center mb-8">
-          <div className="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl font-black mx-auto mb-4">
-            S
-          </div>
+        <div className="text-center pb-8 flex flex-col items-center gap-2">
+          <Logo />
           <h2 className="text-2xl font-black text-slate-900 tracking-tight">
             {isSignUp ? "Create Account" : "Welcome Back"}
           </h2>
