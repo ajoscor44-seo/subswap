@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export type TViewState =
   | "home"
   | "dashboard"
@@ -154,4 +156,37 @@ export const INITIAL_FORM: Partial<MasterAccount> = {
   category: "Streaming" as any,
   fulfillment_type: "Password" as any,
   features: [],
+};
+
+export interface FormState {
+  email: string;
+  name: string;
+  username: string;
+  password: string;
+}
+
+export interface OnboardingState {
+  useCase: string;
+  role: string;
+  referralSource: string;
+}
+
+export interface OnboardingStep {
+  title: string;
+  subtitle: string;
+  field: keyof OnboardingState;
+  options: { icon: ReactNode; label: string }[];
+}
+
+export const DEFAULT_FORM: FormState = {
+  email: "",
+  name: "",
+  username: "",
+  password: "",
+};
+
+export const DEFAULT_ONBOARDING: OnboardingState = {
+  useCase: "",
+  role: "",
+  referralSource: "",
 };
