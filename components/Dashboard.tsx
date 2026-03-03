@@ -6,6 +6,7 @@ import { supabase } from "../lib/supabase";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
+import { SettingsTab } from "./SettingsTab";
 
 interface DashboardProps {
   user: User;
@@ -446,88 +447,88 @@ const HistoryTab: React.FC<{
 };
 
 // Settings Tab Component
-const SettingsTab: React.FC<{
-  user: User;
-  showStatus: (text: string, type: "success" | "error") => void;
-  logout: () => void;
-}> = ({ user, showStatus, logout }) => {
-  return (
-    <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
-      <div className="mb-8 md:mb-12">
-        <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-          Account Settings
-        </h3>
-        <p className="text-slate-500 text-sm font-medium">
-          Manage your profile and preferences.
-        </p>
-      </div>
+// const SettingsTab: React.FC<{
+//   user: User;
+//   showStatus: (text: string, type: "success" | "error") => void;
+//   logout: () => void;
+// }> = ({ user, showStatus, logout }) => {
+//   return (
+//     <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
+//       <div className="mb-8 md:mb-12">
+//         <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
+//           Account Settings
+//         </h3>
+//         <p className="text-slate-500 text-sm font-medium">
+//           Manage your profile and preferences.
+//         </p>
+//       </div>
 
-      <div className="max-w-xl space-y-8">
-        <div className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Profile Information
-          </p>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-                Display Name
-              </label>
-              <input
-                type="text"
-                defaultValue={user.name}
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-                placeholder="Your full name"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-                Username
-              </label>
-              <input
-                type="text"
-                defaultValue={user.username}
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-                placeholder="username"
-              />
-            </div>
-          </div>
-        </div>
+//       <div className="max-w-xl space-y-8">
+//         <div className="space-y-4">
+//           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+//             Profile Information
+//           </p>
+//           <div className="grid grid-cols-1 gap-4">
+//             <div className="space-y-2">
+//               <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
+//                 Display Name
+//               </label>
+//               <input
+//                 type="text"
+//                 defaultValue={user.name}
+//                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
+//                 placeholder="Your full name"
+//               />
+//             </div>
+//             <div className="space-y-2">
+//               <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
+//                 Username
+//               </label>
+//               <input
+//                 type="text"
+//                 defaultValue={user.username}
+//                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
+//                 placeholder="username"
+//               />
+//             </div>
+//           </div>
+//         </div>
 
-        <div className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Security
-          </p>
-          <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-            <div>
-              <h4 className="font-black text-slate-900 text-sm">
-                Email Address
-              </h4>
-              <p className="text-slate-500 text-xs font-medium">{user.email}</p>
-            </div>
-            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[8px] uppercase tracking-widest">
-              Verified
-            </span>
-          </div>
-        </div>
+//         <div className="space-y-4">
+//           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+//             Security
+//           </p>
+//           <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+//             <div>
+//               <h4 className="font-black text-slate-900 text-sm">
+//                 Email Address
+//               </h4>
+//               <p className="text-slate-500 text-xs font-medium">{user.email}</p>
+//             </div>
+//             <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[8px] uppercase tracking-widest">
+//               Verified
+//             </span>
+//           </div>
+//         </div>
 
-        <div className="pt-6 border-t border-slate-50 flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={() => showStatus("Profile updated successfully!")}
-            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
-          >
-            Save Changes
-          </button>
-          <button
-            onClick={logout}
-            className="px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all"
-          >
-            Sign Out
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
+//         <div className="pt-6 border-t border-slate-50 flex flex-col sm:flex-row gap-3">
+//           <button
+//             onClick={() => showStatus("Profile updated successfully!")}
+//             className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
+//           >
+//             Save Changes
+//           </button>
+//           <button
+//             onClick={logout}
+//             className="px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all"
+//           >
+//             Sign Out
+//           </button>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
   const { user, logout } = useAuth();

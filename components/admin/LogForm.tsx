@@ -4,7 +4,9 @@ import {
   ProductCategory,
   FulfillmentType,
 } from "@/constants/types";
-import { PRESET_ICONS } from "@/constants/types";
+import { INITIAL_FORM } from "@/constants/types";
+import { BrandPicker } from "../BrandPicker";
+// import { BrandPicker } from "./BrandPicker";
 
 interface LogFormProps {
   editingId: string | null;
@@ -26,11 +28,9 @@ export const LogForm: React.FC<LogFormProps> = ({
   const set = (patch: Partial<MasterAccount>) =>
     onChange({ ...formData, ...patch });
 
-  console.log("yes changed", formData);
-
   return (
     <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12 shadow-2xl animate-in zoom-in-95 duration-200">
-      {/* Form header */}
+      {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
           <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
@@ -59,7 +59,26 @@ export const LogForm: React.FC<LogFormProps> = ({
       </div>
 
       <form onSubmit={onSubmit} className="space-y-8">
-        {/* Row 1: Service info */}
+        {/* ── Brand picker (replaces icon picker) ── */}
+        <div className="space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 ml-1 block">
+            Service Brand
+          </label>
+          <BrandPicker
+            value={formData.icon_url || ""}
+            serviceName={formData.service_name || ""}
+            onChange={(iconUrl, brandName, _domain) => {
+              // Auto-fill service name if it's empty or matches previous auto-fill
+              set({
+                icon_url: iconUrl,
+                // Only auto-update service_name if user hasn't customised it
+                service_name: formData.service_name || brandName,
+              });
+            }}
+          />
+        </div>
+
+        {/* ── Service info ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Field label="Service Name">
             <input
@@ -67,7 +86,7 @@ export const LogForm: React.FC<LogFormProps> = ({
               required
               placeholder="e.g. Netflix Premium"
               className="input"
-              value={formData.service_name}
+              value={formData.service_name || ""}
               onChange={(e) => set({ service_name: e.target.value })}
             />
           </Field>
@@ -88,7 +107,7 @@ export const LogForm: React.FC<LogFormProps> = ({
           </Field>
           <Field label="Fulfillment Method">
             <select
-              className="input border-indigo-100 text-indigo-600 font-black"
+              className="input"
               value={formData.fulfillment_type}
               onChange={(e) =>
                 set({ fulfillment_type: e.target.value as FulfillmentType })
@@ -101,31 +120,31 @@ export const LogForm: React.FC<LogFormProps> = ({
           </Field>
         </div>
 
-        {/* Row 2: Pricing & slots */}
+        {/* ── Pricing & slots ── */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <Field label="Price (₦/month)">
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">
                 ₦
               </span>
               <input
                 type="number"
                 required
                 className="input pl-8"
-                value={formData.price}
+                value={formData.price || ""}
                 onChange={(e) => set({ price: parseFloat(e.target.value) })}
               />
             </div>
           </Field>
-          <Field label="Original Price (₦)" hint="Used to show discount">
+          <Field label="Original Price (₦)" hint="Shows discount badge">
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm">
                 ₦
               </span>
               <input
                 type="number"
                 className="input pl-8"
-                value={formData.original_price}
+                value={formData.original_price || ""}
                 onChange={(e) =>
                   set({ original_price: parseFloat(e.target.value) })
                 }
@@ -138,7 +157,7 @@ export const LogForm: React.FC<LogFormProps> = ({
               required
               min={1}
               className="input"
-              value={formData.total_slots}
+              value={formData.total_slots || ""}
               onChange={(e) => {
                 const v = parseInt(e.target.value);
                 set({ total_slots: v, available_slots: v });
@@ -147,11 +166,11 @@ export const LogForm: React.FC<LogFormProps> = ({
           </Field>
         </div>
 
-        {/* Row 3: Credentials */}
+        {/* ── Credentials ── */}
         <div className="p-6 bg-slate-50 rounded-3xl border border-dashed border-slate-200 space-y-5">
           <p className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-2">
             <i className="fa-solid fa-lock text-[8px]" />
-            Sensitive Credentials — Never visible to buyers
+            Sensitive Credentials — Not visible to buyers
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <Field
@@ -165,7 +184,7 @@ export const LogForm: React.FC<LogFormProps> = ({
                 type="text"
                 required
                 className="input bg-white border-indigo-50"
-                value={formData.master_email}
+                value={formData.master_email || ""}
                 onChange={(e) => set({ master_email: e.target.value })}
                 placeholder={
                   formData.fulfillment_type === "Invite Link"
@@ -189,7 +208,7 @@ export const LogForm: React.FC<LogFormProps> = ({
                 }
                 required
                 className="input bg-white border-indigo-50"
-                value={formData.master_password}
+                value={formData.master_password || ""}
                 onChange={(e) => set({ master_password: e.target.value })}
                 placeholder={
                   formData.fulfillment_type === "OTP / Instruction"
@@ -201,54 +220,17 @@ export const LogForm: React.FC<LogFormProps> = ({
           </div>
         </div>
 
-        {/* Icon picker */}
-        <Field label="Service Icon">
-          <div className="flex flex-wrap gap-3 mt-2">
-            {PRESET_ICONS.map((icon) => (
-              <button
-                key={icon.url}
-                type="button"
-                onClick={() => set({ icon_url: icon.url })}
-                title={icon.name}
-                className={`relative p-1 rounded-2xl border-2 transition-all ${
-                  formData.icon_url === icon.url
-                    ? "border-indigo-600 scale-110 shadow-lg shadow-indigo-100"
-                    : "border-transparent opacity-40 hover:opacity-70"
-                }`}
-              >
-                <img
-                  src={icon.url}
-                  className="h-12 w-12 rounded-xl object-cover"
-                  alt={icon.name}
-                />
-                {formData.icon_url === icon.url && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <i className="fa-solid fa-check text-white text-[7px]" />
-                  </span>
-                )}
-              </button>
-            ))}
-            <input
-              type="text"
-              placeholder="Custom image URL..."
-              className="input flex-1 min-w-32 text-xs"
-              value={formData.icon_url}
-              onChange={(e) => set({ icon_url: e.target.value })}
-            />
-          </div>
-        </Field>
-
-        {/* Description */}
+        {/* ── Description ── */}
         <Field label="Description / Internal Notes">
           <textarea
             className="input h-24 resize-none"
-            value={formData.description}
+            value={formData.description || ""}
             onChange={(e) => set({ description: e.target.value })}
             placeholder="Tell users about this subscription..."
           />
         </Field>
 
-        {/* Actions */}
+        {/* ── Actions ── */}
         <div className="flex gap-4 pt-2">
           <button
             type="submit"
@@ -273,7 +255,7 @@ export const LogForm: React.FC<LogFormProps> = ({
           width: 100%;
           background: #f8fafc;
           border: 1px solid #f1f5f9;
-          padding: 1rem;
+          padding: 0.875rem 1rem;
           border-radius: 0.75rem;
           font-weight: 700;
           font-size: 0.875rem;
