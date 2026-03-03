@@ -56,7 +56,7 @@ export enum ProductCategory {
   STREAMING = "Streaming",
   MUSIC = "Music",
   VPN = "Privacy & Security",
-  AI = "AI",
+  AI = "AI & Writing",
   DESIGN = "Design",
   MARKETING = "Marketing",
   PRODUCTIVITY = "Productivity",
