@@ -1,5 +1,5 @@
 import { INITIAL_FORM, MasterAccount } from "@/constants/types";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { LogForm } from "./LogForm";
 

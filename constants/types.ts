@@ -56,6 +56,12 @@ export enum ProductCategory {
   STREAMING = "Streaming",
   MUSIC = "Music",
   VPN = "VPN",
+  AI = "AI",
+  DESIGN = "Design",
+  COURSES = "Courses",
+  MARKETING = "Marketing",
+  PRODUCTIVITY = "Productivity",
+  GAMING = "Gaming",
   SOCIAL = "Social",
   SOFTWARE = "Software",
   EDUCATION = "Education",
@@ -116,33 +122,6 @@ export interface AdminDashboardProps {
   onRefreshUser?: () => void;
 }
 
-export const PRESET_ICONS = [
-  {
-    name: "Netflix",
-    url: "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Spotify",
-    url: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Canva",
-    url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "ChatGPT",
-    url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "YouTube",
-    url: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Apple",
-    url: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400",
-  },
-];
-
 export const INITIAL_FORM: Partial<MasterAccount> = {
   service_name: "",
   master_email: "",
@@ -152,9 +131,9 @@ export const INITIAL_FORM: Partial<MasterAccount> = {
   price: 0,
   original_price: 0,
   description: "",
-  icon_url: PRESET_ICONS[0].url,
-  category: "Streaming" as any,
-  fulfillment_type: "Password" as any,
+  icon_url: "",
+  category: "",
+  fulfillment_type: "Password",
   features: [],
 };
 
