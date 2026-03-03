@@ -6,4 +6,12 @@
 
 body {
   @apply bg-slate-50 text-slate-900 font-sans;
+  font-family: "DM Sans", sans-serif;
+  font-size: 15px;
+  color: #1a1230;
+}
+
+/* Utility class for Syne — use on headings, prices, labels */
+.font-display {
+  font-family: "Syne", sans-serif;
 }
