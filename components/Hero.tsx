@@ -2,90 +2,120 @@ import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 import React from "react";
 
-export const Hero: React.FC<{ onGetStarted: () => void }> = () => {
+// List of popular domains to fetch from Brandfetch CDN
+const PARTNER_DOMAINS = [
+  "netflix.com",
+  "spotify.com",
+  "apple.com",
+  "youtube.com",
+  "amazon.com",
+  "canva.com",
+  "chatgpt.com",
+];
+
+export const Hero: React.FC = () => {
   const { openLoginModal, user } = useAuth();
   const { changeView } = useNavigator();
 
   return (
     <section className="relative pt-24 pb-32 overflow-hidden bg-white">
-      {/* Dynamic Background Elements */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none opacity-50">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-50 blur-[120px] rounded-full"></div>
-        <div className="absolute bottom-[10%] right-[-10%] w-[40%] h-[40%] bg-blue-50 blur-[120px] rounded-full"></div>
-        <div className="absolute top-[20%] right-[10%] w-[20%] h-[20%] bg-emerald-50 blur-[100px] rounded-full"></div>
+      {/* Background Blurs */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none opacity-40">
+        <div className="absolute top-[-5%] left-[-5%] w-[45%] h-[45%] bg-indigo-100 blur-[130px] rounded-full"></div>
+        <div className="absolute bottom-[5%] right-[-5%] w-[45%] h-[45%] bg-blue-100 blur-[130px] rounded-full"></div>
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100 mb-8 animate-fade-in shadow-sm">
-            <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-ping"></span>
+        <div className="text-center mb-20">
+          {/* Status Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-50 border border-slate-100 mb-8 shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+            </span>
             <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">
               Live: 4,000+ Active Slots in Nigeria
             </span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-slate-900 tracking-tight leading-[0.95] mb-8">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 tracking-tight leading-[0.9] mb-8">
             The Smartest Way to <br />
             <span className="text-indigo-600">Enjoy Premium.</span>
           </h1>
 
-          <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-500 font-medium leading-relaxed mb-12">
-            Join a secure community of savers. Share your existing subscriptions
-            and earn, or join a verified group and save up to 80% on the world's
-            best digital services.
+          <p className="max-w-2xl mx-auto text-lg md:text-xl text-slate-500 font-medium leading-relaxed mb-12">
+            Share existing subscriptions or join verified groups. Save up to 80%
+            on the world's best digital services.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+          {/* CTA Section */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
             <button
-              onClick={() => {
-                if (user) {
-                  changeView("dashboard");
-                } else {
-                  openLoginModal();
-                }
-              }}
-              className="w-full sm:w-auto bg-slate-900 text-white px-12 py-6 rounded-2xl text-base font-black tracking-widest hover:bg-indigo-600 transition-all shadow-2xl shadow-slate-300 flex items-center justify-center gap-3 active:scale-95"
+              onClick={() =>
+                user ? changeView("dashboard") : openLoginModal()
+              }
+              className="group w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-2xl text-base font-black tracking-widest hover:bg-indigo-600 transition-all shadow-xl hover:shadow-indigo-200 flex items-center justify-center gap-3 active:scale-95"
             >
               Start Saving Now
-              <i className="fa-solid fa-arrow-right text-xs"></i>
+              <svg
+                className="w-4 h-4 transition-transform group-hover:translate-x-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="3"
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                ></path>
+              </svg>
             </button>
-            <div className="flex items-center gap-4 px-6 py-4">
+
+            <div className="flex items-center gap-4">
               <div className="flex -space-x-3">
                 {[1, 2, 3, 4].map((i) => (
                   <img
                     key={i}
-                    src={`https://i.pravatar.cc/100?u=${i + 10}`}
-                    className="h-10 w-10 rounded-full border-4 border-white shadow-sm"
+                    src={`https://i.pravatar.cc/100?u=${i + 20}`}
+                    className="h-12 w-12 rounded-full border-4 border-white shadow-sm"
                     alt="User"
                   />
                 ))}
               </div>
               <div className="text-left">
-                <p className="text-xs font-black text-slate-900 uppercase tracking-tighter">
+                <p className="text-xs font-black text-slate-900 uppercase tracking-tight">
                   Trusted by 2.4k+
                 </p>
                 <p className="text-[10px] font-bold text-slate-400">
-                  Verified community members
+                  Verified members
                 </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Trust Logos / Partnership Section */}
-        <div className="pt-20 border-t border-slate-100">
-          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-300 text-center mb-10">
-            Supporting your favorite services
+        {/* Brandfetch Logo Section */}
+        <div className="pt-16 mt-16 border-t border-slate-100">
+          <p className="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400 text-center mb-12">
+            Available Subscriptions
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-30 grayscale hover:grayscale-0 transition-all duration-500">
-            <i className="fa-brands fa-netflix text-4xl"></i>
-            <i className="fa-brands fa-spotify text-4xl"></i>
-            <i className="fa-brands fa-apple text-4xl"></i>
-            <i className="fa-brands fa-youtube text-4xl"></i>
-            <i className="fa-brands fa-amazon text-4xl"></i>
-            <span className="text-2xl font-black tracking-tighter italic">
-              Canva
-            </span>
+
+          {/* Logo Grid / Marquee */}
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16">
+            {PARTNER_DOMAINS.map((domain) => (
+              <div
+                key={domain}
+                className="w-auto flex items-center rounded-full overflow-hidden bg-slate-50 p-2"
+              >
+                <img
+                  src={`https://cdn.brandfetch.io/${domain}/w/100/h/100?fallback=transparent`}
+                  alt={domain}
+                  className="h-full w-auto rounded-full object-contain transition-transform hover:scale-110"
+                  onError={(e) => (e.currentTarget.style.display = "none")}
+                />
+              </div>
+            ))}
           </div>
         </div>
       </div>

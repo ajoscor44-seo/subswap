@@ -560,3 +560,12 @@ export const INITIAL_FORM: Partial<MasterAccount> = {
   fulfillment_type: "Password",
   features: [],
 };
+
+export const NAV_ITEMS = [
+  { id: "overview", label: "Overview", icon: "fa-house-chimney" },
+  { id: "stacks", label: "My Stacks", icon: "fa-layer-group" },
+  { id: "explore", label: "Explore", icon: "fa-compass" },
+  { id: "wallet", label: "Wallet", icon: "fa-wallet" },
+  { id: "history", label: "History", icon: "fa-receipt" },
+  { id: "settings", label: "Settings", icon: "fa-gear" },
+] as const;

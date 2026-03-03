@@ -219,7 +219,7 @@ export const HowItWorks: React.FC = () => {
         {/* Header */}
         <div
           ref={badgeRef}
-          className="text-center mb-20 max-w-2xl mx-auto"
+          className="text-center mb-10 lg:mb-20 max-w-2xl mx-auto"
           style={{
             opacity: badgeInView ? 1 : 0,
             transform: badgeInView ? "translateY(0)" : "translateY(24px)",

@@ -55,7 +55,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
           {
             label: "Total Deposited",
             value: `₦${totals.deposits.toLocaleString()}`,
-            icon: "fa-arrow-down-to-line",
+            icon: "fa-arrow-down",
             color: "text-emerald-600",
             bg: "bg-emerald-50",
           },

@@ -156,6 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       hasDeposited: Boolean(data.has_deposited),
       totalSaved: Number(data.total_saved) || 0,
       is_banned: Boolean(data.is_banned),
+      joinedAt: data.created_at,
     };
 
     return profile;
