@@ -1,6 +1,10 @@
-import { Platform, PlatformCategory } from "@/components/ServicePicker";
 import { ProductCategory, TViewState } from "./types";
-import type { OnboardingStep } from "./types";
+import type {
+  MasterAccount,
+  OnboardingStep,
+  Platform,
+  PlatformCategory,
+} from "./types";
 
 export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
@@ -420,4 +424,19 @@ export const CATEGORY_MAP: Record<string, ProductCategory> = {
   "SEO & Marketing": ProductCategory.MARKETING,
   Productivity: ProductCategory.PRODUCTIVITY,
   Gaming: ProductCategory.GAMING,
+};
+
+export const INITIAL_FORM: Partial<MasterAccount> = {
+  service_name: "",
+  master_email: "",
+  master_password: "",
+  total_slots: 5,
+  available_slots: 5,
+  price: 0,
+  original_price: 0,
+  description: "",
+  icon_url: "",
+  category: "",
+  fulfillment_type: "Password",
+  features: [],
 };

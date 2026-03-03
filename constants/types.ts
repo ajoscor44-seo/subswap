@@ -122,21 +122,6 @@ export interface AdminDashboardProps {
   onRefreshUser?: () => void;
 }
 
-export const INITIAL_FORM: Partial<MasterAccount> = {
-  service_name: "",
-  master_email: "",
-  master_password: "",
-  total_slots: 5,
-  available_slots: 5,
-  price: 0,
-  original_price: 0,
-  description: "",
-  icon_url: "",
-  category: "",
-  fulfillment_type: "Password",
-  features: [],
-};
-
 export interface FormState {
   email: string;
   name: string;
@@ -169,3 +154,20 @@ export const DEFAULT_ONBOARDING: OnboardingState = {
   role: "",
   referralSource: "",
 };
+
+export interface Platform {
+  name: string;
+  domain: string;
+  category: PlatformCategory;
+  hint?: string;
+}
+
+export type PlatformCategory =
+  | "Streaming"
+  | "Music"
+  | "AI & Writing"
+  | "Design"
+  | "Education"
+  | "SEO & Marketing"
+  | "Productivity"
+  | "Gaming";

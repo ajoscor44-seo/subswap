@@ -1,4 +1,5 @@
 import { CATEGORIES, CATEGORY_META, PLATFORMS } from "@/constants/data";
+import { Platform, PlatformCategory } from "@/constants/types";
 import React, {
   useState,
   useRef,
@@ -11,23 +12,6 @@ const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID ?? "";
 
 export const logoUrl = (domain: string, size = 64) =>
   `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
-
-export interface Platform {
-  name: string;
-  domain: string;
-  category: PlatformCategory;
-  hint?: string;
-}
-
-export type PlatformCategory =
-  | "Streaming"
-  | "Music"
-  | "AI & Writing"
-  | "Design"
-  | "Education"
-  | "SEO & Marketing"
-  | "Productivity"
-  | "Gaming";
 
 interface BrandLogoProps {
   domain: string;
@@ -130,6 +114,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
     });
   }, [query, activeCategory]);
 
+  // Grouped only when not searching
   const grouped = useMemo<Record<string, Platform[]>>(() => {
     if (query) return {};
     const map: Record<string, Platform[]> = {};
@@ -152,7 +137,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
   const meta = value ? CATEGORY_META[value.category] : null;
 
   return (
-    <>
+    <div ref={containerRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -212,6 +197,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         />
       </button>
 
+      {/* ── Dropdown panel ── */}
       {open && (
         <div
           className="
@@ -223,6 +209,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         "
           style={{ maxHeight: 460 }}
         >
+          {/* Search bar */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
             <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm shrink-0" />
             <input
@@ -247,6 +234,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
+          {/* Category rail — hidden when searching */}
           {!query && (
             <div className="flex items-center gap-1.5 px-3 py-2.5 overflow-x-auto no-scrollbar border-b border-slate-100 shrink-0">
               <Pill
@@ -270,6 +258,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             </div>
           )}
 
+          {/* Results */}
           <div className="overflow-y-auto flex-1 p-2">
             {filtered.length === 0 ? (
               <div className="py-14 text-center">
@@ -282,6 +271,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
                 </p>
               </div>
             ) : query ? (
+              // Flat list when searching
               filtered.map((p) => (
                 <PlatformItem
                   key={p.domain}
@@ -291,6 +281,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
                 />
               ))
             ) : (
+              // Grouped by category
               Object.entries(grouped).map(([cat, platforms]) => (
                 <div key={cat} className="mb-1">
                   <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
@@ -317,6 +308,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
+          {/* Footer */}
           <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between shrink-0">
             <span className="text-[10px] text-slate-400 font-medium">
               {filtered.length} platform{filtered.length !== 1 ? "s" : ""}
@@ -341,9 +333,11 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
-    </>
+    </div>
   );
 };
+
+// ─── Platform row ─────────────────────────────────────────────────────────────
 
 const PlatformItem: React.FC<{
   platform: Platform;
@@ -386,6 +380,8 @@ const PlatformItem: React.FC<{
     )}
   </button>
 );
+
+// ─── Category pill ────────────────────────────────────────────────────────────
 
 const Pill: React.FC<{
   label: string;

@@ -1,7 +1,8 @@
-import { INITIAL_FORM, MasterAccount } from "@/constants/types";
+import { MasterAccount } from "@/constants/types";
 import React, { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { LogForm } from "./LogForm";
+import { INITIAL_FORM } from "@/constants/data";
 
 interface AdminInventoryProps {
   accounts: MasterAccount[];

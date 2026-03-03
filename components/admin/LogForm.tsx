@@ -3,8 +3,9 @@ import {
   MasterAccount,
   ProductCategory,
   FulfillmentType,
+  Platform,
 } from "@/constants/types";
-import { ServicePicker, Platform, logoUrl } from "../ServicePicker";
+import { ServicePicker, logoUrl } from "../ServicePicker";
 import { CATEGORY_MAP } from "@/constants/data";
 
 interface LogFormProps {
