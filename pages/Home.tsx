@@ -24,15 +24,7 @@ const Home = () => {
       <PopularServices />
       <HowItWorks />
       <Features />
-      <div className="container mx-auto px-4 py-20" id="marketplace">
-        <div className="text-center mb-16 max-w-2xl mx-auto">
-          <h2 className="text-sm font-black text-indigo-600 uppercase tracking-[0.3em] mb-4">
-            Marketplace
-          </h2>
-          <h3 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tight">
-            Available Premium Stacks
-          </h3>
-        </div>
+      <div className="container mx-auto max-w-6xl px-4 py-20" id="marketplace">
         <Marketplace
           user={user}
           onAuthRequired={() => openLoginModal()}
