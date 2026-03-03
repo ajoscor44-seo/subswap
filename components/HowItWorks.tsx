@@ -237,8 +237,8 @@ export const HowItWorks: React.FC = () => {
             <span className="text-indigo-600">in minutes</span>
           </h3>
           <p className="mt-5 text-slate-500 font-medium leading-relaxed max-w-lg mx-auto">
-            Turn your extra subscription slots into cash. SubSwap makes it easy
-            for Nigerians to share costs securely and automatically.
+            Turn your extra subscription slots into cash. DiscountZAR makes it
+            easy for Nigerians to share costs securely and automatically.
           </p>
         </div>
 
