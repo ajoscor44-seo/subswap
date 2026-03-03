@@ -13,6 +13,13 @@ export const useCloudinaryUpload = () => {
   const [progress, setProgress] = useState(0);
 
   const upload = async (file: File): Promise<string> => {
+    if (!CLOUD_NAME)
+      throw new Error(
+        "Cloudinary cloud name is not configured. Set VITE_CLOUDINARY_CLOUD_NAME in your .env file.",
+      );
+    if (!UPLOAD_PRESET)
+      throw new Error("Cloudinary upload preset is not configured.");
+
     setUploading(true);
     setProgress(0);
 
@@ -25,26 +32,48 @@ export const useCloudinaryUpload = () => {
       const xhr = new XMLHttpRequest();
 
       xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) {
+        if (e.lengthComputable)
           setProgress(Math.round((e.loaded / e.total) * 100));
-        }
       };
 
       xhr.onload = () => {
         setUploading(false);
         if (xhr.status === 200) {
-          const data = JSON.parse(xhr.responseText);
-          resolve(data.secure_url);
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.secure_url) resolve(data.secure_url);
+            else
+              reject(
+                new Error(
+                  data.error?.message || "Upload failed — no URL returned.",
+                ),
+              );
+          } catch {
+            reject(new Error("Unexpected response from Cloudinary."));
+          }
         } else {
-          reject(new Error("Upload failed"));
+          let msg = `Upload failed (status ${xhr.status}).`;
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (data.error?.message) msg = data.error.message;
+          } catch {}
+          reject(new Error(msg));
         }
       };
 
       xhr.onerror = () => {
         setUploading(false);
-        reject(new Error("Network error during upload"));
+        reject(
+          new Error("Network error — check your connection and try again."),
+        );
       };
 
+      xhr.ontimeout = () => {
+        setUploading(false);
+        reject(new Error("Upload timed out. Please try again."));
+      };
+
+      xhr.timeout = 30000;
       xhr.open(
         "POST",
         `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
@@ -56,37 +85,37 @@ export const useCloudinaryUpload = () => {
   return { upload, uploading, progress };
 };
 
-// ─── Avatar uploader component ────────────────────────────────────────────────
+// ─── Avatar uploader component ─────────────────────────────────────────────────
 
 interface AvatarUploaderProps {
   currentAvatar: string;
   username: string;
   onUploaded: (url: string) => void;
+  showStatus: (text: string, type: "success" | "error") => void;
 }
 
 export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   currentAvatar,
   username,
   onUploaded,
+  showStatus,
 }) => {
   const { upload, uploading, progress } = useCloudinaryUpload();
   const inputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      setError("Please select an image file.");
+      showStatus("Please select an image file (PNG, JPG, WEBP).", "error");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setError("Image must be under 5MB.");
+      showStatus("Image must be under 5MB.", "error");
       return;
     }
 
-    setError(null);
-
-    // Show preview immediately
+    // Show local preview immediately
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(file);
@@ -95,13 +124,14 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
       const url = await upload(file);
       onUploaded(url);
     } catch (err: any) {
-      setError(err.message || "Upload failed. Try again.");
       setPreview(null);
+      showStatus(err.message || "Upload failed. Try again.", "error");
     }
   };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
+    setIsDragging(false);
     const file = e.dataTransfer.files[0];
     if (file) handleFile(file);
   };
@@ -109,71 +139,178 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
   const displaySrc = preview || currentAvatar;
 
   return (
-    <div className="flex items-center gap-6">
+    <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
       {/* Avatar preview */}
-      <div className="relative shrink-0">
-        <img
-          src={displaySrc}
-          className="h-20 w-20 rounded-2xl object-cover border-4 border-white shadow-xl"
-          alt={username}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src =
-              `https://ui-avatars.com/api/?name=${username}&background=6366f1&color=fff`;
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        <div
+          style={{
+            width: 80,
+            height: 80,
+            borderRadius: "50%",
+            overflow: "hidden",
+            border: "3px solid #ede9fe",
+            boxShadow: "0 4px 16px rgba(124,92,252,0.2)",
           }}
-        />
+        >
+          <img
+            src={displaySrc}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+            alt={username}
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=7c5cfc&color=fff&size=80`;
+            }}
+          />
+        </div>
 
-        {/* Upload progress ring */}
+        {/* Upload progress overlay */}
         {uploading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-2xl">
-            <div className="text-center">
-              <i className="fa-solid fa-spinner fa-spin text-white text-lg" />
-              <p className="text-white text-[10px] font-black mt-1">
-                {progress}%
-              </p>
-            </div>
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: "50%",
+              background: "rgba(26,18,48,0.7)",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 2,
+            }}
+          >
+            <i
+              className="fa-solid fa-spinner fa-spin"
+              style={{ color: "#fff", fontSize: 16 }}
+            />
+            <span
+              style={{
+                color: "#fff",
+                fontSize: 9,
+                fontFamily: "'Syne',sans-serif",
+                fontWeight: 700,
+              }}
+            >
+              {progress}%
+            </span>
           </div>
         )}
 
-        {/* Edit button */}
+        {/* Camera button */}
         {!uploading && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="absolute -bottom-2 -right-2 h-8 w-8 bg-indigo-600 rounded-xl border-2 border-white flex items-center justify-center text-white hover:bg-indigo-700 transition-all shadow-lg"
+            style={{
+              position: "absolute",
+              bottom: -2,
+              right: -2,
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #7c5cfc, #6366f1)",
+              border: "2.5px solid #fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              cursor: "pointer",
+              boxShadow: "0 2px 8px rgba(124,92,252,0.4)",
+              transition: "transform 0.15s",
+            }}
+            onMouseOver={(e) =>
+              (e.currentTarget.style.transform = "scale(1.1)")
+            }
+            onMouseOut={(e) => (e.currentTarget.style.transform = "scale(1)")}
           >
-            <i className="fa-solid fa-camera text-[10px]" />
+            <i
+              className="fa-solid fa-camera"
+              style={{ color: "#fff", fontSize: 10 }}
+            />
           </button>
         )}
       </div>
 
-      {/* Drop zone / text */}
+      {/* Drop zone */}
       <div
-        className="flex-1 border-2 border-dashed border-slate-200 rounded-2xl p-5 text-center hover:border-indigo-300 hover:bg-indigo-50/30 transition-all cursor-pointer"
-        onClick={() => inputRef.current?.click()}
+        onClick={() => !uploading && inputRef.current?.click()}
         onDrop={handleDrop}
-        onDragOver={(e) => e.preventDefault()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        style={{
+          flex: 1,
+          padding: "18px 20px",
+          borderRadius: 14,
+          textAlign: "center",
+          border: `1.5px dashed ${isDragging ? "#7c5cfc" : "#ede9fe"}`,
+          background: isDragging ? "#f5f3ff" : "#fafafe",
+          cursor: uploading ? "default" : "pointer",
+          transition: "all 0.2s",
+        }}
       >
         {uploading ? (
-          <div className="space-y-2">
-            <div className="h-1.5 bg-slate-200 rounded-full overflow-hidden">
+          <div>
+            <div
+              style={{
+                height: 5,
+                background: "#f0eef9",
+                borderRadius: 99,
+                overflow: "hidden",
+                marginBottom: 8,
+              }}
+            >
               <div
-                className="h-full bg-indigo-600 rounded-full transition-all duration-200"
-                style={{ width: `${progress}%` }}
+                style={{
+                  height: "100%",
+                  borderRadius: 99,
+                  background: "linear-gradient(90deg, #7c5cfc, #a78bfa)",
+                  width: `${progress}%`,
+                  transition: "width 0.2s",
+                }}
               />
             </div>
-            <p className="text-xs font-bold text-indigo-600">
-              Uploading... {progress}%
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                fontFamily: "'Syne',sans-serif",
+                fontWeight: 700,
+                color: "#7c5cfc",
+              }}
+            >
+              Uploading… {progress}%
             </p>
           </div>
         ) : (
           <>
-            <i className="fa-solid fa-cloud-arrow-up text-slate-300 text-xl mb-2 block" />
-            <p className="text-xs font-bold text-slate-500">
+            <i
+              className="fa-solid fa-cloud-arrow-up"
+              style={{
+                color: "#c4b5fd",
+                fontSize: 20,
+                display: "block",
+                marginBottom: 6,
+              }}
+            />
+            <p
+              style={{
+                margin: "0 0 3px",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#475569",
+              }}
+            >
               Drop image here or{" "}
-              <span className="text-indigo-600 underline">browse</span>
+              <span style={{ color: "#7c5cfc", fontWeight: 600 }}>browse</span>
             </p>
-            <p className="text-[10px] text-slate-400 mt-1">
-              PNG, JPG, WEBP · Max 5MB
+            <p style={{ margin: 0, fontSize: 11, color: "#b8addb" }}>
+              PNG, JPG, WEBP · max 5 MB
             </p>
           </>
         )}
@@ -183,24 +320,19 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         ref={inputRef}
         type="file"
         accept="image/png,image/jpeg,image/webp,image/gif"
-        className="hidden"
+        style={{ display: "none" }}
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
+          // reset so same file can be picked again
+          e.target.value = "";
         }}
       />
-
-      {error && (
-        <p className="text-[10px] text-red-500 font-bold flex items-center gap-1">
-          <i className="fa-solid fa-circle-exclamation" />
-          {error}
-        </p>
-      )}
     </div>
   );
 };
 
-// ─── SettingsTab ──────────────────────────────────────────────────────────────
+// ─── SettingsTab ───────────────────────────────────────────────────────────────
 
 interface SettingsTabProps {
   user: User;
@@ -220,140 +352,477 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
   const handleAvatarUploaded = async (url: string) => {
     setAvatarUrl(url);
-    // Immediately persist to Supabase
     const { error } = await supabase
       .from("profiles")
       .update({ avatar: url })
       .eq("id", user.id);
 
-    if (error) {
-      showStatus("Failed to update avatar", "error");
-    } else {
-      showStatus("Profile photo updated!", "success");
-    }
+    if (error) showStatus("Failed to update avatar.", "error");
+    else showStatus("Profile photo updated!", "success");
   };
 
   const handleSave = async () => {
+    if (!name.trim()) {
+      showStatus("Display name cannot be empty.", "error");
+      return;
+    }
+    if (!username.trim()) {
+      showStatus("Username cannot be empty.", "error");
+      return;
+    }
     setSaving(true);
     try {
       const { error } = await supabase
         .from("profiles")
         .update({
-          name,
-          username,
+          name: name.trim(),
+          username: username.trim(),
           avatar: avatarUrl,
         })
         .eq("id", user.id);
-
       if (error) throw error;
       showStatus("Profile updated successfully!", "success");
     } catch (err: any) {
-      showStatus(err.message || "Failed to save changes", "error");
+      showStatus(err.message || "Failed to save changes.", "error");
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
-      <div className="mb-8 md:mb-12">
-        <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-          Account Settings
-        </h3>
-        <p className="text-slate-500 text-sm font-medium">
-          Manage your profile and preferences.
-        </p>
-      </div>
+    <>
+      <style>{`
+        .st-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
+        .st-root * { box-sizing: border-box; }
 
-      <div className="max-w-xl space-y-8">
-        {/* Avatar */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Profile Photo
+        .st-card {
+          background: #fff;
+          border: 1.5px solid #f0eef9;
+          border-radius: 20px;
+          padding: 24px;
+        }
+
+        .st-input {
+          width: 100%; padding: 13px 16px;
+          background: #fafafe;
+          border: 1.5px solid #ede9fe;
+          border-radius: 12px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px; font-weight: 400;
+          color: #1a1230; outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .st-input:focus {
+          border-color: #7c5cfc;
+          box-shadow: 0 0 0 4px rgba(124,92,252,0.08);
+        }
+        .st-input::placeholder { color: #c4b5fd; }
+        .st-input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+        .st-input-wrap { position: relative; }
+        .st-input-prefix {
+          position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+          color: #a78bfa; pointer-events: none;
+        }
+        .st-input-wrap .st-input { padding-left: 30px; }
+
+        .st-label {
+          display: block; margin-bottom: 8px;
+          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.08em; color: #b8addb;
+        }
+
+        .st-save-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 13px 28px; border-radius: 12px; border: none;
+          background: linear-gradient(135deg, #1a1230, #2d1f6e);
+          color: #fff; cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 12px;
+          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+          transition: all 0.2s;
+          box-shadow: 0 4px 14px rgba(26,18,48,0.2);
+        }
+        .st-save-btn:hover:not(:disabled) {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          box-shadow: 0 6px 20px rgba(124,92,252,0.35);
+          transform: translateY(-1px);
+        }
+        .st-save-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .st-save-btn:active:not(:disabled) { transform: scale(0.98); }
+
+        .st-logout-btn {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 13px 24px; border-radius: 12px; border: none;
+          background: #fef2f2; color: #ef4444; cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 12px;
+          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+          transition: all 0.2s;
+        }
+        .st-logout-btn:hover { background: #fee2e2; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fa-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+        @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+        .st-fade { animation: fadeUp 0.35s ease forwards; }
+        .st-fade-2 { animation: fadeUp 0.35s 0.07s ease both; }
+        .st-fade-3 { animation: fadeUp 0.35s 0.14s ease both; }
+        .st-fade-4 { animation: fadeUp 0.35s 0.21s ease both; }
+      `}</style>
+
+      <div
+        className="st-root bg-white p-8 rounded-4xl"
+        style={{ display: "flex", flexDirection: "column", gap: 20 }}
+      >
+        {/* ── Header ── */}
+        <div className="st-fade">
+          <p
+            className="font-display"
+            style={{
+              margin: "0 0 4px",
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "#a78bfa",
+            }}
+          >
+            Account
           </p>
-          <AvatarUploader
-            currentAvatar={avatarUrl}
-            username={username}
-            onUploaded={handleAvatarUploaded}
-          />
+          <h2
+            className="font-display"
+            style={{
+              margin: 0,
+              fontSize: 26,
+              fontWeight: 800,
+              color: "#1a1230",
+              lineHeight: 1.2,
+            }}
+          >
+            Settings
+          </h2>
         </div>
 
-        {/* Profile fields */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Profile Information
-          </p>
-          <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-                Display Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-                placeholder="Your full name"
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: 16,
+            alignItems: "start",
+          }}
+        >
+          {/* ── LEFT column ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Profile photo */}
+            <div className="st-card st-fade-2">
+              <p className="st-label" style={{ marginBottom: 16 }}>
+                Profile Photo
+              </p>
+              <AvatarUploader
+                currentAvatar={avatarUrl}
+                username={username}
+                onUploaded={handleAvatarUploaded}
+                showStatus={showStatus}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-                Username
-              </label>
-              <div className="relative">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 font-black text-slate-400">
-                  @
-                </span>
+
+            {/* Profile info */}
+            <div
+              className="st-card st-fade-3"
+              style={{ display: "flex", flexDirection: "column", gap: 16 }}
+            >
+              <p className="st-label" style={{ margin: 0 }}>
+                Profile Information
+              </p>
+
+              <div>
+                <label className="st-label">Display Name</label>
                 <input
+                  className="st-input"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full pl-9 pr-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-                  placeholder="username"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your full name"
                 />
+              </div>
+
+              <div>
+                <label className="st-label">Username</label>
+                <div className="st-input-wrap">
+                  <span className="st-input-prefix">@</span>
+                  <input
+                    className="st-input"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="username"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Security */}
-        <div className="space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-            Security
-          </p>
-          <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-            <div>
-              <h4 className="font-black text-slate-900 text-sm">
-                Email Address
-              </h4>
-              <p className="text-slate-500 text-xs font-medium mt-0.5">
-                {user.email}
+          {/* ── RIGHT column ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* Security / email */}
+            <div className="st-card st-fade-2">
+              <p className="st-label" style={{ marginBottom: 16 }}>
+                Security
               </p>
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  background: "#fafafe",
+                  border: "1.5px solid #f0eef9",
+                  marginBottom: 12,
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "#f0eef9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-envelope"
+                      style={{ color: "#7c5cfc", fontSize: 14 }}
+                    />
+                  </div>
+                  <div>
+                    <p
+                      className="font-display"
+                      style={{
+                        margin: "0 0 2px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#1a1230",
+                      }}
+                    >
+                      Email Address
+                    </p>
+                    <p style={{ margin: 0, fontSize: 12, color: "#9b8fc2" }}>
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: 7,
+                    background: "#f0fdf4",
+                    border: "1px solid #bbf7d0",
+                    fontFamily: "'Syne',sans-serif",
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    color: "#16a34a",
+                  }}
+                >
+                  Verified
+                </span>
+              </div>
+
+              {/* Password placeholder */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  padding: "14px 16px",
+                  borderRadius: 12,
+                  background: "#fafafe",
+                  border: "1.5px solid #f0eef9",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: 10,
+                      background: "#f0eef9",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-lock"
+                      style={{ color: "#7c5cfc", fontSize: 14 }}
+                    />
+                  </div>
+                  <div>
+                    <p
+                      className="font-display"
+                      style={{
+                        margin: "0 0 2px",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#1a1230",
+                      }}
+                    >
+                      Password
+                    </p>
+                    <p style={{ margin: 0, fontSize: 12, color: "#9b8fc2" }}>
+                      Managed via your login provider
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[8px] uppercase tracking-widest">
-              Verified
-            </span>
+
+            {/* Account info card */}
+            <div className="st-card st-fade-3">
+              <p className="st-label" style={{ marginBottom: 16 }}>
+                Account Details
+              </p>
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                {[
+                  {
+                    label: "Member Since",
+                    value: user.created_at
+                      ? new Date(user.created_at).toLocaleDateString(
+                          undefined,
+                          { year: "numeric", month: "long" },
+                        )
+                      : "—",
+                    icon: "fa-calendar",
+                  },
+                  {
+                    label: "Account ID",
+                    value: `···${user.id?.slice(-8) || "—"}`,
+                    icon: "fa-fingerprint",
+                  },
+                  {
+                    label: "Account Type",
+                    value: user.isAdmin ? "Administrator" : "Member",
+                    icon: "fa-shield-halved",
+                  },
+                ].map((row, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 12,
+                      padding: "10px 14px",
+                      borderRadius: 10,
+                      background: "#fafafe",
+                      border: "1px solid #f0eef9",
+                    }}
+                  >
+                    <i
+                      className={`fa-solid ${row.icon}`}
+                      style={{
+                        color: "#c4b5fd",
+                        fontSize: 13,
+                        width: 16,
+                        textAlign: "center",
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span style={{ fontSize: 12, color: "#9b8fc2", flex: 1 }}>
+                      {row.label}
+                    </span>
+                    <span
+                      className="font-display"
+                      style={{
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#1a1230",
+                      }}
+                    >
+                      {row.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Danger zone */}
+            <div
+              className="st-card st-fade-4"
+              style={{ border: "1.5px solid #fee2e2" }}
+            >
+              <p
+                className="st-label"
+                style={{ marginBottom: 12, color: "#fca5a5" }}
+              >
+                Danger Zone
+              </p>
+              <p style={{ margin: "0 0 16px", fontSize: 13, color: "#9b8fc2" }}>
+                Signing out will end your current session.
+              </p>
+              <button className="st-logout-btn" onClick={logout}>
+                <i className="fa-solid fa-arrow-right-from-bracket" />
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="pt-6 border-t border-slate-50 flex flex-col sm:flex-row gap-3">
+        {/* ── Save bar ── */}
+        <div
+          className="st-fade-4"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "18px 24px",
+            borderRadius: 16,
+            background: "#fff",
+            border: "1.5px solid #f0eef9",
+            boxShadow: "0 4px 16px rgba(124,92,252,0.06)",
+          }}
+        >
+          <div>
+            <p
+              className="font-display"
+              style={{
+                margin: "0 0 2px",
+                fontSize: 13,
+                fontWeight: 700,
+                color: "#1a1230",
+              }}
+            >
+              Save your changes
+            </p>
+            <p style={{ margin: 0, fontSize: 12, color: "#b8addb" }}>
+              Name and username updates apply immediately.
+            </p>
+          </div>
           <button
+            className="st-save-btn"
             onClick={handleSave}
             disabled={saving}
-            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 disabled:opacity-50 flex items-center justify-center gap-2"
           >
-            {saving && <i className="fa-solid fa-spinner fa-spin" />}
-            Save Changes
-          </button>
-          <button
-            onClick={logout}
-            className="px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all"
-          >
-            Sign Out
+            {saving ? (
+              <>
+                <i className="fa-solid fa-spinner fa-spin" /> Saving…
+              </>
+            ) : (
+              <>
+                <i className="fa-solid fa-floppy-disk" /> Save Changes
+              </>
+            )}
           </button>
         </div>
       </div>
-    </div>
+    </>
   );
 };

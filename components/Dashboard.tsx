@@ -9,6 +9,7 @@ import { useNavigator } from "@/providers/navigator";
 import { SettingsTab } from "./SettingsTab";
 import WalletTab from "./WalletTab";
 import OverviewTab from "./OverviewTab";
+import MyStacksTab from "./MyStacksTab";
 
 interface DashboardProps {
   user: User;
@@ -39,113 +40,6 @@ const getTimeRemaining = (dateStr: string) => {
 
   if (days > 0) return `${days}d ${hours}h left`;
   return `${hours}h left`;
-};
-
-// MyStacks Tab Component
-const MyStacksTab: React.FC<{
-  user: User;
-  activeSubscriptions: any[];
-  isLoading: boolean;
-  changeTab: (tab: string) => void;
-  copyToClipboard: (text: string) => void;
-}> = ({ user, activeSubscriptions, isLoading, changeTab, copyToClipboard }) => {
-  return (
-    <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-10 shadow-sm border border-slate-100 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between mb-8 md:mb-10">
-        <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-          My Active Access
-        </h3>
-        <button
-          onClick={() => changeTab("explore")}
-          className="text-xs font-black text-indigo-600"
-        >
-          Buy New +
-        </button>
-      </div>
-      {isLoading ? (
-        <div className="text-center py-20">
-          <i className="fa-solid fa-spinner fa-spin text-indigo-600 text-2xl"></i>
-        </div>
-      ) : activeSubscriptions.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-          {activeSubscriptions.map((sub) => (
-            <div
-              key={sub.id}
-              className="p-6 md:p-8 bg-slate-50 rounded-3xl border border-slate-100 group hover:bg-white hover:shadow-xl transition-all duration-300"
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-4">
-                  <img
-                    src={sub.master_accounts?.icon_url}
-                    className="h-12 w-12 md:h-16 md:w-16 rounded-2xl bg-white shadow-sm object-cover"
-                    alt=""
-                  />
-                  <div>
-                    <h4 className="font-black text-slate-900 text-base md:text-lg">
-                      {sub.master_accounts?.service_name}
-                    </h4>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest">
-                        Active
-                      </span>
-                      <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-md font-black text-[8px] uppercase tracking-widest flex items-center gap-1">
-                        <i className="fa-regular fa-clock"></i>
-                        {getTimeRemaining(
-                          sub.purchased_at || sub.created_at || "",
-                        )}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white/50 rounded-2xl p-4 mb-6 border border-slate-100/50 space-y-3">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">
-                    Account ID
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-700 font-mono font-bold truncate max-w-37.5">
-                      {sub.master_accounts?.master_email}
-                    </span>
-                    <button
-                      onClick={() =>
-                        copyToClipboard(sub.master_accounts?.master_email)
-                      }
-                      className="text-indigo-600 hover:text-indigo-800"
-                    >
-                      <i className="fa-solid fa-copy"></i>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={() =>
-                  copyToClipboard(sub.master_accounts?.master_password)
-                }
-                className="w-full bg-slate-900 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-widest group-hover:bg-indigo-600 transition-all shadow-lg active:scale-95"
-              >
-                <i className="fa-solid fa-key mr-2"></i> Copy Password
-              </button>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 md:py-20 bg-slate-50/50 rounded-4xl border-2 border-dashed border-slate-200">
-          <p className="text-slate-400 font-medium text-sm">
-            No active subscriptions yet.
-          </p>
-          <button
-            onClick={() => changeTab("explore")}
-            className="mt-4 bg-indigo-600 text-white px-8 py-3 rounded-xl font-black text-[10px] cursor-pointer tracking-widest"
-          >
-            Start a new subscription
-          </button>
-        </div>
-      )}
-    </div>
-  );
 };
 
 // Explore Tab Component
