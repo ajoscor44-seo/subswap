@@ -324,15 +324,12 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) handleFile(file);
-          // reset so same file can be picked again
           e.target.value = "";
         }}
       />
     </div>
   );
 };
-
-// ─── SettingsTab ───────────────────────────────────────────────────────────────
 
 interface SettingsTabProps {
   user: User;
@@ -472,7 +469,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       `}</style>
 
       <div
-        className="st-root bg-white p-8 rounded-4xl"
+        className="st-root bg-white p-8 rounded-3xl"
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
         {/* ── Header ── */}
@@ -695,11 +692,11 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 {[
                   {
                     label: "Member Since",
-                    value: user.created_at
-                      ? new Date(user.created_at).toLocaleDateString(
-                          undefined,
-                          { year: "numeric", month: "long" },
-                        )
+                    value: user.joinedAt
+                      ? new Date(user.joinedAt).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "long",
+                        })
                       : "—",
                     icon: "fa-calendar",
                   },

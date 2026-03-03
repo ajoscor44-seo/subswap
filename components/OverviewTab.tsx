@@ -418,13 +418,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 onClick={stat.action}
                 style={{ flexShrink: 0 }}
               >
-                →
+                <i
+                  className={`fa-solid fa-chevron-right`}
+                  style={{ color: stat.color, fontSize: 20 }}
+                />
               </button>
             </div>
           ))}
         </div>
 
-        {/* ── Row 3: Recent activity + Active stacks ── */}
         <div
           className="ov-fade-3"
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
@@ -547,7 +549,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   onClick={() => changeTab("wallet")}
                   style={{ fontSize: 11 }}
                 >
-                  Fund your wallet →
+                  Fund your wallet{" "}
+                  <i
+                    className={`fa-solid fa-chevron-right`}
+                    style={{ color: "#7c5cfc", fontSize: 20 }}
+                  />
                 </button>
               </div>
             )}

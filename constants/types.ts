@@ -25,6 +25,7 @@ export interface User {
   totalSaved: number;
   is_banned?: boolean;
   merchantRating?: number;
+  joinedAt?: Date | string;
 }
 
 export type FulfillmentType = "Password" | "Invite Link" | "OTP / Instruction";

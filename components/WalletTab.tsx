@@ -144,7 +144,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
         .wt-amount-preview { animation: countUp 0.25s ease forwards; }
       `}</style>
 
-      <div className="wt-root bg-white p-8 rounded-4xl shadow-sm">
+      <div className="wt-root bg-white p-8 rounded-2xl">
         <div
           style={{
             display: "grid",

@@ -110,8 +110,12 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
       `}</style>
 
       <div
-        className="bg-white p-8 rounded-4xl"
-        style={{ display: "flex", flexDirection: "column", gap: 20 }}
+        className="bg-white p-8 rounded-2xl"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 20,
+        }}
       >
         {/* ── Header ── */}
         <div
