@@ -31,7 +31,7 @@ export const Features: React.FC = () => {
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-20">
+        <div className="text-center max-w-3xl mx-auto mb-10 lg:mb-20">
           <h2 className="text-sm font-black text-indigo-600 uppercase tracking-[0.3em] mb-4">
             Why DiscountZAR?
           </h2>

@@ -35,9 +35,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   );
 
   const fwConfig = {
-    public_key:
-      import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY ||
-      "FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X",
+    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
     tx_ref: Date.now().toString(),
     amount: neededAmount,
     currency: "NGN",

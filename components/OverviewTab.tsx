@@ -10,28 +10,19 @@ interface OverviewTabProps {
   onPurchaseSuccess?: () => void;
 }
 
-// ── Helper: Time remaining ──
-const getTimeRemaining = (dateStr: string) => {
-  if (!dateStr) return "Expired";
-  const purchaseDate = new Date(dateStr);
-  const expiryDate = new Date(
-    purchaseDate.getTime() + 30 * 24 * 60 * 60 * 1000,
-  );
-  const now = new Date();
-  const diff = expiryDate.getTime() - now.getTime();
-  if (diff <= 0) return "Expired";
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
+const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
+  Deposit: { icon: "fa-arrow-down-to-line", bg: "#f0fdf4", color: "#16a34a" },
+  Purchase: { icon: "fa-bag-shopping", bg: "#f0eef9", color: "#7c5cfc" },
+  Withdrawal: {
+    icon: "fa-arrow-up-from-line",
+    bg: "#fef2f2",
+    color: "#ef4444",
+  },
+  default: { icon: "fa-circle-dot", bg: "#f8fafc", color: "#64748b" },
 };
+const getTxStyle = (type: string) => TYPE_ICON[type] ?? TYPE_ICON.default;
 
-const OverviewTab: React.FC<{
-  user: User;
-  activeSubscriptions: any[];
-  recentTransactions: Transaction[];
-  changeTab: (tab: string) => void;
-  onPurchaseSuccess?: () => void;
-}> = ({
+export const OverviewTab: React.FC<OverviewTabProps> = ({
   user,
   activeSubscriptions,
   recentTransactions,
@@ -39,165 +30,748 @@ const OverviewTab: React.FC<{
   onPurchaseSuccess,
 }) => {
   return (
-    <div className="animate-in fade-in duration-500 space-y-6 md:space-y-8">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 bg-linear-to-br from-slate-900 to-indigo-900 rounded-[2.5rem] p-8 md:p-10 text-white relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <i className="fa-solid fa-naira-sign text-[8rem] rotate-12"></i>
-          </div>
-          <div className="relative z-10">
-            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-2">
-              My Balance
-            </p>
-            <h4 className="text-5xl md:text-6xl font-black tracking-tighter mb-10">
-              ₦{user.balance.toLocaleString()}
-            </h4>
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 
-            <div className="flex flex-wrap gap-3">
-              <button
-                onClick={() => changeTab("wallet")}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all shadow-xl shadow-indigo-900/40"
+        .ov-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
+        .ov-root * { box-sizing: border-box; }
+        .ov-heading { font-family: 'Syne', sans-serif; }
+
+        /* Section label */
+        .ov-label {
+          font-family: 'Syne', sans-serif;
+          font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.12em;
+          color: #a78bfa; margin: 0 0 4px;
+        }
+
+        /* White surface card */
+        .ov-card {
+          background: #fff;
+          border: 1.5px solid #f0eef9;
+          border-radius: 20px;
+          transition: box-shadow 0.25s, transform 0.25s;
+        }
+        .ov-card:hover { box-shadow: 0 12px 32px rgba(124,92,252,0.09); }
+
+        /* Hero balance card */
+        .ov-hero {
+          border-radius: 20px;
+          background: linear-gradient(145deg, #1a1230 0%, #2d1f6e 55%, #3730a3 100%);
+          position: relative; overflow: hidden;
+          padding: 36px 36px 32px;
+        }
+        .ov-hero::before {
+          content: '';
+          position: absolute; top: -60px; right: -60px;
+          width: 260px; height: 260px; border-radius: 50%;
+          background: rgba(255,255,255,0.03);
+        }
+        .ov-hero::after {
+          content: '';
+          position: absolute; bottom: -80px; left: -30px;
+          width: 300px; height: 300px; border-radius: 50%;
+          background: rgba(124,92,252,0.12);
+        }
+        .ov-hero-naira {
+          position: absolute; right: 28px; top: 28px;
+          font-size: 100px; color: rgba(255,255,255,0.04);
+          font-family: 'Syne', sans-serif; font-weight: 800;
+          line-height: 1; pointer-events: none; z-index: 0;
+        }
+
+        /* Hero buttons */
+        .ov-btn-primary {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 22px; border-radius: 12px; border: none;
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 11px;
+          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+          transition: all 0.2s;
+          box-shadow: 0 4px 16px rgba(124,92,252,0.38);
+        }
+        .ov-btn-primary:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.5); transform: translateY(-1px); }
+
+        .ov-btn-ghost {
+          display: inline-flex; align-items: center; gap: 8px;
+          padding: 12px 22px; border-radius: 12px; border: none;
+          background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
+          color: rgba(255,255,255,0.8); cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 11px;
+          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+          transition: all 0.2s;
+        }
+        .ov-btn-ghost:hover { background: rgba(255,255,255,0.18); color: #fff; }
+
+        /* Stat mini card */
+        .ov-stat {
+          padding: 20px 22px; border-radius: 16px;
+          border: 1.5px solid #f0eef9; background: #fff;
+          transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .ov-stat:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.1); transform: translateY(-2px); }
+
+        /* Transaction row */
+        .ov-tx-row {
+          display: flex; align-items: center; gap: 12px;
+          padding: 10px 14px; border-radius: 12px;
+          transition: background 0.15s; cursor: default;
+        }
+        .ov-tx-row:hover { background: #fafafe; }
+
+        /* Icon circle */
+        .ov-icon {
+          width: 36px; height: 36px; border-radius: 10px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 13px; flex-shrink: 0;
+        }
+
+        /* Stack avatar cluster */
+        .ov-stack-avatar {
+          width: 44px; height: 44px; border-radius: 50%;
+          border: 3px solid #fff; object-fit: cover;
+          box-shadow: 0 2px 8px rgba(124,92,252,0.15);
+          transition: transform 0.2s, z-index 0s;
+          flex-shrink: 0;
+        }
+        .ov-stack-avatar:hover { transform: scale(1.12) translateY(-3px); z-index: 10; }
+
+        /* View all link */
+        .ov-link {
+          font-family: 'Syne', sans-serif; font-size: 10px;
+          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
+          color: #7c5cfc; background: none; border: none; cursor: pointer;
+          padding: 4px 10px; border-radius: 8px; transition: background 0.15s;
+        }
+        .ov-link:hover { background: #f0eef9; }
+
+        /* Progress bar */
+        .ov-bar-bg { height: 5px; border-radius: 99px; background: #f0eef9; overflow: hidden; margin-top: 10px; }
+        .ov-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #7c5cfc, #a78bfa); transition: width 1s cubic-bezier(0.34,1.2,0.64,1); }
+
+        /* Section fade-in */
+        @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .ov-fade { animation: fadeUp 0.4s ease forwards; }
+        .ov-fade-2 { animation: fadeUp 0.4s 0.08s ease both; }
+        .ov-fade-3 { animation: fadeUp 0.4s 0.16s ease both; }
+        .ov-fade-4 { animation: fadeUp 0.4s 0.24s ease both; }
+
+        /* Skeleton */
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .ov-skeleton {
+          background: linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%);
+          background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px;
+        }
+      `}</style>
+
+      <div
+        className="ov-root"
+        style={{ display: "flex", flexDirection: "column", gap: 20 }}
+      >
+        {/* ── Row 1: Hero balance + savings + quick stats ── */}
+        <div
+          className="ov-fade"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr 1fr",
+            gap: 16,
+          }}
+        >
+          {/* Balance hero — spans 2 cols */}
+          <div className="ov-hero" style={{ gridColumn: "span 2" }}>
+            <span className="ov-hero-naira">₦</span>
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <p
+                className="ov-label"
+                style={{ color: "rgba(255,255,255,0.35)", marginBottom: 8 }}
               >
-                <i className="fa-solid fa-plus mr-2"></i> Fund Wallet
-              </button>
-              <button
-                onClick={() => changeTab("explore")}
-                className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest transition-all"
+                Available Balance
+              </p>
+              <h2
+                className="ov-heading"
+                style={{
+                  margin: "0 0 6px",
+                  fontSize: 48,
+                  fontWeight: 800,
+                  color: "#fff",
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1,
+                }}
               >
-                Find Slots
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white z-20 rounded-[2.5rem] p-8 border border-slate-100 shadow-sm flex flex-col justify-between">
-          <div>
-            <div className="h-12 w-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-xl mb-4">
-              <i className="fa-solid fa-piggy-bank"></i>
-            </div>
-            <h5 className="font-black text-slate-900 text-lg mb-1">
-              Total Saved
-            </h5>
-            <p className="text-slate-500 text-sm font-medium">
-              You've saved ₦{user.totalSaved.toLocaleString()} using
-              DiscountZAR.
-            </p>
-          </div>
-          <div className="pt-6 border-t border-slate-50">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Current Rate
-            </p>
-            <p className="text-sm font-black text-slate-900">
-              ₦1.00 = 1 Credit
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Recent Activity Mini Widget */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h4 className="font-black text-slate-900 text-lg">
-              Recent Activity
-            </h4>
-            <button
-              onClick={() => changeTab("history")}
-              className="text-[10px] font-black uppercase tracking-widest text-indigo-600"
-            >
-              View All
-            </button>
-          </div>
-          <div className="space-y-4">
-            {recentTransactions.length > 0 ? (
-              recentTransactions.map((tx) => (
-                <div
-                  key={tx.id}
-                  className="flex items-center justify-between p-3 rounded-2xl bg-slate-50 border border-slate-100/50 hover:bg-slate-100 transition-all"
+                ₦{user.balance.toLocaleString()}
+              </h2>
+              <p
+                style={{
+                  margin: "0 0 28px",
+                  fontSize: 12,
+                  color: "rgba(255,255,255,0.35)",
+                }}
+              >
+                ₦1.00 = 1 Credit
+              </p>
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  className="ov-btn-primary"
+                  onClick={() => changeTab("wallet")}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs ${tx.amount > 0 ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-600"}`}
-                    >
-                      <i
-                        className={`fa-solid ${tx.amount > 0 ? "fa-arrow-down" : "fa-arrow-up"}`}
-                      ></i>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black text-slate-900 line-clamp-1">
-                        {tx.description}
-                      </p>
-                      <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">
-                        {new Date(tx.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-[10px] font-black ${tx.amount > 0 ? "text-emerald-500" : "text-slate-900"}`}
-                  >
-                    {tx.amount > 0 ? "+" : ""}₦
-                    {Math.abs(tx.amount).toLocaleString()}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <p className="text-[10px] text-slate-400 font-bold uppercase py-4 text-center">
-                No recent activity
-              </p>
-            )}
+                  <i className="fa-solid fa-plus" /> Fund Wallet
+                </button>
+                <button
+                  className="ov-btn-ghost"
+                  onClick={() => changeTab("explore")}
+                >
+                  <i className="fa-solid fa-compass" /> Explore Plans
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Active Slots Snapshot */}
-        <div className="bg-white rounded-[2.5rem] p-8 border border-slate-100 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <h4 className="font-black text-slate-900 text-lg">Active Stacks</h4>
-            <button
-              onClick={() => changeTab("stacks")}
-              className="text-[10px] font-black uppercase tracking-widest text-indigo-600"
+          {/* Savings card */}
+          <div
+            className="ov-card"
+            style={{
+              padding: "24px",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 11,
+                  background: "#f0fdf4",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginBottom: 14,
+                }}
+              >
+                <i
+                  className="fa-solid fa-piggy-bank"
+                  style={{ color: "#16a34a", fontSize: 17 }}
+                />
+              </div>
+              <p className="ov-label">Total Saved</p>
+              <h3
+                className="ov-heading"
+                style={{
+                  margin: "0 0 6px",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#16a34a",
+                  lineHeight: 1.1,
+                }}
+              >
+                ₦{user.totalSaved.toLocaleString()}
+              </h3>
+              <p style={{ margin: 0, fontSize: 12, color: "#9b8fc2" }}>
+                saved using DiscountZAR
+              </p>
+            </div>
+            <div
+              style={{
+                marginTop: 20,
+                paddingTop: 16,
+                borderTop: "1.5px solid #f0eef9",
+              }}
             >
-              My Stacks
-            </button>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  marginBottom: 6,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    color: "#b8addb",
+                  }}
+                >
+                  vs. Retail price
+                </span>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 800,
+                    color: "#7c5cfc",
+                  }}
+                >
+                  {user.totalSaved > 0
+                    ? `${Math.round((user.totalSaved / (user.totalSaved + user.balance)) * 100)}%`
+                    : "0%"}
+                </span>
+              </div>
+              <div className="ov-bar-bg">
+                <div
+                  className="ov-bar-fill"
+                  style={{
+                    width:
+                      user.totalSaved > 0
+                        ? `${Math.min(100, Math.round((user.totalSaved / (user.totalSaved + user.balance)) * 100))}%`
+                        : "0%",
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <div className="flex -space-x-3 overflow-hidden mb-6">
-            {activeSubscriptions.map((sub, i) => (
-              <img
-                key={i}
-                src={sub.master_accounts?.icon_url}
-                className="inline-block h-10 w-10 rounded-full ring-4 ring-white object-cover"
-                alt=""
-              />
-            ))}
-            {activeSubscriptions.length === 0 && (
-              <p className="text-[10px] text-slate-400 font-bold uppercase py-4">
-                No active stacks yet
-              </p>
+        </div>
+
+        {/* ── Row 2: Quick stats row ── */}
+        <div
+          className="ov-fade-2"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3, 1fr)",
+            gap: 14,
+          }}
+        >
+          {[
+            {
+              label: "Active Stacks",
+              value: activeSubscriptions.length,
+              icon: "fa-layer-group",
+              color: "#7c5cfc",
+              bg: "#f0eef9",
+              action: () => changeTab("stacks"),
+              actionLabel: "View stacks",
+            },
+            {
+              label: "Recent Transactions",
+              value: recentTransactions.length,
+              icon: "fa-receipt",
+              color: "#6366f1",
+              bg: "#eef2ff",
+              action: () => changeTab("history"),
+              actionLabel: "View history",
+            },
+            {
+              label: "Wallet Credits",
+              value: `₦${user.balance.toLocaleString()}`,
+              icon: "fa-wallet",
+              color: "#0ea5e9",
+              bg: "#f0f9ff",
+              action: () => changeTab("wallet"),
+              actionLabel: "Add funds",
+            },
+          ].map((stat, i) => (
+            <div
+              key={i}
+              className="ov-stat"
+              style={{ display: "flex", alignItems: "center", gap: 14 }}
+            >
+              <div
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 12,
+                  background: stat.bg,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <i
+                  className={`fa-solid ${stat.icon}`}
+                  style={{ color: stat.color, fontSize: 17 }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p
+                  style={{
+                    margin: "0 0 2px",
+                    fontSize: 10,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.07em",
+                    color: "#b8addb",
+                  }}
+                >
+                  {stat.label}
+                </p>
+                <p
+                  className="ov-heading"
+                  style={{
+                    margin: 0,
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#1a1230",
+                  }}
+                >
+                  {stat.value}
+                </p>
+              </div>
+              <button
+                className="ov-link"
+                onClick={stat.action}
+                style={{ flexShrink: 0 }}
+              >
+                →
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Row 3: Recent activity + Active stacks ── */}
+        <div
+          className="ov-fade-3"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
+        >
+          {/* Recent transactions */}
+          <div className="ov-card" style={{ padding: "24px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 18,
+              }}
+            >
+              <div>
+                <p className="ov-label">Latest Activity</p>
+                <h4
+                  className="ov-heading"
+                  style={{
+                    margin: 0,
+                    fontSize: 17,
+                    fontWeight: 800,
+                    color: "#1a1230",
+                  }}
+                >
+                  Recent Transactions
+                </h4>
+              </div>
+              <button className="ov-link" onClick={() => changeTab("history")}>
+                View all
+              </button>
+            </div>
+
+            {recentTransactions.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {recentTransactions.map((tx) => {
+                  const cfg = getTxStyle(tx.type);
+                  const isPos = tx.amount > 0;
+                  return (
+                    <div key={tx.id} className="ov-tx-row">
+                      <div className="ov-icon" style={{ background: cfg.bg }}>
+                        <i
+                          className={`fa-solid ${cfg.icon}`}
+                          style={{ color: cfg.color }}
+                        />
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p
+                          style={{
+                            margin: "0 0 2px",
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: "#1a1230",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                          }}
+                        >
+                          {tx.description || "No description"}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 10,
+                            color: "#b8addb",
+                            fontFamily: "'Syne',sans-serif",
+                            fontWeight: 600,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          {new Date(tx.created_at).toLocaleDateString(
+                            undefined,
+                            { month: "short", day: "numeric" },
+                          )}
+                        </p>
+                      </div>
+                      <span
+                        className="ov-heading"
+                        style={{
+                          fontSize: 13,
+                          fontWeight: 800,
+                          color: isPos ? "#16a34a" : "#ef4444",
+                          flexShrink: 0,
+                        }}
+                      >
+                        {isPos ? "+" : "−"}₦
+                        {Math.abs(tx.amount).toLocaleString()}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{ textAlign: "center", padding: "32px 16px" }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: "#f5f3ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 10px",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-receipt"
+                    style={{ color: "#c4b5fd", fontSize: 18 }}
+                  />
+                </div>
+                <p
+                  style={{ margin: "0 0 12px", fontSize: 12, color: "#b8addb" }}
+                >
+                  No activity yet
+                </p>
+                <button
+                  className="ov-link"
+                  onClick={() => changeTab("wallet")}
+                  style={{ fontSize: 11 }}
+                >
+                  Fund your wallet →
+                </button>
+              </div>
             )}
           </div>
-          <p className="text-[10px] text-slate-500 font-medium">
-            You have {activeSubscriptions.length} active premium subscriptions.
-          </p>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-[2.5rem] p-8 md:p-10 border border-slate-100 shadow-sm">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h3 className="text-2xl font-black text-slate-900 tracking-tight">
+          {/* Active stacks */}
+          <div className="ov-card" style={{ padding: "24px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 18,
+              }}
+            >
+              <div>
+                <p className="ov-label">Subscriptions</p>
+                <h4
+                  className="ov-heading"
+                  style={{
+                    margin: 0,
+                    fontSize: 17,
+                    fontWeight: 800,
+                    color: "#1a1230",
+                  }}
+                >
+                  Active Stacks
+                </h4>
+              </div>
+              <button className="ov-link" onClick={() => changeTab("stacks")}>
+                Manage
+              </button>
+            </div>
+
+            {activeSubscriptions.length > 0 ? (
+              <>
+                {/* Avatar cluster */}
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 8,
+                    marginBottom: 18,
+                  }}
+                >
+                  {activeSubscriptions.slice(0, 8).map((sub, i) => (
+                    <img
+                      key={i}
+                      src={sub.master_accounts?.icon_url}
+                      className="ov-stack-avatar"
+                      alt={sub.master_accounts?.service_name || ""}
+                      title={sub.master_accounts?.service_name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.master_accounts?.service_name || "S")}&background=ede9fe&color=7c5cfc`;
+                      }}
+                    />
+                  ))}
+                  {activeSubscriptions.length > 8 && (
+                    <div
+                      className="ov-stack-avatar"
+                      style={{
+                        background: "#f0eef9",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontFamily: "'Syne',sans-serif",
+                          fontWeight: 800,
+                          fontSize: 11,
+                          color: "#7c5cfc",
+                        }}
+                      >
+                        +{activeSubscriptions.length - 8}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stack list */}
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 8 }}
+                >
+                  {activeSubscriptions.slice(0, 3).map((sub, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        background: "#fafafe",
+                        border: "1px solid #f0eef9",
+                      }}
+                    >
+                      <img
+                        src={sub.master_accounts?.icon_url}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                          border: "2px solid #fff",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                        }}
+                        alt=""
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            `https://ui-avatars.com/api/?name=S&background=ede9fe&color=7c5cfc&size=28`;
+                        }}
+                      />
+                      <span
+                        style={{
+                          flex: 1,
+                          fontSize: 12,
+                          fontWeight: 500,
+                          color: "#1a1230",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {sub.master_accounts?.service_name}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: 10,
+                          fontFamily: "'Syne',sans-serif",
+                          fontWeight: 700,
+                          color: "#10b981",
+                          background: "#f0fdf4",
+                          padding: "2px 8px",
+                          borderRadius: 6,
+                        }}
+                      >
+                        Active
+                      </span>
+                    </div>
+                  ))}
+                  {activeSubscriptions.length > 3 && (
+                    <button
+                      className="ov-link"
+                      onClick={() => changeTab("stacks")}
+                      style={{
+                        textAlign: "center",
+                        width: "100%",
+                        fontSize: 11,
+                      }}
+                    >
+                      +{activeSubscriptions.length - 3} more stacks →
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div style={{ textAlign: "center", padding: "32px 16px" }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: "#f5f3ff",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 10px",
+                  }}
+                >
+                  <i
+                    className="fa-solid fa-layer-group"
+                    style={{ color: "#c4b5fd", fontSize: 18 }}
+                  />
+                </div>
+                <p
+                  style={{ margin: "0 0 12px", fontSize: 12, color: "#b8addb" }}
+                >
+                  No active stacks yet
+                </p>
+                <button
+                  className="ov-link"
+                  onClick={() => changeTab("explore")}
+                  style={{ fontSize: 11 }}
+                >
+                  Browse marketplace →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Row 4: Quick Join ── */}
+        <div
+          className="ov-fade-4 ov-card"
+          style={{ padding: "28px 28px 24px" }}
+        >
+          <div style={{ marginBottom: 24 }}>
+            <p className="ov-label">Discover</p>
+            <h3
+              className="ov-heading"
+              style={{
+                margin: "0 0 4px",
+                fontSize: 20,
+                fontWeight: 800,
+                color: "#1a1230",
+              }}
+            >
               Quick Join
             </h3>
-            <p className="text-slate-500 text-sm font-medium">
-              Join a new group in seconds.
+            <p style={{ margin: 0, fontSize: 13, color: "#9b8fc2" }}>
+              Browse and join a shared plan in seconds.
             </p>
           </div>
+          <Marketplace
+            user={user}
+            onAuthRequired={() => {}}
+            onPurchaseSuccess={onPurchaseSuccess}
+          />
         </div>
-        <Marketplace
-          user={user}
-          onAuthRequired={() => {}}
-          onPurchaseSuccess={onPurchaseSuccess}
-        />
       </div>
-    </div>
+    </>
   );
 };
 
