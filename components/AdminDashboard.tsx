@@ -86,7 +86,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const fetchData = async (forceAll = false) => {
     setIsLoading(true);
     try {
-      // stats needs everything, users needs profiles, inventory needs accounts, transactions needs transactions
       const fetchAccounts =
         activeTab === "inventory" || activeTab === "stats" || forceAll;
       const fetchProfiles =

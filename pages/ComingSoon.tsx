@@ -81,7 +81,7 @@ const Digit = ({ value, label }: { value: number; label: string }) => (
 );
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
-const TARGET = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
+const TARGET = new Date(2026, 3, 1); // April 1, 2026 (months are 0-indexed)
 
 const ComingSoon: React.FC = () => {
   const [timeLeft, setTimeLeft] = useState({ d: 30, h: 0, m: 0, s: 0 });

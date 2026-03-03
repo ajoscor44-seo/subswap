@@ -25,6 +25,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   // Quick Fund State
   const [showFundModal, setShowFundModal] = useState(false);
@@ -73,15 +74,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       const { data, error } = await supabase
         .from("master_accounts")
         .select(
-          `
-          *,
-          owner:profiles!owner_id (
-            username,
-            is_verified,
-            avatar,
-            merchant_rating
-          )
-        `,
+          `*, owner:profiles!owner_id (username, is_verified, avatar, merchant_rating)`,
         )
         .gt("available_slots", 0)
         .order("created_at", { ascending: false });
@@ -100,14 +93,12 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       onAuthRequired();
       return;
     }
-
     if (user.balance < account.price) {
       setNeededAmount(account.price - user.balance);
       setActiveAccount(account);
       setShowFundModal(true);
       return;
     }
-
     setIsProcessing(account.id);
     try {
       const { error } = await supabase.rpc("purchase_slot_v2", {
@@ -116,15 +107,9 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         p_profile_name: user.username || user.name,
         p_amount: account.price,
       });
-
       if (error) throw error;
-
       showToast(`Success! Taking you to your new stack...`);
-
-      // Call parent success handler for smooth internal navigation
-      if (onPurchaseSuccess) {
-        setTimeout(() => onPurchaseSuccess(), 1500);
-      }
+      if (onPurchaseSuccess) setTimeout(() => onPurchaseSuccess(), 1500);
     } catch (err: any) {
       showToast(err.message || "Purchase failed. Please try again.", "error");
     } finally {
@@ -134,49 +119,31 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
   const handleFlutterwavePayment = (amount: number) => {
     if (!user) return;
-
     const config = {
       ...fwConfig,
-      amount: amount,
+      amount,
       tx_ref: `tx-qf-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      customizations: {
-        ...fwConfig.customizations,
-        description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
-      },
     };
-
     handleFlutterPayment({
       ...config,
       callback: async (response) => {
         if (response.status === "successful") {
           try {
-            const { error: txError } = await supabase
-              .from("transactions")
-              .insert({
-                user_id: user.id,
-                amount: amount,
-                type: "Deposit",
-                description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
-              });
-            if (txError) throw txError;
-
-            const { error: balError } = await supabase
+            await supabase.from("transactions").insert({
+              user_id: user.id,
+              amount,
+              type: "Deposit",
+              description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
+            });
+            await supabase
               .from("profiles")
-              .update({
-                balance: user.balance + amount,
-              })
+              .update({ balance: user.balance + amount })
               .eq("id", user.id);
-            if (balError) throw balError;
-
             showToast(`₦${amount.toLocaleString()} added successfully!`);
             setShowFundModal(false);
-
-            // If we now have enough, proceed to join
-            if (activeAccount && user.balance + amount >= activeAccount.price) {
+            if (activeAccount && user.balance + amount >= activeAccount.price)
               handleJoin(activeAccount);
-            } else {
-              if (onPurchaseSuccess) onPurchaseSuccess();
-            }
+            else if (onPurchaseSuccess) onPurchaseSuccess();
           } catch (err: any) {
             showToast(err.message, "error");
           }
@@ -185,9 +152,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         }
         closePaymentModal();
       },
-      onClose: () => {
-        console.log("Payment modal closed");
-      },
+      onClose: () => console.log("Payment modal closed"),
     });
   };
 
@@ -201,236 +166,896 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
     });
   }, [filter, searchQuery, dbProducts]);
 
+  const slotsPercent = (account: MasterAccount) =>
+    Math.round(
+      ((account.total_slots - account.available_slots) / account.total_slots) *
+        100,
+    );
+
+  const isFull = (account: MasterAccount) => account.available_slots === 0;
+  const isLow = (account: MasterAccount) =>
+    account.available_slots <= 2 && account.available_slots > 0;
+
   return (
-    <div className="space-y-8 relative">
-      {/* Toast Notification */}
-      {toast && (
-        <div
-          className={`fixed top-24 right-6 z-300 flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-right-4 border ${
-            toast.type === "success"
-              ? "bg-slate-900 border-slate-700 text-white"
-              : "bg-red-500 border-red-400 text-white"
-          }`}
-        >
-          <i
-            className={`fa-solid ${toast.type === "success" ? "fa-circle-check text-emerald-400" : "fa-triangle-exclamation"}`}
-          ></i>
-          <p className="font-black text-[10px] uppercase tracking-widest">
-            {toast.message}
-          </p>
-        </div>
-      )}
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-      {/* Quick Fund Modal */}
-      {showFundModal && (
-        <div className="fixed inset-0 z-250 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white w-full max-w-md rounded-4xl md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl animate-in zoom-in-95 relative border border-slate-100">
-            <button
-              onClick={() => setShowFundModal(false)}
-              className="absolute top-4 right-4 md:top-6 md:right-6 text-slate-400 hover:text-slate-900 transition-colors"
+        .mkt-root { font-family: 'DM Sans', sans-serif; }
+        .mkt-root * { box-sizing: border-box; }
+
+        .mkt-heading { font-family: 'Syne', sans-serif; }
+
+        /* Toast */
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateY(-12px) scale(0.96); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .mkt-toast { animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+        /* Card */
+        .mkt-card {
+          background: #ffffff;
+          border: 1.5px solid #f0eef9;
+          border-radius: 20px;
+          overflow: hidden;
+          transition: box-shadow 0.35s ease, transform 0.35s ease, border-color 0.25s ease;
+          display: flex;
+          flex-direction: column;
+          position: relative;
+        }
+        .mkt-card:hover {
+          box-shadow: 0 24px 48px -8px rgba(99,76,201,0.14), 0 4px 16px -4px rgba(99,76,201,0.08);
+          transform: translateY(-4px);
+          border-color: #d8d0f8;
+        }
+
+        /* Image zone */
+        .mkt-card-img-wrap {
+          width: 80px; height: 80px;
+          border-radius: 50%;
+          overflow: hidden;
+          border: 3px solid #ede9fe;
+          box-shadow: 0 4px 16px rgba(124,92,252,0.15);
+          flex-shrink: 0;
+          transition: box-shadow 0.3s ease, transform 0.3s ease;
+        }
+        .mkt-card:hover .mkt-card-img-wrap {
+          box-shadow: 0 8px 24px rgba(124,92,252,0.25);
+          transform: scale(1.05);
+        }
+        .mkt-card-img {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+
+        /* Slots bar */
+        .mkt-bar-bg { background: #f0eef9; border-radius: 99px; height: 6px; overflow: hidden; }
+        .mkt-bar-fill {
+          height: 100%; border-radius: 99px;
+          background: linear-gradient(90deg, #7c5cfc, #a78bfa);
+          transition: width 0.8s cubic-bezier(0.34,1.2,0.64,1);
+        }
+        .mkt-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+
+        /* Join button */
+        .mkt-join-btn {
+          width: 100%;
+          padding: 13px;
+          border-radius: 12px;
+          font-family: 'Syne', sans-serif;
+          font-weight: 700;
+          font-size: 13px;
+          letter-spacing: 0.04em;
+          text-transform: uppercase;
+          border: none;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .mkt-join-btn.primary {
+          background: linear-gradient(135deg, #7c5cfc 0%, #6366f1 100%);
+          color: #fff;
+          box-shadow: 0 4px 16px rgba(124,92,252,0.3);
+        }
+        .mkt-join-btn.primary:hover {
+          box-shadow: 0 8px 24px rgba(124,92,252,0.4);
+          transform: translateY(-1px);
+        }
+        .mkt-join-btn.fund {
+          background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+          color: #fff;
+          box-shadow: 0 4px 16px rgba(245,158,11,0.28);
+        }
+        .mkt-join-btn.fund:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.38); transform: translateY(-1px); }
+        .mkt-join-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+        .mkt-join-btn:active:not(:disabled) { transform: scale(0.98) !important; }
+
+        /* Filter pills */
+        .mkt-pill {
+          padding: 8px 18px;
+          border-radius: 99px;
+          font-family: 'Syne', sans-serif;
+          font-size: 11px;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          cursor: pointer;
+          border: 1.5px solid #ede9fe;
+          background: #fff;
+          color: #9b8fc2;
+          white-space: nowrap;
+          transition: all 0.2s ease;
+        }
+        .mkt-pill:hover { border-color: #c4b5fd; color: #6d4fc8; }
+        .mkt-pill.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff;
+          border-color: transparent;
+          box-shadow: 0 4px 12px rgba(124,92,252,0.28);
+        }
+
+        /* Search box */
+        .mkt-search-wrap { position: relative; }
+        .mkt-search-input {
+          width: 100%;
+          background: #fff;
+          border: 1.5px solid #ede9fe;
+          border-radius: 14px;
+          padding: 14px 18px 14px 50px;
+          font-family: 'DM Sans', sans-serif;
+          font-size: 14px;
+          font-weight: 400;
+          color: #1a1230;
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .mkt-search-input::placeholder { color: #b8addb; }
+        .mkt-search-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 4px rgba(124,92,252,0.1); }
+        .mkt-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #b8addb; font-size: 14px; pointer-events: none; }
+
+        /* Category badge on card */
+        .mkt-cat-badge {
+          display: inline-block;
+          padding: 3px 9px;
+          border-radius: 6px;
+          background: #f0eef9;
+          color: #7c5cfc;
+          font-size: 10px;
+          font-family: 'Syne', sans-serif;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+        }
+
+        /* Urgency dot */
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
+        .mkt-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+        .mkt-dot.urgent { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
+        .mkt-dot.ok { background: #10b981; }
+
+        /* Modal */
+        @keyframes modalIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+        .mkt-modal { animation: modalIn 0.28s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+
+        /* Skeleton */
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .mkt-skeleton {
+          background: linear-gradient(90deg, #f5f3ff 25%, #ede9fe 50%, #f5f3ff 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.6s infinite;
+          border-radius: 8px;
+        }
+
+        /* Verified badge */
+        .mkt-verified { color: #7c5cfc; font-size: 11px; }
+
+        /* No-scroll bar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Spin */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .fa-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+      `}</style>
+
+      <div className="mkt-root" style={{ position: "relative" }}>
+        {/* ── Toast ── */}
+        {toast && (
+          <div
+            className="mkt-toast"
+            style={{
+              position: "fixed",
+              top: 88,
+              right: 20,
+              zIndex: 9999,
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: "12px 20px",
+              borderRadius: 14,
+              background: toast.type === "success" ? "#fff" : "#fef2f2",
+              border: `1.5px solid ${toast.type === "success" ? "#d8d0f8" : "#fca5a5"}`,
+              boxShadow: "0 12px 32px rgba(0,0,0,0.1)",
+              maxWidth: 320,
+            }}
+          >
+            <i
+              className={`fa-solid ${toast.type === "success" ? "fa-circle-check" : "fa-triangle-exclamation"}`}
+              style={{
+                color: toast.type === "success" ? "#10b981" : "#ef4444",
+                fontSize: 16,
+              }}
+            />
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 13,
+                fontWeight: 500,
+                color: "#1a1230",
+              }}
             >
-              <i className="fa-solid fa-xmark text-lg"></i>
-            </button>
-
-            <div className="text-center mb-6 md:mb-8">
-              <div className="h-12 w-12 md:h-16 md:w-16 bg-amber-50 text-amber-500 rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl mx-auto mb-4">
-                <i className="fa-solid fa-wallet"></i>
-              </div>
-              <h3 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
-                Top-up Required
-              </h3>
-              <p className="text-slate-500 text-xs md:text-sm font-medium mt-1">
-                You need ₦{neededAmount.toLocaleString()} more to join this
-                plan.
-              </p>
-            </div>
-
-            <div className="bg-slate-50 rounded-xl md:rounded-2xl p-4 md:p-6 mb-6 md:mb-8 border border-slate-100">
-              <div className="flex justify-between text-[8px] md:text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
-                <span>Plan Price</span>
-                <span className="text-slate-900">
-                  ₦{activeAccount?.price.toLocaleString()}
-                </span>
-              </div>
-              <div className="h-2 bg-slate-200 rounded-full overflow-hidden mb-3 md:mb-4">
-                <div
-                  className="h-full bg-indigo-600 transition-all duration-700"
-                  style={{
-                    width: `${Math.min(100, ((user?.balance || 0) / (activeAccount?.price || 1)) * 100)}%`,
-                  }}
-                ></div>
-              </div>
-              <div className="flex justify-between text-[10px] md:text-xs font-black">
-                <span className="text-slate-400">
-                  Balance: ₦{user?.balance.toLocaleString()}
-                </span>
-                <span className="text-indigo-600">
-                  Missing: ₦{neededAmount.toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <button
-                onClick={() => handleFlutterwavePayment(neededAmount)}
-                disabled={isProcessing === "funding"}
-                className="w-full bg-indigo-600 text-white py-3.5 md:py-4 rounded-xl font-black uppercase text-[9px] md:text-[10px] tracking-widest shadow-xl shadow-indigo-100 flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all active:scale-95"
-              >
-                {isProcessing === "funding" ? (
-                  <i className="fa-solid fa-spinner fa-spin"></i>
-                ) : (
-                  <i className="fa-solid fa-bolt"></i>
-                )}
-                Pay ₦{neededAmount.toLocaleString()} via Flutterwave
-              </button>
-
-              <div className="grid grid-cols-2 gap-2 md:gap-3">
-                {[2000, 5000].map((amt) => (
-                  <button
-                    key={amt}
-                    onClick={() => handleFlutterwavePayment(amt)}
-                    className="py-2.5 md:py-3 bg-white border border-slate-200 rounded-xl font-black text-[9px] md:text-[10px] uppercase tracking-widest text-slate-900 hover:border-indigo-600 transition-all active:scale-95"
-                  >
-                    +₦{amt.toLocaleString()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <p className="text-[8px] md:text-[9px] text-center text-slate-400 mt-6 font-bold uppercase tracking-widest">
-              Secured by Flutterwave
+              {toast.message}
             </p>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="flex flex-col gap-6">
-        <div className="relative w-full max-w-2xl mx-auto">
-          <i className="fa-solid fa-magnifying-glass absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"></i>
-          <input
-            type="text"
-            placeholder="Search for Netflix, Spotify, Canva..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border-2 border-slate-100 p-5 pl-14 rounded-3xl font-bold text-slate-900 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 outline-none transition-all shadow-sm"
-          />
-        </div>
-
-        <div className="flex justify-center gap-2 p-1 overflow-x-auto no-scrollbar pb-2">
-          {[
-            "All",
-            ProductCategory.STREAMING,
-            ProductCategory.SOFTWARE,
-            ProductCategory.MUSIC,
-            ProductCategory.EDUCATION,
-          ].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap border-2 ${filter === f ? "bg-slate-900 text-white border-slate-900 shadow-xl" : "bg-white text-slate-400 border-slate-100 hover:border-slate-300"}`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {isLoading ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
-          {[1, 2, 3, 4].map((i) => (
+        {/* ── Quick Fund Modal ── */}
+        {showFundModal && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 9000,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: 16,
+              background: "rgba(15,10,40,0.5)",
+              backdropFilter: "blur(10px)",
+            }}
+          >
             <div
-              key={i}
-              className="bg-white rounded-2xl md:rounded-[2.5rem] p-4 md:p-8 border-2 border-slate-50 animate-pulse"
+              className="mkt-modal"
+              style={{
+                background: "#fff",
+                borderRadius: 24,
+                padding: "36px 32px",
+                width: "100%",
+                maxWidth: 420,
+                position: "relative",
+                border: "1.5px solid #ede9fe",
+                boxShadow: "0 32px 64px rgba(99,76,201,0.18)",
+              }}
             >
-              <div className="h-24 md:h-48 bg-slate-100 rounded-xl md:rounded-2xl mb-4 md:mb-6"></div>
-              <div className="h-4 bg-slate-100 rounded-full w-2/3 mb-2 md:mb-4"></div>
-              <div className="h-3 bg-slate-100 rounded-full w-full mb-4 md:mb-8"></div>
-              <div className="h-8 md:h-12 bg-slate-100 rounded-lg md:rounded-xl"></div>
-            </div>
-          ))}
-        </div>
-      ) : filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-8">
-          {filteredProducts.map((account) => (
-            <div
-              key={account.id}
-              className="bg-white rounded-2xl md:rounded-[2.5rem] border-2 border-slate-50 overflow-hidden group hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 flex flex-col h-full"
-            >
-              <div className="h-32 md:h-56 relative overflow-hidden">
-                <img
-                  src={account.icon_url}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                  alt={account.service_name}
-                />
-                <div className="absolute top-2 left-2 md:top-4 md:left-4 bg-white/95 backdrop-blur px-2 md:px-4 py-1.5 md:py-2.5 rounded-lg md:rounded-2xl shadow-xl border border-slate-100">
-                  <p className="text-xs md:text-xl font-black text-slate-900 leading-none">
-                    ₦{account.price.toLocaleString()}
-                  </p>
-                  <p className="text-[6px] md:text-[8px] font-black uppercase tracking-widest text-slate-400 mt-0.5 md:mt-1">
-                    / Month
-                  </p>
-                </div>
-              </div>
+              <button
+                onClick={() => setShowFundModal(false)}
+                style={{
+                  position: "absolute",
+                  top: 16,
+                  right: 16,
+                  background: "#f5f3ff",
+                  border: "none",
+                  borderRadius: 8,
+                  width: 32,
+                  height: 32,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#7c5cfc",
+                  fontSize: 14,
+                }}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
 
-              <div className="p-3 md:p-8 flex flex-col grow">
-                <div className="grow space-y-3 md:space-y-6">
-                  <div>
-                    <h3 className="text-xs md:text-xl font-black text-slate-900 mb-1 md:mb-2 truncate">
-                      {account.service_name}
-                    </h3>
-                    <div className="flex items-center gap-1 md:gap-2 mb-2 md:mb-4">
-                      <span className="bg-indigo-50 text-indigo-600 px-1.5 md:px-3 py-0.5 md:py-1 rounded-md md:rounded-lg font-black text-[6px] md:text-[9px] uppercase tracking-widest">
-                        {account.category}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5 md:space-y-2">
-                    <div className="flex items-center justify-between text-[6px] md:text-[9px] font-black uppercase tracking-widest">
-                      <span className="text-slate-400">Slots</span>
-                      <span className="text-indigo-600">
-                        {account.available_slots} left
-                      </span>
-                    </div>
-                    <div className="h-1.5 md:h-2.5 bg-slate-50 rounded-full overflow-hidden border border-slate-100">
-                      <div
-                        className="h-full bg-indigo-600 rounded-full transition-all duration-1000"
-                        style={{
-                          width: `${((account.total_slots - account.available_slots) / account.total_slots) * 100}%`,
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-
-                <button
-                  disabled={isProcessing === account.id}
-                  onClick={() => handleJoin(account)}
-                  className={`w-full mt-4 md:mt-8 py-2.5 md:py-4.5 rounded-xl md:rounded-3xl font-black uppercase tracking-widest md:tracking-[0.2em] text-[8px] md:text-[10px] transition-all shadow-xl active:scale-95 disabled:opacity-50 ${
-                    user && user.balance < account.price
-                      ? "bg-amber-500 text-white hover:bg-amber-600"
-                      : "bg-slate-900 text-white hover:bg-indigo-600"
-                  }`}
+              <div style={{ textAlign: "center", marginBottom: 28 }}>
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: 16,
+                    background: "linear-gradient(135deg,#f0eef9,#ede9fe)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    margin: "0 auto 16px",
+                  }}
                 >
-                  {isProcessing === account.id ? (
-                    <i className="fa-solid fa-spinner fa-spin mr-1 md:mr-2"></i>
-                  ) : null}
-                  {user && user.balance < account.price ? "Fund" : `Join`}
-                </button>
+                  <i
+                    className="fa-solid fa-wallet"
+                    style={{ color: "#7c5cfc", fontSize: 22 }}
+                  />
+                </div>
+                <h3
+                  className="mkt-heading"
+                  style={{
+                    margin: "0 0 6px",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#1a1230",
+                  }}
+                >
+                  Top-up Required
+                </h3>
+                <p style={{ margin: 0, color: "#9b8fc2", fontSize: 13 }}>
+                  You need{" "}
+                  <strong style={{ color: "#7c5cfc" }}>
+                    ₦{neededAmount.toLocaleString()}
+                  </strong>{" "}
+                  more to join this plan.
+                </p>
               </div>
+
+              <div
+                style={{
+                  background: "#fafafe",
+                  borderRadius: 14,
+                  padding: "18px 20px",
+                  marginBottom: 24,
+                  border: "1.5px solid #f0eef9",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    marginBottom: 10,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontFamily: "'Syne',sans-serif",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      color: "#b8addb",
+                    }}
+                  >
+                    Plan Price
+                  </span>
+                  <span
+                    style={{ fontSize: 13, fontWeight: 700, color: "#1a1230" }}
+                  >
+                    ₦{activeAccount?.price.toLocaleString()}
+                  </span>
+                </div>
+                <div className="mkt-bar-bg" style={{ marginBottom: 10 }}>
+                  <div
+                    className="mkt-bar-fill"
+                    style={{
+                      width: `${Math.min(100, ((user?.balance || 0) / (activeAccount?.price || 1)) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <div
+                  style={{ display: "flex", justifyContent: "space-between" }}
+                >
+                  <span style={{ fontSize: 12, color: "#9b8fc2" }}>
+                    Balance: ₦{user?.balance.toLocaleString()}
+                  </span>
+                  <span
+                    style={{ fontSize: 12, color: "#7c5cfc", fontWeight: 600 }}
+                  >
+                    Needed: ₦{neededAmount.toLocaleString()}
+                  </span>
+                </div>
+              </div>
+
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 10 }}
+              >
+                <button
+                  className="mkt-join-btn primary"
+                  onClick={() => handleFlutterwavePayment(neededAmount)}
+                  disabled={isProcessing === "funding"}
+                >
+                  {isProcessing === "funding" ? (
+                    <i className="fa-solid fa-spinner fa-spin" />
+                  ) : (
+                    <i className="fa-solid fa-bolt" />
+                  )}
+                  Pay ₦{neededAmount.toLocaleString()} via Flutterwave
+                </button>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: 10,
+                  }}
+                >
+                  {[2000, 5000].map((amt) => (
+                    <button
+                      key={amt}
+                      onClick={() => handleFlutterwavePayment(amt)}
+                      style={{
+                        padding: "11px",
+                        borderRadius: 11,
+                        border: "1.5px solid #ede9fe",
+                        background: "#fff",
+                        fontFamily: "'Syne',sans-serif",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "#7c5cfc",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                      onMouseOver={(e) =>
+                        (e.currentTarget.style.borderColor = "#7c5cfc")
+                      }
+                      onMouseOut={(e) =>
+                        (e.currentTarget.style.borderColor = "#ede9fe")
+                      }
+                    >
+                      + ₦{amt.toLocaleString()}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p
+                style={{
+                  textAlign: "center",
+                  marginTop: 18,
+                  fontSize: 10,
+                  color: "#c4b5fd",
+                  fontFamily: "'Syne',sans-serif",
+                  fontWeight: 700,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                🔒 Secured by Flutterwave
+              </p>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 bg-white rounded-[3rem] border-2 border-dashed border-slate-100">
-          <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-200 mx-auto mb-4 text-xl">
-            <i className="fa-solid fa-magnifying-glass"></i>
           </div>
-          <p className="text-slate-400 font-black text-sm uppercase tracking-widest">
-            No active slots found
+        )}
+
+        {/* ── Header ── */}
+        <div style={{ marginBottom: 28 }}>
+          <p
+            className="mkt-heading"
+            style={{
+              margin: "0 0 4px",
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "#a78bfa",
+            }}
+          >
+            Browse &amp; Subscribe
           </p>
+          <h2
+            className="mkt-heading"
+            style={{
+              margin: 0,
+              fontSize: 26,
+              fontWeight: 800,
+              color: "#1a1230",
+              lineHeight: 1.2,
+            }}
+          >
+            Shared Plans Marketplace
+          </h2>
         </div>
-      )}
-    </div>
+
+        {/* ── Search + Filters ── */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 14,
+            marginBottom: 32,
+          }}
+        >
+          <div className="mkt-search-wrap" style={{ maxWidth: 560 }}>
+            <i className="fa-solid fa-magnifying-glass mkt-search-icon" />
+            <input
+              className="mkt-search-input"
+              type="text"
+              placeholder="Search Netflix, Spotify, Canva..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div
+            style={{ display: "flex", gap: 8, overflowX: "auto" }}
+            className="no-scrollbar"
+          >
+            {["All", ...Object.keys(ProductCategory)].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`mkt-pill ${filter === f ? "active" : ""}`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Grid ── */}
+        {isLoading ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
+              gap: 20,
+            }}
+          >
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                style={{
+                  borderRadius: 20,
+                  overflow: "hidden",
+                  border: "1.5px solid #f0eef9",
+                  background: "#fff",
+                }}
+              >
+                <div className="mkt-skeleton" style={{ height: 160 }} />
+                <div style={{ padding: "18px 18px 20px" }}>
+                  <div
+                    className="mkt-skeleton"
+                    style={{ height: 14, width: "65%", marginBottom: 10 }}
+                  />
+                  <div
+                    className="mkt-skeleton"
+                    style={{ height: 10, width: "90%", marginBottom: 6 }}
+                  />
+                  <div
+                    className="mkt-skeleton"
+                    style={{ height: 10, width: "75%", marginBottom: 20 }}
+                  />
+                  <div
+                    className="mkt-skeleton"
+                    style={{ height: 44, borderRadius: 12 }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredProducts.length > 0 ? (
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
+              gap: 20,
+            }}
+          >
+            {filteredProducts.map((account) => {
+              const pct = slotsPercent(account);
+              const low = isLow(account);
+              const needsFund = user && user.balance < account.price;
+              return (
+                <div
+                  key={account.id}
+                  className="mkt-card"
+                  onMouseEnter={() => setHoveredCard(account.id)}
+                  onMouseLeave={() => setHoveredCard(null)}
+                >
+                  {/* Card Header — gradient band with circular logo */}
+                  <div
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
+                      padding: "24px 18px 16px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      position: "relative",
+                    }}
+                  >
+                    {/* Circular image */}
+                    <div className="mkt-card-img-wrap">
+                      <img
+                        className="mkt-card-img"
+                        src={account.icon_url}
+                        alt={account.service_name}
+                      />
+                    </div>
+
+                    {/* Price + urgency stacked on the right */}
+                    <div
+                      style={{
+                        textAlign: "right",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-end",
+                        gap: 6,
+                      }}
+                    >
+                      <div
+                        style={{
+                          background: "#fff",
+                          borderRadius: 10,
+                          padding: "7px 12px",
+                          border: "1.5px solid #ede9fe",
+                          boxShadow: "0 2px 8px rgba(124,92,252,0.1)",
+                        }}
+                      >
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: "'Syne',sans-serif",
+                            fontWeight: 800,
+                            fontSize: 15,
+                            color: "#1a1230",
+                            lineHeight: 1.1,
+                          }}
+                        >
+                          ₦{account.price.toLocaleString()}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontSize: 9,
+                            fontFamily: "'Syne',sans-serif",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.08em",
+                            color: "#b8addb",
+                          }}
+                        >
+                          / mo
+                        </p>
+                      </div>
+                      {low && (
+                        <div
+                          style={{
+                            background: "rgba(245,158,11,0.12)",
+                            border: "1px solid rgba(245,158,11,0.28)",
+                            borderRadius: 7,
+                            padding: "3px 8px",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
+                        >
+                          <span className="mkt-dot urgent" />
+                          <span
+                            style={{
+                              fontSize: 9,
+                              fontFamily: "'Syne',sans-serif",
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              color: "#f59e0b",
+                              letterSpacing: "0.06em",
+                            }}
+                          >
+                            {account.available_slots} left
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div
+                    style={{
+                      padding: "18px 18px 20px",
+                      display: "flex",
+                      flexDirection: "column",
+                      flexGrow: 1,
+                      gap: 12,
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          marginBottom: 5,
+                        }}
+                      >
+                        <h3
+                          className="mkt-heading"
+                          style={{
+                            margin: 0,
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: "#1a1230",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "75%",
+                          }}
+                        >
+                          {account.service_name}
+                        </h3>
+                        {account.owner?.is_verified && (
+                          <i
+                            className="fa-solid fa-circle-check mkt-verified"
+                            title="Verified seller"
+                          />
+                        )}
+                      </div>
+                      <span className="mkt-cat-badge">{account.category}</span>
+                    </div>
+
+                    {/* Slots */}
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 5,
+                          }}
+                        >
+                          <span
+                            className={`mkt-dot ${low ? "urgent" : "ok"}`}
+                          />
+                          <span
+                            style={{
+                              fontSize: 11,
+                              fontFamily: "'DM Sans',sans-serif",
+                              color: "#9b8fc2",
+                              fontWeight: 500,
+                            }}
+                          >
+                            {account.available_slots} of {account.total_slots}{" "}
+                            slots open
+                          </span>
+                        </div>
+                        <span
+                          style={{
+                            fontSize: 11,
+                            fontFamily: "'Syne',sans-serif",
+                            fontWeight: 700,
+                            color: low ? "#f59e0b" : "#7c5cfc",
+                          }}
+                        >
+                          {pct}%
+                        </span>
+                      </div>
+                      <div className="mkt-bar-bg">
+                        <div
+                          className={`mkt-bar-fill ${low ? "warn" : ""}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Seller info */}
+                    {account.owner && (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                        }}
+                      >
+                        <img
+                          src={
+                            account.owner.avatar ||
+                            `https://ui-avatars.com/api/?name=${encodeURIComponent(account.owner.username || "U")}&background=ede9fe&color=7c5cfc&size=32`
+                          }
+                          style={{
+                            width: 22,
+                            height: 22,
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                            border: "1.5px solid #ede9fe",
+                          }}
+                          alt={account.owner.username}
+                        />
+                        <span
+                          style={{
+                            fontSize: 12,
+                            color: "#b8addb",
+                            fontWeight: 400,
+                          }}
+                        >
+                          @{account.owner.username}
+                        </span>
+                        {account.owner.merchant_rating && (
+                          <span
+                            style={{
+                              marginLeft: "auto",
+                              fontSize: 11,
+                              color: "#f59e0b",
+                              fontWeight: 600,
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 3,
+                            }}
+                          >
+                            <i
+                              className="fa-solid fa-star"
+                              style={{ fontSize: 9 }}
+                            />
+                            {account.owner.merchant_rating.toFixed(1)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    <button
+                      className={`mkt-join-btn ${needsFund ? "fund" : "primary"}`}
+                      disabled={isProcessing === account.id}
+                      onClick={() => handleJoin(account)}
+                      style={{ marginTop: "auto" }}
+                    >
+                      {isProcessing === account.id ? (
+                        <i className="fa-solid fa-spinner fa-spin" />
+                      ) : needsFund ? (
+                        <>
+                          <i className="fa-solid fa-wallet" /> Fund &amp; Join
+                        </>
+                      ) : (
+                        <>
+                          <i className="fa-solid fa-arrow-right-to-bracket" />{" "}
+                          Join Plan
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div
+            style={{
+              textAlign: "center",
+              padding: "64px 32px",
+              background: "#fafafe",
+              borderRadius: 20,
+              border: "1.5px dashed #ede9fe",
+            }}
+          >
+            <div
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 16,
+                background: "#f0eef9",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 16px",
+              }}
+            >
+              <i
+                className="fa-solid fa-magnifying-glass"
+                style={{ color: "#c4b5fd", fontSize: 20 }}
+              />
+            </div>
+            <p
+              className="mkt-heading"
+              style={{
+                margin: 0,
+                color: "#b8addb",
+                fontSize: 13,
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              No active slots found
+            </p>
+            <p style={{ margin: "6px 0 0", color: "#c4b5fd", fontSize: 13 }}>
+              Try adjusting your search or filters
+            </p>
+          </div>
+        )}
+      </div>
+    </>
   );
 };

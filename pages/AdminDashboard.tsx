@@ -92,12 +92,17 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   // ─── Inventory handlers ────────────────────────────────────────────────────
 
+  const sanitise = (data: Partial<MasterAccount>) => {
+    const { _domain, _category, ...clean } = data as any;
+    return clean;
+  };
+
   const handleAddAccount = async (data: Partial<MasterAccount>) => {
     setIsLoading(true);
     try {
       const { error } = await supabase
         .from("master_accounts")
-        .insert([{ ...data, available_slots: data.total_slots }]);
+        .insert([{ ...sanitise(data), available_slots: data.total_slots }]);
       if (error) throw error;
       showFeedback("Log launched to marketplace.");
       fetchData(true);
@@ -116,7 +121,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     try {
       const { error } = await supabase
         .from("master_accounts")
-        .update(data)
+        .update(sanitise(data))
         .eq("id", id);
       if (error) throw error;
       showFeedback("Log updated successfully.");

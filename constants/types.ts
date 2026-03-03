@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export type TViewState =
   | "home"
   | "dashboard"
@@ -53,9 +55,13 @@ export interface MasterAccount {
 export enum ProductCategory {
   STREAMING = "Streaming",
   MUSIC = "Music",
-  VPN = "VPN",
+  VPN = "Privacy & Security",
+  AI = "AI & Writing",
+  DESIGN = "Design",
+  MARKETING = "Marketing",
+  PRODUCTIVITY = "Productivity",
+  GAMING = "Gaming",
   SOCIAL = "Social",
-  SOFTWARE = "Software",
   EDUCATION = "Education",
 }
 
@@ -114,44 +120,54 @@ export interface AdminDashboardProps {
   onRefreshUser?: () => void;
 }
 
-export const PRESET_ICONS = [
-  {
-    name: "Netflix",
-    url: "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Spotify",
-    url: "https://images.unsplash.com/photo-1614680376593-902f74cf0d41?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Canva",
-    url: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "ChatGPT",
-    url: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "YouTube",
-    url: "https://images.unsplash.com/photo-1611162616305-c69b3fa7fbe0?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    name: "Apple",
-    url: "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?auto=format&fit=crop&q=80&w=400",
-  },
-];
+export interface FormState {
+  email: string;
+  name: string;
+  username: string;
+  password: string;
+}
 
-export const INITIAL_FORM: Partial<MasterAccount> = {
-  service_name: "",
-  master_email: "",
-  master_password: "",
-  total_slots: 5,
-  available_slots: 5,
-  price: 0,
-  original_price: 0,
-  description: "",
-  icon_url: PRESET_ICONS[0].url,
-  category: "Streaming" as any,
-  fulfillment_type: "Password" as any,
-  features: [],
+export interface OnboardingState {
+  useCase: string;
+  role: string;
+  referralSource: string;
+}
+
+export interface OnboardingStep {
+  title: string;
+  subtitle: string;
+  field: keyof OnboardingState;
+  options: { icon: ReactNode; label: string }[];
+}
+
+export const DEFAULT_FORM: FormState = {
+  email: "",
+  name: "",
+  username: "",
+  password: "",
 };
+
+export const DEFAULT_ONBOARDING: OnboardingState = {
+  useCase: "",
+  role: "",
+  referralSource: "",
+};
+
+export interface Platform {
+  name: string;
+  domain: string;
+  category: PlatformCategory;
+  hint?: string;
+}
+
+export type PlatformCategory =
+  | "Streaming"
+  | "Music"
+  | "AI & Writing"
+  | "Design"
+  | "Privacy & Security"
+  | "Social"
+  | "Education"
+  | "SEO & Marketing"
+  | "Productivity"
+  | "Gaming";

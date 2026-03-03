@@ -3,8 +3,21 @@ import {
   MasterAccount,
   ProductCategory,
   FulfillmentType,
+  Platform,
 } from "@/constants/types";
-import { PRESET_ICONS } from "@/constants/types";
+import { ServicePicker, logoUrl } from "../ServicePicker";
+
+const CATEGORY_MAP: Record<string, ProductCategory> = {
+  Streaming: ProductCategory.STREAMING,
+  Music: ProductCategory.MUSIC,
+  "AI & Writing": ProductCategory.AI,
+  "Privacy & Security": ProductCategory.VPN,
+  Design: ProductCategory.DESIGN,
+  Education: ProductCategory.EDUCATION,
+  "SEO & Marketing": ProductCategory.MARKETING,
+  Productivity: ProductCategory.PRODUCTIVITY,
+  Gaming: ProductCategory.GAMING,
+};
 
 interface LogFormProps {
   editingId: string | null;
@@ -15,7 +28,33 @@ interface LogFormProps {
   onCancel: () => void;
 }
 
-export const LogForm: React.FC<LogFormProps> = ({
+export const LogForm: React.FC<LogFormProps> = (props) => {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-250 flex items-center justify-center p-4 md:p-8"
+      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(8px)" }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) props.onCancel();
+      }}
+    >
+      <div
+        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-4xl bg-white shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <LogFormInner {...props} />
+      </div>
+    </div>
+  );
+};
+
+const LogFormInner: React.FC<LogFormProps> = ({
   editingId,
   formData,
   isLoading,
@@ -26,271 +65,337 @@ export const LogForm: React.FC<LogFormProps> = ({
   const set = (patch: Partial<MasterAccount>) =>
     onChange({ ...formData, ...patch });
 
-  console.log("yes changed", formData);
+  const selectedPlatform: Platform | null =
+    formData.service_name && formData.icon_url
+      ? {
+          name: formData.service_name,
+          domain: (formData as any)._domain ?? "",
+          category: (formData as any)._category ?? "Streaming",
+        }
+      : null;
+
+  const handlePlatformChange = (p: Platform) => {
+    set({
+      service_name: p.name,
+      icon_url: logoUrl(p.domain, 256),
+      category: CATEGORY_MAP[p.category] ?? ProductCategory.STREAMING,
+      _domain: p.domain,
+      _category: p.category,
+    } as any);
+  };
+
+  const isInvite = formData.fulfillment_type === "Invite Link";
+  const isOtp = formData.fulfillment_type === "OTP / Instruction";
+
+  const discountPct =
+    (formData.price ?? 0) > 0 &&
+    (formData.original_price ?? 0) > (formData.price ?? 0)
+      ? Math.round(
+          (((formData.original_price ?? 0) - (formData.price ?? 0)) /
+            (formData.original_price ?? 1)) *
+            100,
+        )
+      : null;
 
   return (
-    <div className="bg-white rounded-[2.5rem] border border-slate-200 p-8 md:p-12 shadow-2xl animate-in zoom-in-95 duration-200">
-      {/* Form header */}
-      <div className="flex items-center justify-between mb-10">
-        <div className="flex items-center gap-4">
-          <div className="h-12 w-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-            <i
-              className={`fa-solid ${editingId ? "fa-pen-to-square" : "fa-plus"}`}
-            />
-          </div>
-          <div>
-            <h3 className="text-xl font-black text-slate-900">
-              {editingId ? "Edit Log Entry" : "New Log Entry"}
-            </h3>
-            <p className="text-slate-400 text-xs font-medium mt-0.5">
-              {editingId
-                ? "Update the details below"
-                : "Fill in the subscription details"}
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all"
-        >
-          <i className="fa-solid fa-xmark" />
-        </button>
-      </div>
+    <>
+      <div className="h-1 bg-linear-to-r from-violet-500 via-indigo-500 to-cyan-400 rounded-t-4xl" />
 
-      <form onSubmit={onSubmit} className="space-y-8">
-        {/* Row 1: Service info */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <Field label="Service Name">
-            <input
-              type="text"
-              required
-              placeholder="e.g. Netflix Premium"
-              className="input"
-              value={formData.service_name}
-              onChange={(e) => set({ service_name: e.target.value })}
-            />
-          </Field>
-          <Field label="Category">
-            <select
-              className="input"
-              value={formData.category}
-              onChange={(e) =>
-                set({ category: e.target.value as ProductCategory })
-              }
-            >
-              {Object.values(ProductCategory).map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Fulfillment Method">
-            <select
-              className="input border-indigo-100 text-indigo-600 font-black"
-              value={formData.fulfillment_type}
-              onChange={(e) =>
-                set({ fulfillment_type: e.target.value as FulfillmentType })
-              }
-            >
-              <option value="Password">Direct Password</option>
-              <option value="Invite Link">Invite Link</option>
-              <option value="OTP / Instruction">OTP / Instructions</option>
-            </select>
-          </Field>
-        </div>
-
-        {/* Row 2: Pricing & slots */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <Field label="Price (₦/month)">
+      <div className="p-7 md:p-9">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">
-                ₦
-              </span>
-              <input
-                type="number"
-                required
-                className="input pl-8"
-                value={formData.price}
-                onChange={(e) => set({ price: parseFloat(e.target.value) })}
-              />
-            </div>
-          </Field>
-          <Field label="Original Price (₦)" hint="Used to show discount">
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">
-                ₦
-              </span>
-              <input
-                type="number"
-                className="input pl-8"
-                value={formData.original_price}
-                onChange={(e) =>
-                  set({ original_price: parseFloat(e.target.value) })
-                }
-              />
-            </div>
-          </Field>
-          <Field label="Total Slots">
-            <input
-              type="number"
-              required
-              min={1}
-              className="input"
-              value={formData.total_slots}
-              onChange={(e) => {
-                const v = parseInt(e.target.value);
-                set({ total_slots: v, available_slots: v });
-              }}
-            />
-          </Field>
-        </div>
-
-        {/* Row 3: Credentials */}
-        <div className="p-6 bg-slate-50 rounded-3xl border border-dashed border-slate-200 space-y-5">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-indigo-600 flex items-center gap-2">
-            <i className="fa-solid fa-lock text-[8px]" />
-            Sensitive Credentials — Never visible to buyers
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Field
-              label={
-                formData.fulfillment_type === "Invite Link"
-                  ? "Activation Link"
-                  : "Log Email / ID"
-              }
-            >
-              <input
-                type="text"
-                required
-                className="input bg-white border-indigo-50"
-                value={formData.master_email}
-                onChange={(e) => set({ master_email: e.target.value })}
-                placeholder={
-                  formData.fulfillment_type === "Invite Link"
-                    ? "https://..."
-                    : "account@email.com"
-                }
-              />
-            </Field>
-            <Field
-              label={
-                formData.fulfillment_type === "OTP / Instruction"
-                  ? "Setup Instructions"
-                  : "Log Password"
-              }
-            >
-              <input
-                type={
-                  formData.fulfillment_type === "OTP / Instruction"
-                    ? "text"
-                    : "password"
-                }
-                required
-                className="input bg-white border-indigo-50"
-                value={formData.master_password}
-                onChange={(e) => set({ master_password: e.target.value })}
-                placeholder={
-                  formData.fulfillment_type === "OTP / Instruction"
-                    ? "Step-by-step instructions..."
-                    : "••••••••"
-                }
-              />
-            </Field>
-          </div>
-        </div>
-
-        {/* Icon picker */}
-        <Field label="Service Icon">
-          <div className="flex flex-wrap gap-3 mt-2">
-            {PRESET_ICONS.map((icon) => (
-              <button
-                key={icon.url}
-                type="button"
-                onClick={() => set({ icon_url: icon.url })}
-                title={icon.name}
-                className={`relative p-1 rounded-2xl border-2 transition-all ${
-                  formData.icon_url === icon.url
-                    ? "border-indigo-600 scale-110 shadow-lg shadow-indigo-100"
-                    : "border-transparent opacity-40 hover:opacity-70"
-                }`}
-              >
+              {formData.icon_url ? (
                 <img
-                  src={icon.url}
-                  className="h-12 w-12 rounded-xl object-cover"
-                  alt={icon.name}
+                  src={formData.icon_url}
+                  alt=""
+                  className="h-12 w-12 rounded-2xl object-contain border border-slate-100 shadow-sm bg-slate-50 p-0.5"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.opacity = "0";
+                  }}
                 />
-                {formData.icon_url === icon.url && (
-                  <span className="absolute -top-1.5 -right-1.5 h-4 w-4 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <i className="fa-solid fa-check text-white text-[7px]" />
-                  </span>
-                )}
-              </button>
-            ))}
-            <input
-              type="text"
-              placeholder="Custom image URL..."
-              className="input flex-1 min-w-32 text-xs"
-              value={formData.icon_url}
-              onChange={(e) => set({ icon_url: e.target.value })}
-            />
+              ) : (
+                <div className="h-12 w-12 rounded-2xl bg-linear-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
+                  <i className="fa-solid fa-layer-group text-indigo-400" />
+                </div>
+              )}
+              {formData.service_name && (
+                <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
+                  <i
+                    className="fa-solid fa-check text-white"
+                    style={{ fontSize: 7 }}
+                  />
+                </div>
+              )}
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-slate-900">
+                {editingId ? "Edit Log Entry" : "New Log Entry"}
+              </h3>
+              <p className="text-xs text-slate-400 font-medium mt-0.5">
+                {formData.service_name
+                  ? `Configuring ${formData.service_name}`
+                  : "Start by selecting a platform below"}
+              </p>
+            </div>
           </div>
-        </Field>
-
-        {/* Description */}
-        <Field label="Description / Internal Notes">
-          <textarea
-            className="input h-24 resize-none"
-            value={formData.description}
-            onChange={(e) => set({ description: e.target.value })}
-            placeholder="Tell users about this subscription..."
-          />
-        </Field>
-
-        {/* Actions */}
-        <div className="flex gap-4 pt-2">
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-indigo-600 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            {isLoading && <i className="fa-solid fa-spinner fa-spin" />}
-            {editingId ? "Update Log" : "Launch Log to Marketplace"}
-          </button>
           <button
             type="button"
             onClick={onCancel}
-            className="px-8 bg-slate-100 text-slate-400 font-black uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
+            className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all shrink-0"
           >
-            Cancel
+            <i className="fa-solid fa-xmark" />
           </button>
         </div>
-      </form>
+
+        <form onSubmit={onSubmit} className="space-y-7">
+          <Section n="1" title="Platform" sub="Choose the subscription service">
+            <ServicePicker
+              value={selectedPlatform}
+              onChange={handlePlatformChange}
+            />
+            {formData.service_name && (
+              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Field label="Listing label" hint="Override name if needed">
+                  <Input
+                    value={formData.service_name ?? ""}
+                    onChange={(v) => set({ service_name: v })}
+                    placeholder="e.g. Netflix 4K Family"
+                  />
+                </Field>
+                <Field label="Category">
+                  <select
+                    className="field-input"
+                    value={formData.category}
+                    onChange={(e) =>
+                      set({ category: e.target.value as ProductCategory })
+                    }
+                  >
+                    {Object.values(ProductCategory).map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              </div>
+            )}
+          </Section>
+
+          <Section
+            n="2"
+            title="Pricing & Slots"
+            sub="How much members pay and how many can join"
+          >
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Field label="Your Price / month">
+                <NairaInput
+                  value={formData.price}
+                  onChange={(v) => set({ price: v })}
+                  placeholder="3,500"
+                />
+              </Field>
+              <Field label="Original Price" hint="shows % off">
+                <NairaInput
+                  value={formData.original_price}
+                  onChange={(v) => set({ original_price: v })}
+                  placeholder="12,000"
+                />
+              </Field>
+              <Field label="Total Slots">
+                <div className="relative">
+                  <Input
+                    type="number"
+                    value={String(formData.total_slots ?? "")}
+                    onChange={(v) => {
+                      const n = parseInt(v);
+                      set({ total_slots: n, available_slots: n });
+                    }}
+                    placeholder="5"
+                    min="1"
+                    max="20"
+                    className="pr-14"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 uppercase tracking-wider select-none">
+                    slots
+                  </span>
+                </div>
+              </Field>
+            </div>
+
+            {discountPct && (
+              <div className="flex items-center gap-3 mt-3 px-4 py-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
+                <div className="h-8 w-8 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0">
+                  <i className="fa-solid fa-tag text-white text-xs" />
+                </div>
+                <div>
+                  <p className="text-xs font-black text-emerald-700">
+                    {discountPct}% discount shown to buyers
+                  </p>
+                  <p className="text-[10px] text-emerald-600 font-medium">
+                    Members save ₦
+                    {(
+                      (formData.original_price ?? 0) - (formData.price ?? 0)
+                    ).toLocaleString()}{" "}
+                    / month
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="mt-4">
+              <Field label="Fulfillment method">
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    ["Password", "Invite Link", "OTP / Instruction"] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt}
+                      type="button"
+                      onClick={() =>
+                        set({ fulfillment_type: opt as FulfillmentType })
+                      }
+                      className={`py-3 px-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all leading-tight text-center ${
+                        formData.fulfillment_type === opt
+                          ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                          : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
+                      }`}
+                    >
+                      <i
+                        className={`fa-solid block mb-1.5 text-sm ${
+                          opt === "Password"
+                            ? "fa-key"
+                            : opt === "Invite Link"
+                              ? "fa-link"
+                              : "fa-qrcode"
+                        }`}
+                      />
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+          </Section>
+
+          <Section
+            n="3"
+            title="Credentials"
+            sub="Encrypted — only revealed after successful purchase"
+          >
+            <div className="flex items-start gap-2.5 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl mb-4">
+              <i className="fa-solid fa-shield-halved text-amber-500 mt-0.5 shrink-0" />
+              <p className="text-[11px] font-semibold text-amber-700 leading-relaxed">
+                These details are never shown publicly. Members only see them
+                after a verified purchase.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field
+                label={
+                  isInvite ? "Invite / Activation link" : "Account email or ID"
+                }
+              >
+                <Input
+                  required
+                  value={formData.master_email ?? ""}
+                  onChange={(v) => set({ master_email: v })}
+                  placeholder={isInvite ? "https://..." : "account@email.com"}
+                />
+              </Field>
+              <Field label={isOtp ? "Setup instructions" : "Account password"}>
+                <Input
+                  type={isOtp ? "text" : "password"}
+                  required
+                  value={formData.master_password ?? ""}
+                  onChange={(v) => set({ master_password: v })}
+                  placeholder={isOtp ? "Step-by-step guide..." : "••••••••"}
+                />
+              </Field>
+            </div>
+          </Section>
+
+          <Section
+            n="4"
+            title="Description"
+            sub="Optional — displayed on the marketplace card"
+          >
+            <textarea
+              className="field-input h-24 resize-none"
+              value={formData.description ?? ""}
+              onChange={(e) => set({ description: e.target.value })}
+              placeholder="e.g. Netflix 4K UHD · Family plan · 5 screens · Stable account, no region issues."
+            />
+          </Section>
+
+          <div className="flex gap-3 pt-1 pb-1">
+            <button
+              type="submit"
+              disabled={isLoading || !formData.service_name}
+              className="flex-1 flex items-center justify-center gap-2.5 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100/40 disabled:opacity-40"
+            >
+              {isLoading ? (
+                <i className="fa-solid fa-spinner fa-spin" />
+              ) : (
+                <i className="fa-solid fa-rocket-launch text-xs" />
+              )}
+              {editingId ? "Save Changes" : "Launch to Marketplace"}
+            </button>
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-7 bg-slate-100 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
 
       <style>{`
-        .input {
+        .field-input {
           width: 100%;
           background: #f8fafc;
-          border: 1px solid #f1f5f9;
-          padding: 1rem;
-          border-radius: 0.75rem;
-          font-weight: 700;
+          border: 1.5px solid #f1f5f9;
+          padding: 12px 16px;
+          border-radius: 14px;
+          font-weight: 600;
           font-size: 0.875rem;
+          color: #0f172a;
           outline: none;
-          transition: all 0.15s;
+          transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
         }
-        .input:focus {
+        .field-input:focus {
           border-color: #6366f1;
-          background: white;
-          box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+          background: #fff;
+          box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
         }
+        .field-input::placeholder { color: #94a3b8; font-weight: 500; }
+        .field-input option { font-weight: 600; }
       `}</style>
-    </div>
+    </>
   );
 };
 
-// ─── Field wrapper ─────────────────────────────────────────────────────────────
+const Section: React.FC<{
+  n: string;
+  title: string;
+  sub: string;
+  children: React.ReactNode;
+}> = ({ n, title, sub, children }) => (
+  <div className="space-y-4">
+    <div className="flex items-center gap-3">
+      <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[11px] font-black shrink-0">
+        {n}
+      </div>
+      <div>
+        <p className="text-sm font-black text-slate-900">{title}</p>
+        <p className="text-[10px] text-slate-400 font-medium">{sub}</p>
+      </div>
+    </div>
+    {children}
+  </div>
+);
 
 const Field: React.FC<{
   label: string;
@@ -298,14 +403,50 @@ const Field: React.FC<{
   children: React.ReactNode;
 }> = ({ label, hint, children }) => (
   <div className="space-y-1.5">
-    <div className="flex items-center justify-between ml-1">
+    <div className="flex items-center justify-between px-0.5">
       <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
         {label}
       </label>
       {hint && (
-        <span className="text-[9px] text-slate-300 font-medium">{hint}</span>
+        <span className="text-[9px] italic text-slate-300 font-medium">
+          {hint}
+        </span>
       )}
     </div>
     {children}
+  </div>
+);
+
+const Input: React.FC<
+  React.InputHTMLAttributes<HTMLInputElement> & {
+    onChange?: (v: string) => void;
+  }
+> = ({ onChange, className = "", ...props }) => (
+  <input
+    {...props}
+    className={`field-input ${className}`}
+    onChange={
+      onChange ? (e) => onChange(e.target.value) : (props.onChange as any)
+    }
+  />
+);
+
+const NairaInput: React.FC<{
+  value?: number;
+  onChange: (v: number) => void;
+  placeholder?: string;
+}> = ({ value, onChange, placeholder }) => (
+  <div className="relative">
+    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm select-none">
+      ₦
+    </span>
+    <input
+      type="number"
+      min={0}
+      value={value ?? ""}
+      placeholder={placeholder}
+      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+      className="field-input pl-8"
+    />
   </div>
 );

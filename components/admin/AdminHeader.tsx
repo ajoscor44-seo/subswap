@@ -31,7 +31,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           Admin Console
         </h1>
         <p className="text-slate-400 font-medium text-sm mt-0.5">
-          Master control · SubSwap platform
+          Master control · DiscountZAR platform
         </p>
       </div>
     </div>

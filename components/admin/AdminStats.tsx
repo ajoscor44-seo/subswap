@@ -1,6 +1,7 @@
 import { MasterAccount, Transaction } from "@/constants/types";
 import React, { useMemo } from "react";
 import { StatCard } from "./StatCard";
+import { OnboardingAnalytics } from "../OnboardingAnalytics";
 
 interface AdminStatsProps {
   accounts: MasterAccount[];
@@ -306,6 +307,8 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
           </div>
         </div>
       </div>
+
+      <OnboardingAnalytics />
     </div>
   );
 };
