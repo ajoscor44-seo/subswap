@@ -12,6 +12,17 @@ export type TViewState =
 
 export type UserRole = "admin" | "user";
 
+export interface Step {
+  number: string;
+  accent: string;
+  light: string;
+  icon: string;
+  title: string;
+  description: string;
+  detail: string;
+  detailIcon: string;
+}
+
 export interface User {
   id: string;
   email: string;
