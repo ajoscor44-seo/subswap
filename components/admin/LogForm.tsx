@@ -6,7 +6,18 @@ import {
   Platform,
 } from "@/constants/types";
 import { ServicePicker, logoUrl } from "../ServicePicker";
-import { CATEGORY_MAP } from "@/constants/data";
+
+const CATEGORY_MAP: Record<string, ProductCategory> = {
+  Streaming: ProductCategory.STREAMING,
+  Music: ProductCategory.MUSIC,
+  "AI & Writing": ProductCategory.AI,
+  "Privacy & Security": ProductCategory.VPN,
+  Design: ProductCategory.DESIGN,
+  Education: ProductCategory.EDUCATION,
+  "SEO & Marketing": ProductCategory.MARKETING,
+  Productivity: ProductCategory.PRODUCTIVITY,
+  Gaming: ProductCategory.GAMING,
+};
 
 interface LogFormProps {
   editingId: string | null;
@@ -17,7 +28,33 @@ interface LogFormProps {
   onCancel: () => void;
 }
 
-export const LogForm: React.FC<LogFormProps> = ({
+export const LogForm: React.FC<LogFormProps> = (props) => {
+  React.useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
+  return (
+    <div
+      className="fixed inset-0 z-250 flex items-center justify-center p-4 md:p-8"
+      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(8px)" }}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) props.onCancel();
+      }}
+    >
+      <div
+        className="relative w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-4xl bg-white shadow-2xl animate-in zoom-in-95 fade-in duration-200"
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <LogFormInner {...props} />
+      </div>
+    </div>
+  );
+};
+
+const LogFormInner: React.FC<LogFormProps> = ({
   editingId,
   formData,
   isLoading,
@@ -32,8 +69,8 @@ export const LogForm: React.FC<LogFormProps> = ({
     formData.service_name && formData.icon_url
       ? {
           name: formData.service_name,
-          domain: formData._domain ?? "",
-          category: (formData._category as any) ?? "Streaming",
+          domain: (formData as any)._domain ?? "",
+          category: (formData as any)._category ?? "Streaming",
         }
       : null;
 
@@ -51,19 +88,20 @@ export const LogForm: React.FC<LogFormProps> = ({
   const isOtp = formData.fulfillment_type === "OTP / Instruction";
 
   const discountPct =
-    formData.price > 0 && formData.original_price > formData.price
+    (formData.price ?? 0) > 0 &&
+    (formData.original_price ?? 0) > (formData.price ?? 0)
       ? Math.round(
-          ((formData.original_price - formData.price) /
-            formData.original_price) *
+          (((formData.original_price ?? 0) - (formData.price ?? 0)) /
+            (formData.original_price ?? 1)) *
             100,
         )
       : null;
 
   return (
-    <div className="bg-white rounded-4xl border border-slate-200/80 overflow-hidden shadow-2xl shadow-slate-200/60 animate-in slide-in-from-top-3 duration-200">
-      <div className="h-1 bg-linear-to-r from-violet-500 via-indigo-500 to-cyan-400" />
+    <>
+      <div className="h-1 bg-linear-to-r from-violet-500 via-indigo-500 to-cyan-400 rounded-t-4xl" />
 
-      <div className="p-7 md:p-10">
+      <div className="p-7 md:p-9">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -90,7 +128,6 @@ export const LogForm: React.FC<LogFormProps> = ({
                 </div>
               )}
             </div>
-
             <div>
               <h3 className="text-lg font-black text-slate-900">
                 {editingId ? "Edit Log Entry" : "New Log Entry"}
@@ -102,11 +139,10 @@ export const LogForm: React.FC<LogFormProps> = ({
               </p>
             </div>
           </div>
-
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all"
+            className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all shrink-0"
           >
             <i className="fa-solid fa-xmark" />
           </button>
@@ -114,13 +150,10 @@ export const LogForm: React.FC<LogFormProps> = ({
 
         <form onSubmit={onSubmit} className="space-y-7">
           <Section n="1" title="Platform" sub="Choose the subscription service">
-            <div className="relative">
-              <ServicePicker
-                value={selectedPlatform}
-                onChange={handlePlatformChange}
-              />
-            </div>
-
+            <ServicePicker
+              value={selectedPlatform}
+              onChange={handlePlatformChange}
+            />
             {formData.service_name && (
               <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Field label="Listing label" hint="Override name if needed">
@@ -202,9 +235,9 @@ export const LogForm: React.FC<LogFormProps> = ({
                   <p className="text-[10px] text-emerald-600 font-medium">
                     Members save ₦
                     {(
-                      formData.original_price! - formData.price!
+                      (formData.original_price ?? 0) - (formData.price ?? 0)
                     ).toLocaleString()}{" "}
-                    per month
+                    / month
                   </p>
                 </div>
               </div>
@@ -237,7 +270,7 @@ export const LogForm: React.FC<LogFormProps> = ({
                               : "fa-qrcode"
                         }`}
                       />
-                      <span className="mt-2 ml-2">{opt}</span>
+                      {opt}
                     </button>
                   ))}
                 </div>
@@ -257,7 +290,6 @@ export const LogForm: React.FC<LogFormProps> = ({
                 after a verified purchase.
               </p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field
                 label={
@@ -296,7 +328,7 @@ export const LogForm: React.FC<LogFormProps> = ({
             />
           </Section>
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex gap-3 pt-1 pb-1">
             <button
               type="submit"
               disabled={isLoading || !formData.service_name}
@@ -341,7 +373,7 @@ export const LogForm: React.FC<LogFormProps> = ({
         .field-input::placeholder { color: #94a3b8; font-weight: 500; }
         .field-input option { font-weight: 600; }
       `}</style>
-    </div>
+    </>
   );
 };
 

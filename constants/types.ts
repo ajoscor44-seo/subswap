@@ -55,15 +55,13 @@ export interface MasterAccount {
 export enum ProductCategory {
   STREAMING = "Streaming",
   MUSIC = "Music",
-  VPN = "VPN",
+  VPN = "Privacy & Security",
   AI = "AI",
   DESIGN = "Design",
-  COURSES = "Courses",
   MARKETING = "Marketing",
   PRODUCTIVITY = "Productivity",
   GAMING = "Gaming",
   SOCIAL = "Social",
-  SOFTWARE = "Software",
   EDUCATION = "Education",
 }
 
@@ -167,6 +165,8 @@ export type PlatformCategory =
   | "Music"
   | "AI & Writing"
   | "Design"
+  | "Privacy & Security"
+  | "Social"
   | "Education"
   | "SEO & Marketing"
   | "Productivity"

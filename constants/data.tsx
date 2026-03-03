@@ -167,6 +167,62 @@ export const PLATFORMS: Platform[] = [
     hint: "Independent artists",
   },
 
+  // ── Privacy & Security ──
+  {
+    name: "NordVPN",
+    domain: "nordvpn.com",
+    category: "Privacy & Security",
+    hint: "Fast & feature-rich VPN",
+  },
+  {
+    name: "Surfshark",
+    domain: "surfshark.com",
+    category: "Privacy & Security",
+    hint: "Unlimited devices, great value",
+  },
+  {
+    name: "Proton VPN",
+    domain: "protonvpn.com",
+    category: "Privacy & Security",
+    hint: "Strong privacy, Swiss-based",
+  },
+  {
+    name: "ExpressVPN",
+    domain: "expressvpn.com",
+    category: "Privacy & Security",
+    hint: "User-friendly, reliable streaming",
+  },
+  {
+    name: "Private Internet Access",
+    domain: "privateinternetaccess.com",
+    category: "Privacy & Security",
+    hint: "Customizable & affordable",
+  },
+  {
+    name: "Mullvad VPN",
+    domain: "mullvad.net",
+    category: "Privacy & Security",
+    hint: "Anonymous payments, no-logs focus",
+  },
+  {
+    name: "1Password",
+    domain: "1password.com",
+    category: "Privacy & Security",
+    hint: "Premium password manager",
+  },
+  {
+    name: "Bitwarden",
+    domain: "bitwarden.com",
+    category: "Privacy & Security",
+    hint: "Open-source password manager",
+  },
+  {
+    name: "Proton Pass",
+    domain: "proton.me/pass",
+    category: "Privacy & Security",
+    hint: "Privacy-focused passwords + aliases",
+  },
+
   // ── AI & Writing ──
   {
     name: "ChatGPT Plus",
@@ -221,6 +277,68 @@ export const PLATFORMS: Platform[] = [
     domain: "runwayml.com",
     category: "AI & Writing",
     hint: "AI video generation",
+  },
+
+  // ── Social ──
+  {
+    name: "Facebook",
+    domain: "facebook.com",
+    category: "Social",
+    hint: "Meta social network",
+  },
+  {
+    name: "Instagram",
+    domain: "instagram.com",
+    category: "Social",
+    hint: "Photo & video sharing (Meta)",
+  },
+  {
+    name: "X",
+    domain: "x.com",
+    category: "Social",
+    hint: "Real-time microblogging",
+  },
+  {
+    name: "TikTok",
+    domain: "tiktok.com",
+    category: "Social",
+    hint: "Short-form video platform",
+  },
+  {
+    name: "YouTube",
+    domain: "youtube.com",
+    category: "Social",
+    hint: "Video sharing & streaming",
+  },
+  {
+    name: "LinkedIn",
+    domain: "linkedin.com",
+    category: "Social",
+    hint: "Professional networking",
+  },
+  {
+    name: "Reddit",
+    domain: "reddit.com",
+    category: "Social",
+    hint: "Community discussions & forums",
+  },
+  {
+    name: "Snapchat",
+    domain: "snapchat.com",
+    category: "Social",
+    hint: "Ephemeral messaging & stories",
+  },
+  {
+    name: "Discord",
+    domain: "discord.com",
+    category: "Social",
+    hint: "Voice, video & communities",
+  },
+  {
+    name: "WhatsApp",
+    domain: "whatsapp.com",
+    category: "Social",
+    hint: "Encrypted messaging (Meta)",
   },
 
   // ── Design ──
@@ -413,6 +531,8 @@ export const CATEGORY_META: Record<
   "SEO & Marketing": { color: "#0891B2", icon: "fa-magnifying-glass-chart" },
   Productivity: { color: "#475569", icon: "fa-briefcase" },
   Gaming: { color: "#10B981", icon: "fa-gamepad" },
+  Social: { color: "#3B82F6", icon: "fa-users" },
+  "Privacy & Security": { color: "#6B7280", icon: "fa-shield-halved" },
 };
 
 export const CATEGORY_MAP: Record<string, ProductCategory> = {
