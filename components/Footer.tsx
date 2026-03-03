@@ -225,6 +225,8 @@ const Footer: React.FC = () => {
                   <a
                     key={i}
                     href={s.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="ft-social"
                     aria-label={s.label}
                   >

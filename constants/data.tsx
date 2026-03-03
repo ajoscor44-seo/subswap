@@ -804,8 +804,16 @@ export const WA_LINKS = {
 };
 
 export const SOCIALS = [
-  { icon: "fa-brands fa-x-twitter", href: "#", label: "X" },
-  { icon: "fa-brands fa-instagram", href: "#", label: "Instagram" },
+  {
+    icon: "fa-brands fa-x-twitter",
+    href: "https://x.com/joindiscountzar",
+    label: "X",
+  },
+  {
+    icon: "fa-brands fa-instagram",
+    href: "https://instagram.com/joindiscountzar",
+    label: "Instagram",
+  },
   {
     icon: "fa-brands fa-whatsapp",
     href: WA_LINKS.chatWithUs,
