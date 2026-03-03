@@ -7,6 +7,7 @@ import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 import { SettingsTab } from "./SettingsTab";
+import WalletTab from "./WalletTab";
 
 interface DashboardProps {
   user: User;
@@ -338,103 +339,6 @@ const ExploreTab: React.FC<{
   );
 };
 
-// Wallet Tab Component (Modified for filling input on quick select)
-const WalletTab: React.FC<{
-  user: User;
-  customAmount: string;
-  setCustomAmount: (amount: string) => void;
-  handleFlutterwavePayment: (amount: number) => void;
-  showStatus: (text: string, type: "success" | "error") => void;
-}> = ({
-  user,
-  customAmount,
-  setCustomAmount,
-  handleFlutterwavePayment,
-  showStatus,
-}) => {
-  return (
-    <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between mb-6 md:mb-12">
-        <div className="flex items-center gap-3 md:gap-6">
-          <div className="h-10 w-10 md:h-16 md:w-16 bg-indigo-50 text-indigo-600 rounded-xl md:rounded-3xl flex items-center justify-center text-xl md:text-3xl">
-            <i className="fa-solid fa-naira-sign"></i>
-          </div>
-          <div>
-            <h3 className="text-lg md:text-2xl font-black text-slate-900">
-              Wallet
-            </h3>
-            <p className="text-slate-500 text-[10px] md:text-sm font-medium">
-              Add Naira to your wallet.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-        <div className="bg-linear-to-br from-slate-900 to-indigo-900 rounded-4xl md:rounded-[2.5rem] p-6 md:p-8 text-white flex flex-col justify-between min-h-35 md:min-h-0">
-          <div>
-            <p className="text-[8px] md:text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-1 md:mb-2">
-              Balance
-            </p>
-            <h4 className="text-3xl md:text-5xl font-black tracking-tighter">
-              ₦{user.balance.toLocaleString()}
-            </h4>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <div className="space-y-3">
-            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Custom Amount
-            </p>
-            <div className="flex gap-2">
-              <div className="relative grow">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400">
-                  ₦
-                </span>
-                <input
-                  type="number"
-                  value={customAmount}
-                  onChange={(e) => setCustomAmount(e.target.value)}
-                  placeholder="Enter amount"
-                  className="w-full pl-8 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-black text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-                />
-              </div>
-              <button
-                onClick={() => {
-                  const amt = parseInt(customAmount);
-                  if (amt > 0) handleFlutterwavePayment(amt);
-                  else showStatus("Please enter a valid amount", "error");
-                }}
-                className="px-8 bg-indigo-600 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
-              >
-                Fund
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-400">
-              Quick Select
-            </p>
-            <div className="grid grid-cols-2 gap-2 md:gap-3">
-              {[2000, 5000, 10000, 20000].map((amt) => (
-                <button
-                  key={amt}
-                  onClick={() => setCustomAmount(amt.toString())}
-                  className="p-3 md:p-4 bg-slate-50 border border-slate-100 rounded-xl md:rounded-2xl font-black text-xs md:text-base text-slate-900 hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm"
-                >
-                  ₦{amt.toLocaleString()}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 // History Tab Component
 const HistoryTab: React.FC<{
   user: User;
@@ -445,90 +349,6 @@ const HistoryTab: React.FC<{
     </div>
   );
 };
-
-// Settings Tab Component
-// const SettingsTab: React.FC<{
-//   user: User;
-//   showStatus: (text: string, type: "success" | "error") => void;
-//   logout: () => void;
-// }> = ({ user, showStatus, logout }) => {
-//   return (
-//     <div className="bg-white rounded-4xl md:rounded-[2.5rem] p-6 md:p-12 shadow-sm border border-slate-100 animate-in fade-in duration-500">
-//       <div className="mb-8 md:mb-12">
-//         <h3 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">
-//           Account Settings
-//         </h3>
-//         <p className="text-slate-500 text-sm font-medium">
-//           Manage your profile and preferences.
-//         </p>
-//       </div>
-
-//       <div className="max-w-xl space-y-8">
-//         <div className="space-y-4">
-//           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-//             Profile Information
-//           </p>
-//           <div className="grid grid-cols-1 gap-4">
-//             <div className="space-y-2">
-//               <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-//                 Display Name
-//               </label>
-//               <input
-//                 type="text"
-//                 defaultValue={user.name}
-//                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-//                 placeholder="Your full name"
-//               />
-//             </div>
-//             <div className="space-y-2">
-//               <label className="text-[10px] font-black uppercase tracking-widest text-slate-900 ml-1">
-//                 Username
-//               </label>
-//               <input
-//                 type="text"
-//                 defaultValue={user.username}
-//                 className="w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl font-bold text-slate-900 focus:outline-none focus:border-indigo-600 transition-all"
-//                 placeholder="username"
-//               />
-//             </div>
-//           </div>
-//         </div>
-
-//         <div className="space-y-4">
-//           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-//             Security
-//           </p>
-//           <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-//             <div>
-//               <h4 className="font-black text-slate-900 text-sm">
-//                 Email Address
-//               </h4>
-//               <p className="text-slate-500 text-xs font-medium">{user.email}</p>
-//             </div>
-//             <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-lg font-black text-[8px] uppercase tracking-widest">
-//               Verified
-//             </span>
-//           </div>
-//         </div>
-
-//         <div className="pt-6 border-t border-slate-50 flex flex-col sm:flex-row gap-3">
-//           <button
-//             onClick={() => showStatus("Profile updated successfully!")}
-//             className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200"
-//           >
-//             Save Changes
-//           </button>
-//           <button
-//             onClick={logout}
-//             className="px-8 py-4 bg-red-50 text-red-500 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-red-100 transition-all"
-//           >
-//             Sign Out
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
 
 export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
   const { user, logout } = useAuth();
