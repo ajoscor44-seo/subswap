@@ -372,7 +372,6 @@ export const HowItWorks: React.FC = () => {
                 display: "flex",
                 flexDirection: "column",
                 gap: 10,
-                alignItems: "flex-end",
               }}
             >
               {[

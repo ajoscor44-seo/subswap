@@ -12,14 +12,6 @@ interface OnboardingRow {
   created_at: string;
 }
 
-interface ChartBarProps {
-  label: string;
-  count: number;
-  total: number;
-  color: string;
-  icon?: string;
-}
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const tally = (rows: OnboardingRow[], field: keyof OnboardingRow) => {
@@ -34,7 +26,6 @@ const tally = (rows: OnboardingRow[], field: keyof OnboardingRow) => {
     .sort((a, b) => b.count - a.count);
 };
 
-// Icons for known onboarding labels
 const ICONS: Record<string, string> = {
   "Movies & Shows": "fa-film",
   "Music Streaming": "fa-music",
@@ -54,49 +45,110 @@ const ICONS: Record<string, string> = {
   Podcast: "fa-microphone",
 };
 
-const COLORS = [
-  "#4F46E5",
-  "#059669",
-  "#D97706",
-  "#DC2626",
-  "#7C3AED",
-  "#0891B2",
+// Per-section colour palettes (accent, bar gradient)
+const SECTION_PALETTES = [
+  ["#a78bfa", "#7c5cfc", "#6366f1"], // purple
+  ["#34d399", "#10b981", "#059669"], // green
+  ["#fbbf24", "#f59e0b", "#d97706"], // amber
 ];
 
-// ─── Bar component ────────────────────────────────────────────────────────────
+// ─── Bar ─────────────────────────────────────────────────────────────────────
 
-const ChartBar: React.FC<ChartBarProps> = ({
-  label,
-  count,
-  total,
-  color,
-  icon,
-}) => {
+const ChartBar: React.FC<{
+  label: string;
+  count: number;
+  total: number;
+  accent: string;
+  barGradient: string;
+  icon?: string;
+  rank: number;
+}> = ({ label, count, total, accent, barGradient, icon, rank }) => {
   const pct = total > 0 ? Math.round((count / total) * 100) : 0;
-
   return (
-    <div className="flex items-center gap-3 group">
-      {icon && (
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      {/* Rank + icon */}
+      <div
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 10,
+          flexShrink: 0,
+          background: "rgba(255,255,255,0.07)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}
+      >
+        {icon ? (
+          <i
+            className={`fa-solid ${icon}`}
+            style={{ color: accent, fontSize: 13 }}
+          />
+        ) : (
+          <span
+            style={{
+              fontFamily: "'Syne',sans-serif",
+              fontSize: 11,
+              fontWeight: 800,
+              color: accent,
+            }}
+          >
+            #{rank}
+          </span>
+        )}
+      </div>
+      {/* Bar + label */}
+      <div style={{ flex: 1, minWidth: 0 }}>
         <div
-          className="h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-white text-[10px]"
-          style={{ background: color }}
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 5,
+          }}
         >
-          <i className={`fa-solid ${icon}`} />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between mb-1">
-          <span className="text-xs font-bold text-slate-700 truncate">
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 500,
+              color: "rgba(255,255,255,0.75)",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap" as const,
+            }}
+          >
             {label}
           </span>
-          <span className="text-[10px] font-black text-slate-400 ml-2 shrink-0">
+          <span
+            style={{
+              fontFamily: "'Syne',sans-serif",
+              fontSize: 10,
+              fontWeight: 700,
+              color: accent,
+              marginLeft: 8,
+              flexShrink: 0,
+            }}
+          >
             {count} · {pct}%
           </span>
         </div>
-        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          style={{
+            height: 5,
+            borderRadius: 99,
+            background: "rgba(255,255,255,0.08)",
+            overflow: "hidden",
+          }}
+        >
           <div
-            className="h-full rounded-full transition-all duration-700"
-            style={{ width: `${pct}%`, background: color }}
+            style={{
+              height: "100%",
+              borderRadius: 99,
+              width: `${pct}%`,
+              background: `linear-gradient(90deg, ${barGradient})`,
+              transition: "width 0.9s cubic-bezier(0.34,1,0.64,1)",
+            }}
           />
         </div>
       </div>
@@ -104,42 +156,124 @@ const ChartBar: React.FC<ChartBarProps> = ({
   );
 };
 
-// ─── Section ─────────────────────────────────────────────────────────────────
+// ─── Section card ─────────────────────────────────────────────────────────────
 
 const Section: React.FC<{
   title: string;
   icon: string;
-  iconColor: string;
+  palette: string[];
   items: { label: string; count: number }[];
   total: number;
-}> = ({ title, icon, iconColor, items, total }) => (
-  <div className="bg-white rounded-4xl border border-slate-200 p-7 shadow-sm">
-    <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 flex items-center gap-2">
-      <i className={`fa-solid ${icon} text-xs`} style={{ color: iconColor }} />
-      {title}
-    </h3>
-    {items.length === 0 ? (
-      <p className="text-slate-400 text-sm font-medium text-center py-6">
-        No data yet
-      </p>
-    ) : (
-      <div className="space-y-4">
-        {items.map((item, i) => (
-          <ChartBar
-            key={item.label}
-            label={item.label}
-            count={item.count}
-            total={total}
-            color={COLORS[i % COLORS.length]}
-            icon={ICONS[item.label]}
+  gradient: string;
+}> = ({ title, icon, palette, items, total, gradient }) => (
+  <>
+    <style>{`
+      .oba-section {
+        border-radius: 20px; padding: 24px;
+        position: relative; overflow: hidden;
+      }
+      .oba-section::before {
+        content: ''; position: absolute; bottom: -50px; right: -50px;
+        width: 160px; height: 160px; border-radius: 50%;
+        background: rgba(255,255,255,0.04); pointer-events: none;
+      }
+    `}</style>
+    <div className="oba-section" style={{ background: gradient }}>
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          marginBottom: 20,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        <div
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 10,
+            background: "rgba(255,255,255,0.1)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <i
+            className={`fa-solid ${icon}`}
+            style={{ color: palette[0], fontSize: 14 }}
           />
-        ))}
+        </div>
+        <div>
+          <div
+            style={{
+              height: 2,
+              width: 24,
+              borderRadius: 99,
+              background: palette[0],
+              marginBottom: 4,
+            }}
+          />
+          <p
+            style={{
+              margin: 0,
+              fontFamily: "'Syne',sans-serif",
+              fontSize: 10,
+              fontWeight: 700,
+              textTransform: "uppercase" as const,
+              letterSpacing: "0.1em",
+              color: "rgba(255,255,255,0.4)",
+            }}
+          >
+            {title}
+          </p>
+        </div>
       </div>
-    )}
-  </div>
+
+      {/* Bars */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 14,
+          position: "relative",
+          zIndex: 1,
+        }}
+      >
+        {items.length === 0 ? (
+          <p
+            style={{
+              textAlign: "center",
+              padding: "24px 0",
+              color: "rgba(255,255,255,0.25)",
+              fontSize: 13,
+              fontFamily: "'DM Sans',sans-serif",
+            }}
+          >
+            No data yet
+          </p>
+        ) : (
+          items.map((item, i) => (
+            <ChartBar
+              key={item.label}
+              label={item.label}
+              count={item.count}
+              total={total}
+              accent={palette[0]}
+              barGradient={`${palette[2]}, ${palette[0]}`}
+              icon={ICONS[item.label]}
+              rank={i + 1}
+            />
+          ))
+        )}
+      </div>
+    </div>
+  </>
 );
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export const OnboardingAnalytics: React.FC = () => {
   const [rows, setRows] = useState<OnboardingRow[]>([]);
@@ -159,93 +293,254 @@ export const OnboardingAnalytics: React.FC = () => {
   const roleTally = useMemo(() => tally(rows, "role"), [rows]);
   const referralTally = useMemo(() => tally(rows, "referral_source"), [rows]);
 
-  const completionRate = rows.length;
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <i className="fa-solid fa-spinner fa-spin text-indigo-500 text-2xl" />
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "64px 0",
+        }}
+      >
+        <i
+          className="fa-solid fa-spinner fa-spin"
+          style={{ color: "#7c5cfc", fontSize: 24 }}
+        />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
-            <i className="fa-solid fa-chart-bar text-indigo-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-black text-slate-900">
+    <>
+      <style>{`
+        .oba * { box-sizing: border-box; }
+
+        /* Header hero card */
+        .oba-header {
+          border-radius: 20px; padding: 24px 28px;
+          background: linear-gradient(145deg,#1a1230,#2d1f6e,#3730a3);
+          position: relative; overflow: hidden;
+          display: flex; align-items: center; justify-content: space-between; gap: 20px;
+          flex-wrap: wrap;
+        }
+        .oba-header::before {
+          content: ''; position: absolute; top: -50px; right: -50px;
+          width: 200px; height: 200px; border-radius: 50%;
+          background: rgba(255,255,255,0.03); pointer-events: none;
+        }
+        .oba-header::after {
+          content: ''; position: absolute; bottom: -60px; left: -20px;
+          width: 200px; height: 200px; border-radius: 50%;
+          background: rgba(124,92,252,0.1); pointer-events: none;
+        }
+
+        /* Insight banner */
+        .oba-insight {
+          border-radius: 20px; padding: 24px 28px;
+          background: linear-gradient(145deg,#1a1230,#2d1f6e);
+          position: relative; overflow: hidden;
+          display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+        }
+        .oba-insight::after {
+          content: ''; position: absolute; bottom: -50px; right: -30px;
+          width: 160px; height: 160px; border-radius: 50%;
+          background: rgba(124,92,252,0.12); pointer-events: none;
+        }
+      `}</style>
+
+      <div
+        className="oba"
+        style={{ display: "flex", flexDirection: "column", gap: 16 }}
+      >
+        {/* ── Header ── */}
+        <div className="oba-header">
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <div
+              style={{
+                height: 3,
+                width: 32,
+                borderRadius: 99,
+                background: "linear-gradient(90deg,#7c5cfc,#6366f1)",
+                marginBottom: 10,
+              }}
+            />
+            <h2
+              style={{
+                margin: "0 0 4px",
+                fontFamily: "'Syne',sans-serif",
+                fontSize: 18,
+                fontWeight: 800,
+                color: "#fff",
+                letterSpacing: "-0.02em",
+              }}
+            >
               Signup Survey Analytics
             </h2>
-            <p className="text-slate-400 text-xs font-medium">
-              {completionRate} users completed onboarding
+            <p
+              style={{
+                margin: 0,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: 12,
+                color: "rgba(255,255,255,0.35)",
+              }}
+            >
+              Insights from user onboarding responses
             </p>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              position: "relative",
+              zIndex: 1,
+            }}
+          >
+            <div
+              style={{
+                width: 48,
+                height: 48,
+                borderRadius: 14,
+                background: "rgba(255,255,255,0.08)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <i
+                className="fa-solid fa-chart-bar"
+                style={{ color: "#a78bfa", fontSize: 20 }}
+              />
+            </div>
+            <div>
+              <p
+                style={{
+                  margin: "0 0 2px",
+                  fontFamily: "'Syne',sans-serif",
+                  fontSize: 28,
+                  fontWeight: 800,
+                  color: "#fff",
+                  letterSpacing: "-0.03em",
+                  lineHeight: 1,
+                }}
+              >
+                {rows.length}
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "'Syne',sans-serif",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.1em",
+                  color: "rgba(255,255,255,0.3)",
+                }}
+              >
+                Responses
+              </p>
+            </div>
           </div>
         </div>
 
-        {/* Completion pill */}
-        <span className="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl font-black text-[10px] uppercase tracking-widest">
-          {completionRate} responses
-        </span>
-      </div>
-
-      {/* Three survey charts */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <Section
-          title="What do they share?"
-          icon="fa-film"
-          iconColor="#4F46E5"
-          items={useCaseTally}
-          total={rows.filter((r) => r.use_case).length}
-        />
-        <Section
-          title="How they plan to use it"
-          icon="fa-user"
-          iconColor="#059669"
-          items={roleTally}
-          total={rows.filter((r) => r.role).length}
-        />
-        <Section
-          title="Where they found us"
-          icon="fa-location-dot"
-          iconColor="#D97706"
-          items={referralTally}
-          total={rows.filter((r) => r.referral_source).length}
-        />
-      </div>
-
-      {/* Top insight callout */}
-      {useCaseTally[0] && roleTally[0] && referralTally[0] && (
-        <div className="bg-slate-900 rounded-4xl p-6 flex flex-col md:flex-row items-center gap-6 md:gap-10">
-          <div className="h-12 w-12 bg-indigo-600 rounded-2xl flex items-center justify-center shrink-0">
-            <i className="fa-solid fa-lightbulb text-white text-lg" />
-          </div>
-          <div className="flex-1 text-center md:text-left">
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
-              Top Insight
-            </p>
-            <p className="text-white font-bold text-sm leading-relaxed">
-              Most users want{" "}
-              <span className="text-indigo-400 font-black">
-                {useCaseTally[0].label}
-              </span>
-              , prefer to{" "}
-              <span className="text-emerald-400 font-black">
-                {roleTally[0].label.toLowerCase()}
-              </span>
-              , and found you via{" "}
-              <span className="text-amber-400 font-black">
-                {referralTally[0].label}
-              </span>
-              .
-            </p>
-          </div>
+        {/* ── Three section cards ── */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 14,
+          }}
+        >
+          <Section
+            title="What do they share?"
+            icon="fa-film"
+            palette={SECTION_PALETTES[0]}
+            items={useCaseTally}
+            total={rows.filter((r) => r.use_case).length}
+            gradient="linear-gradient(145deg,#1a1230,#2d1f6e,#3730a3)"
+          />
+          <Section
+            title="How they plan to use it"
+            icon="fa-user"
+            palette={SECTION_PALETTES[1]}
+            items={roleTally}
+            total={rows.filter((r) => r.role).length}
+            gradient="linear-gradient(145deg,#052e16,#14532d,#166534)"
+          />
+          <Section
+            title="Where they found us"
+            icon="fa-location-dot"
+            palette={SECTION_PALETTES[2]}
+            items={referralTally}
+            total={rows.filter((r) => r.referral_source).length}
+            gradient="linear-gradient(145deg,#1c1407,#78350f,#92400e)"
+          />
         </div>
-      )}
-    </div>
+
+        {/* ── Top insight banner ── */}
+        {useCaseTally[0] && roleTally[0] && referralTally[0] && (
+          <div className="oba-insight">
+            <div
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 13,
+                flexShrink: 0,
+                background: "rgba(124,92,252,0.25)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative",
+                zIndex: 1,
+              }}
+            >
+              <i
+                className="fa-solid fa-lightbulb"
+                style={{ color: "#a78bfa", fontSize: 18 }}
+              />
+            </div>
+            <div style={{ flex: 1, position: "relative", zIndex: 1 }}>
+              <p
+                style={{
+                  margin: "0 0 5px",
+                  fontFamily: "'Syne',sans-serif",
+                  fontSize: 9,
+                  fontWeight: 700,
+                  textTransform: "uppercase" as const,
+                  letterSpacing: "0.12em",
+                  color: "rgba(255,255,255,0.3)",
+                }}
+              >
+                Top Insight
+              </p>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: "'DM Sans',sans-serif",
+                  fontSize: 13,
+                  color: "rgba(255,255,255,0.7)",
+                  lineHeight: 1.6,
+                }}
+              >
+                Most users want{" "}
+                <span style={{ color: "#a78bfa", fontWeight: 700 }}>
+                  {useCaseTally[0].label}
+                </span>
+                , prefer to{" "}
+                <span style={{ color: "#34d399", fontWeight: 700 }}>
+                  {roleTally[0].label.toLowerCase()}
+                </span>
+                , and found you via{" "}
+                <span style={{ color: "#fbbf24", fontWeight: 700 }}>
+                  {referralTally[0].label}
+                </span>
+                .
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
