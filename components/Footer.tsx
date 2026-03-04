@@ -204,7 +204,7 @@ const Footer: React.FC = () => {
             <div>
               <div className="ft-divider" />
               <div style={{ marginBottom: 16 }}>
-                <Logo />
+                <Logo size={16} />
               </div>
               <p
                 style={{
