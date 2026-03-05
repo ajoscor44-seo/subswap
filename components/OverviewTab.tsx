@@ -38,131 +38,114 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         .ov-root * { box-sizing: border-box; }
         .ov-heading { font-family: 'Syne', sans-serif; }
 
-        /* Section label */
         .ov-label {
-          font-family: 'Syne', sans-serif;
-          font-size: 10px; font-weight: 700;
-          text-transform: uppercase; letter-spacing: 0.12em;
-          color: #a78bfa; margin: 0 0 4px;
+          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.12em; color: #a78bfa; margin: 0 0 4px;
         }
 
-        /* White surface card */
         .ov-card {
-          background: #fff;
-          border: 1.5px solid #f0eef9;
-          border-radius: 20px;
+          background: #fff; border: 1.5px solid #f0eef9; border-radius: 20px;
           transition: box-shadow 0.25s, transform 0.25s;
         }
         .ov-card:hover { box-shadow: 0 12px 32px rgba(124,92,252,0.09); }
 
-        /* Hero balance card */
+        /* Hero */
         .ov-hero {
           border-radius: 20px;
           background: linear-gradient(145deg, #1a1230 0%, #2d1f6e 55%, #3730a3 100%);
-          position: relative; overflow: hidden;
-          padding: 36px 36px 32px;
+          position: relative; overflow: hidden; padding: 36px 36px 32px;
         }
-        .ov-hero::before {
-          content: '';
-          position: absolute; top: -60px; right: -60px;
-          width: 260px; height: 260px; border-radius: 50%;
-          background: rgba(255,255,255,0.03);
-        }
-        .ov-hero::after {
-          content: '';
-          position: absolute; bottom: -80px; left: -30px;
-          width: 300px; height: 300px; border-radius: 50%;
-          background: rgba(124,92,252,0.12);
-        }
-        .ov-hero-naira {
-          position: absolute; right: 28px; top: 28px;
-          font-size: 100px; color: rgba(255,255,255,0.04);
-          font-family: 'Syne', sans-serif; font-weight: 800;
-          line-height: 1; pointer-events: none; z-index: 0;
-        }
+        .ov-hero::before { content:''; position:absolute; top:-60px; right:-60px; width:260px; height:260px; border-radius:50%; background:rgba(255,255,255,0.03); }
+        .ov-hero::after  { content:''; position:absolute; bottom:-80px; left:-30px; width:300px; height:300px; border-radius:50%; background:rgba(124,92,252,0.12); }
+        .ov-hero-naira { position:absolute; right:28px; top:28px; font-size:100px; color:rgba(255,255,255,0.04); font-family:'Syne',sans-serif; font-weight:800; line-height:1; pointer-events:none; z-index:0; }
 
-        /* Hero buttons */
         .ov-btn-primary {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 22px; border-radius: 12px; border: none;
-          background: linear-gradient(135deg, #7c5cfc, #6366f1);
-          color: #fff; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 11px;
-          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-          transition: all 0.2s;
-          box-shadow: 0 4px 16px rgba(124,92,252,0.38);
+          display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:none;
+          background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; cursor:pointer;
+          font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
+          transition:all 0.2s; box-shadow:0 4px 16px rgba(124,92,252,0.38);
         }
-        .ov-btn-primary:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.5); transform: translateY(-1px); }
+        .ov-btn-primary:hover { box-shadow:0 8px 24px rgba(124,92,252,0.5); transform:translateY(-1px); }
 
         .ov-btn-ghost {
-          display: inline-flex; align-items: center; gap: 8px;
-          padding: 12px 22px; border-radius: 12px; border: none;
-          background: rgba(255,255,255,0.1); backdrop-filter: blur(8px);
-          color: rgba(255,255,255,0.8); cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 11px;
-          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-          transition: all 0.2s;
+          display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:none;
+          background:rgba(255,255,255,0.1); backdrop-filter:blur(8px); color:rgba(255,255,255,0.8); cursor:pointer;
+          font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; transition:all 0.2s;
         }
-        .ov-btn-ghost:hover { background: rgba(255,255,255,0.18); color: #fff; }
+        .ov-btn-ghost:hover { background:rgba(255,255,255,0.18); color:#fff; }
 
-        /* Stat mini card */
-        .ov-stat {
-          padding: 20px 22px; border-radius: 16px;
-          border: 1.5px solid #f0eef9; background: #fff;
-          transition: box-shadow 0.2s, transform 0.2s;
-        }
-        .ov-stat:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.1); transform: translateY(-2px); }
+        .ov-stat { padding:20px 22px; border-radius:16px; border:1.5px solid #f0eef9; background:#fff; transition:box-shadow 0.2s,transform 0.2s; }
+        .ov-stat:hover { box-shadow:0 8px 24px rgba(124,92,252,0.1); transform:translateY(-2px); }
 
-        /* Transaction row */
-        .ov-tx-row {
-          display: flex; align-items: center; gap: 12px;
-          padding: 10px 14px; border-radius: 12px;
-          transition: background 0.15s; cursor: default;
-        }
-        .ov-tx-row:hover { background: #fafafe; }
+        .ov-tx-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; transition:background 0.15s; cursor:default; }
+        .ov-tx-row:hover { background:#fafafe; }
 
-        /* Icon circle */
-        .ov-icon {
-          width: 36px; height: 36px; border-radius: 10px;
-          display: flex; align-items: center; justify-content: center;
-          font-size: 13px; flex-shrink: 0;
-        }
+        .ov-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
 
-        /* Stack avatar cluster */
-        .ov-stack-avatar {
-          width: 44px; height: 44px; border-radius: 50%;
-          border: 3px solid #fff; object-fit: cover;
-          box-shadow: 0 2px 8px rgba(124,92,252,0.15);
-          transition: transform 0.2s, z-index 0s;
-          flex-shrink: 0;
-        }
-        .ov-stack-avatar:hover { transform: scale(1.12) translateY(-3px); z-index: 10; }
+        .ov-stack-avatar { width:44px; height:44px; border-radius:50%; border:3px solid #fff; object-fit:cover; box-shadow:0 2px 8px rgba(124,92,252,0.15); transition:transform 0.2s; flex-shrink:0; }
+        .ov-stack-avatar:hover { transform:scale(1.12) translateY(-3px); z-index:10; }
 
-        /* View all link */
-        .ov-link {
-          font-family: 'Syne', sans-serif; font-size: 10px;
-          font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
-          color: #7c5cfc; background: none; border: none; cursor: pointer;
-          padding: 4px 10px; border-radius: 8px; transition: background 0.15s;
-        }
-        .ov-link:hover { background: #f0eef9; }
+        .ov-link { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#7c5cfc; background:none; border:none; cursor:pointer; padding:4px 10px; border-radius:8px; transition:background 0.15s; }
+        .ov-link:hover { background:#f0eef9; }
 
-        /* Progress bar */
-        .ov-bar-bg { height: 5px; border-radius: 99px; background: #f0eef9; overflow: hidden; margin-top: 10px; }
-        .ov-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #7c5cfc, #a78bfa); transition: width 1s cubic-bezier(0.34,1.2,0.64,1); }
+        .ov-bar-bg { height:5px; border-radius:99px; background:#f0eef9; overflow:hidden; margin-top:10px; }
+        .ov-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#7c5cfc,#a78bfa); transition:width 1s cubic-bezier(0.34,1.2,0.64,1); }
 
-        /* Section fade-in */
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
-        .ov-fade { animation: fadeUp 0.4s ease forwards; }
-        .ov-fade-2 { animation: fadeUp 0.4s 0.08s ease both; }
-        .ov-fade-3 { animation: fadeUp 0.4s 0.16s ease both; }
-        .ov-fade-4 { animation: fadeUp 0.4s 0.24s ease both; }
+        .ov-fade   { animation:fadeUp 0.4s ease forwards; }
+        .ov-fade-2 { animation:fadeUp 0.4s 0.08s ease both; }
+        .ov-fade-3 { animation:fadeUp 0.4s 0.16s ease both; }
+        .ov-fade-4 { animation:fadeUp 0.4s 0.24s ease both; }
 
-        /* Skeleton */
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-        .ov-skeleton {
-          background: linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%);
-          background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px;
+        .ov-skeleton { background:linear-gradient(90deg,#f5f3ff 25%,#ede9fe 50%,#f5f3ff 75%); background-size:200% 100%; animation:shimmer 1.6s infinite; border-radius:8px; }
+
+        /* ── Responsive grid helpers ── */
+        .ov-row1  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+        .ov-row2  { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .ov-row3  { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+
+        /* hero spans 2 of 3 columns by default */
+        .ov-hero-cell  { grid-column: span 2; }
+        .ov-savings-cell { grid-column: span 1; }
+
+        @media (max-width: 767px) {
+          /* Row 1: hero full width, savings below */
+          .ov-row1 { grid-template-columns: 1fr; }
+          .ov-hero-cell { grid-column: span 1; }
+          .ov-hero { padding: 28px 22px 24px; }
+          .ov-hero-naira { font-size: 72px; }
+          .ov-hero h2 { font-size: 36px !important; }
+
+          /* Row 2: 1 col on small, 2 col on medium */
+          .ov-row2 { grid-template-columns: 1fr 1fr; }
+
+          /* Row 3: stack vertically */
+          .ov-row3 { grid-template-columns: 1fr; }
+
+          /* Quick join padding */
+          .ov-quickjoin { padding: 20px 16px 16px !important; }
+
+          /* Stat cards compact */
+          .ov-stat { padding: 14px 16px; }
+
+          /* Buttons stack */
+          .ov-hero-btns { flex-direction: column !important; }
+          .ov-btn-primary, .ov-btn-ghost { width: 100%; justify-content: center; }
+        }
+
+        @media (max-width: 479px) {
+          /* Row 2: single column on very small */
+          .ov-row2 { grid-template-columns: 1fr; }
+        }
+
+        @media (min-width: 768px) and (max-width: 1023px) {
+          /* Tablet: hero + savings side by side, savings 1 col */
+          .ov-row1 { grid-template-columns: 1fr 1fr; }
+          .ov-hero-cell { grid-column: span 1; }
+          .ov-savings-cell { grid-column: span 1; }
+          .ov-row2 { grid-template-columns: repeat(3,1fr); }
+          .ov-row3 { grid-template-columns: 1fr 1fr; }
         }
       `}</style>
 
@@ -170,17 +153,9 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         className="ov-root"
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
-        {/* ── Row 1: Hero balance + savings + quick stats ── */}
-        <div
-          className="ov-fade"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: 16,
-          }}
-        >
-          {/* Balance hero — spans 2 cols */}
-          <div className="ov-hero" style={{ gridColumn: "span 2" }}>
+        {/* ── Row 1: Hero + Savings ── */}
+        <div className="ov-row1 ov-fade">
+          <div className="ov-hero ov-hero-cell">
             <span className="ov-hero-naira">₦</span>
             <div style={{ position: "relative", zIndex: 1 }}>
               <p
@@ -211,7 +186,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               >
                 ₦1.00 = 1 Credit
               </p>
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <div
+                className="ov-hero-btns"
+                style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+              >
                 <button
                   className="ov-btn-primary"
                   onClick={() => changeTab("wallet")}
@@ -230,7 +208,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
           {/* Savings card */}
           <div
-            className="ov-card"
+            className="ov-card ov-savings-cell"
             style={{
               padding: "24px",
               display: "flex",
@@ -327,15 +305,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
         </div>
 
-        {/* ── Row 2: Quick stats row ── */}
-        <div
-          className="ov-fade-2"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: 14,
-          }}
-        >
+        {/* ── Row 2: Quick stats ── */}
+        <div className="ov-row2 ov-fade-2">
           {[
             {
               label: "Active Stacks",
@@ -344,7 +315,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               color: "#7c5cfc",
               bg: "#f0eef9",
               action: () => changeTab("stacks"),
-              actionLabel: "View stacks",
             },
             {
               label: "Recent Transactions",
@@ -353,7 +323,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               color: "#6366f1",
               bg: "#eef2ff",
               action: () => changeTab("history"),
-              actionLabel: "View history",
             },
             {
               label: "Wallet Credits",
@@ -362,7 +331,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               color: "#0ea5e9",
               bg: "#f0f9ff",
               action: () => changeTab("wallet"),
-              actionLabel: "Add funds",
             },
           ].map((stat, i) => (
             <div
@@ -419,7 +387,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 style={{ flexShrink: 0 }}
               >
                 <i
-                  className={`fa-solid fa-chevron-right`}
+                  className="fa-solid fa-chevron-right"
                   style={{ color: stat.color, fontSize: 20 }}
                 />
               </button>
@@ -427,10 +395,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           ))}
         </div>
 
-        <div
-          className="ov-fade-3"
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-        >
+        {/* ── Row 3: Transactions + Stacks ── */}
+        <div className="ov-row3 ov-fade-3">
           {/* Recent transactions */}
           <div className="ov-card" style={{ padding: "24px" }}>
             <div
@@ -551,8 +517,8 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 >
                   Fund your wallet{" "}
                   <i
-                    className={`fa-solid fa-chevron-right`}
-                    style={{ color: "#7c5cfc", fontSize: 20 }}
+                    className="fa-solid fa-chevron-right"
+                    style={{ color: "#7c5cfc", fontSize: 11 }}
                   />
                 </button>
               </div>
@@ -590,7 +556,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
             {activeSubscriptions.length > 0 ? (
               <>
-                {/* Avatar cluster */}
                 <div
                   style={{
                     display: "flex",
@@ -635,8 +600,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     </div>
                   )}
                 </div>
-
-                {/* Stack list */}
                 <div
                   style={{ display: "flex", flexDirection: "column", gap: 8 }}
                 >
@@ -750,7 +713,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
 
         {/* ── Row 4: Quick Join ── */}
         <div
-          className="ov-fade-4 ov-card"
+          className="ov-fade-4 ov-card ov-quickjoin"
           style={{ padding: "28px 28px 24px" }}
         >
           <div style={{ marginBottom: 24 }}>
