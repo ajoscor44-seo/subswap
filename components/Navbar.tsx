@@ -332,60 +332,6 @@ const Navbar: React.FC = () => {
                   )}
                 </button>
               ))}
-
-              {/* Divider + account actions */}
-              {user && (
-                <>
-                  <div
-                    style={{
-                      height: 1,
-                      background: "#f0eef9",
-                      margin: "10px 20px",
-                    }}
-                  />
-                  <p
-                    style={{
-                      margin: "0 20px 6px",
-                      fontFamily: "'Syne',sans-serif",
-                      fontSize: 9,
-                      fontWeight: 700,
-                      textTransform: "uppercase" as const,
-                      letterSpacing: "0.12em",
-                      color: "#c4b5fd",
-                    }}
-                  >
-                    Account
-                  </p>
-                  {[
-                    {
-                      tab: "history",
-                      label: "Transaction History",
-                      icon: "fa-receipt",
-                    },
-                    {
-                      tab: "stacks",
-                      label: "My Stacks",
-                      icon: "fa-layer-group",
-                    },
-                    { tab: "settings", label: "Settings", icon: "fa-gear" },
-                  ].map((item) => (
-                    <button
-                      key={item.tab}
-                      onClick={() => {
-                        goTo("dashboard");
-                        changeTab(item.tab);
-                        setMenuOpen(false);
-                      }}
-                      className="nb-mob-link"
-                    >
-                      <span className="nb-mob-icon">
-                        <i className={`fa-solid ${item.icon}`} />
-                      </span>
-                      <span className="nb-mob-label">{item.label}</span>
-                    </button>
-                  ))}
-                </>
-              )}
             </div>
 
             {/* Drawer footer */}
@@ -684,7 +630,7 @@ const Navbar: React.FC = () => {
 
               {/* ── Hamburger (mobile only) ── */}
               <button
-                className={`nb-burger lg:hidden ${menuOpen ? "open" : ""}`}
+                className={`nb-burger lg:hidden! ${menuOpen ? "open" : ""}`}
                 onClick={() => setMenuOpen(!menuOpen)}
                 aria-label="Toggle menu"
               >
