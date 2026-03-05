@@ -9,11 +9,12 @@ interface AdminTransactionsProps {
 
 type TxFilter = "all" | "Deposit" | "Purchase" | "Withdrawal";
 
-const TYPE_STYLES: Record<string, string> = {
-  Deposit: "bg-emerald-50 text-emerald-600",
-  Purchase: "bg-indigo-50 text-indigo-600",
-  Withdrawal: "bg-amber-50 text-amber-600",
-};
+const TX_META: Record<string, { accent: string; light: string; icon: string }> =
+  {
+    Deposit: { accent: "#10b981", light: "#f0fdf4", icon: "fa-arrow-down" },
+    Purchase: { accent: "#7c5cfc", light: "#f5f3ff", icon: "fa-bag-shopping" },
+    Withdrawal: { accent: "#f59e0b", light: "#fffbeb", icon: "fa-arrow-up" },
+  };
 
 export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
   transactions,
@@ -47,164 +48,367 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
     [transactions],
   );
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Total Deposited",
-            value: `₦${totals.deposits.toLocaleString()}`,
-            icon: "fa-arrow-down",
-            color: "text-emerald-600",
-            bg: "bg-emerald-50",
-          },
-          {
-            label: "Total Purchases",
-            value: `₦${totals.purchases.toLocaleString()}`,
-            icon: "fa-bag-shopping",
-            color: "text-indigo-600",
-            bg: "bg-indigo-50",
-          },
-          {
-            label: "Total Transactions",
-            value: totals.count,
-            icon: "fa-receipt",
-            color: "text-slate-900",
-            bg: "bg-slate-100",
-          },
-        ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white border border-slate-100 rounded-2xl px-6 py-5 flex items-center gap-4"
-          >
-            <div
-              className={`h-10 w-10 ${s.bg} rounded-xl flex items-center justify-center`}
-            >
-              <i className={`fa-solid ${s.icon} ${s.color}`} />
-            </div>
-            <div>
-              <p className={`text-xl font-black ${s.color}`}>{s.value}</p>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                {s.label}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+  const TX_FILTERS: TxFilter[] = ["all", "Deposit", "Purchase", "Withdrawal"];
 
-      {/* Toolbar */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between items-center">
-        <SearchBar
-          value={search}
-          onChange={setSearch}
-          placeholder="Search by description, type, user..."
-        />
-        <div className="flex items-center gap-3">
-          <div className="flex bg-white border border-slate-200 p-1 rounded-xl gap-0.5">
-            {(["all", "Deposit", "Purchase", "Withdrawal"] as TxFilter[]).map(
-              (f) => (
+  return (
+    <>
+      <style>{`
+        .txn2 * { box-sizing: border-box; }
+
+        .txn2-stat-chip {
+          display: flex; align-items: center; gap: 12px;
+          padding: 14px 18px; border-radius: 14px;
+          background: #fff; border: 1.5px solid #f0eef9;
+          transition: box-shadow 0.2s;
+        }
+        .txn2-stat-chip:hover { box-shadow: 0 6px 18px rgba(124,92,252,0.08); }
+
+        .txn2-filter-bar {
+          display: flex; background: #fafafe;
+          border: 1.5px solid #f0eef9; border-radius: 12px;
+          padding: 3px; gap: 2px;
+        }
+        .txn2-filter-btn {
+          padding: 7px 14px; border-radius: 9px; border: none; cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.08em;
+          background: none; color: #b8addb; transition: all 0.18s;
+          white-space: nowrap;
+        }
+        .txn2-filter-btn:hover:not(.active) { background: #f5f3ff; color: #7c5cfc; }
+        .txn2-filter-btn.active {
+          background: linear-gradient(135deg,#1a1230,#2d1f6e);
+          color: #fff; box-shadow: 0 3px 8px rgba(26,18,48,0.2);
+        }
+
+        .txn2-refresh {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 16px; border-radius: 11px;
+          border: 1.5px solid #ede9fe; background: #fff; cursor: pointer;
+          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.07em; color: #9b8fc2;
+          transition: all 0.18s;
+        }
+        .txn2-refresh:hover { border-color: #c4b5fd; color: #7c5cfc; }
+
+        .txn2-th {
+          padding: 12px 18px;
+          font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.1em; color: #b8addb;
+          background: #fafafe; border-bottom: 1.5px solid #f0eef9; white-space: nowrap;
+        }
+        .txn2-td { padding: 13px 18px; border-bottom: 1px solid #fafafe; }
+        .txn2-tr:hover .txn2-td { background: #fafafe; }
+        .txn2-tr:last-child .txn2-td { border-bottom: none; }
+      `}</style>
+
+      <div className="txn2 space-y-5 animate-in fade-in duration-300 max-w-300 mx-auto">
+        {/* Summary chips */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(3,1fr)",
+            gap: 10,
+          }}
+        >
+          {[
+            {
+              label: "Total Deposited",
+              value: `₦${totals.deposits.toLocaleString()}`,
+              icon: "fa-arrow-down",
+              accent: "#10b981",
+              light: "#f0fdf4",
+            },
+            {
+              label: "Total Purchases",
+              value: `₦${totals.purchases.toLocaleString()}`,
+              icon: "fa-bag-shopping",
+              accent: "#7c5cfc",
+              light: "#f5f3ff",
+            },
+            {
+              label: "Total Transactions",
+              value: String(totals.count),
+              icon: "fa-receipt",
+              accent: "#6366f1",
+              light: "#eef2ff",
+            },
+          ].map((s) => (
+            <div key={s.label} className="txn2-stat-chip">
+              <div
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 11,
+                  background: s.light,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <i
+                  className={`fa-solid ${s.icon}`}
+                  style={{ color: s.accent, fontSize: 16 }}
+                />
+              </div>
+              <div>
+                <p
+                  className="font-display"
+                  style={{
+                    margin: "0 0 2px",
+                    fontSize: 20,
+                    fontWeight: 800,
+                    color: "#1a1230",
+                    letterSpacing: "-0.02em",
+                    lineHeight: 1,
+                  }}
+                >
+                  {s.value}
+                </p>
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: "'Syne',sans-serif",
+                    fontSize: 9,
+                    fontWeight: 700,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
+                    color: "#c4b5fd",
+                  }}
+                >
+                  {s.label}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Toolbar */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
+          <SearchBar
+            value={search}
+            onChange={setSearch}
+            placeholder="Search by description, type, user..."
+          />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="txn2-filter-bar">
+              {TX_FILTERS.map((f) => (
                 <button
                   key={f}
+                  className={`txn2-filter-btn ${filter === f ? "active" : ""}`}
                   onClick={() => setFilter(f)}
-                  className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                    filter === f
-                      ? "bg-slate-900 text-white"
-                      : "text-slate-400 hover:text-slate-700"
-                  }`}
                 >
                   {f}
                 </button>
-              ),
-            )}
-          </div>
-          <button
-            onClick={onRefresh}
-            className="h-10 px-4 bg-white border border-slate-200 rounded-xl text-[10px] font-black text-indigo-600 uppercase tracking-widest hover:border-indigo-300 transition-all flex items-center gap-2"
-          >
-            <i className="fa-solid fa-rotate" />
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-white rounded-4xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                <th className="px-7 py-5">Type</th>
-                <th className="px-7 py-5 text-right">Amount</th>
-                <th className="px-7 py-5">Details</th>
-                <th className="px-7 py-5 text-right">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filtered.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className="hover:bg-slate-50/70 transition-colors"
-                >
-                  <td className="px-7 py-5">
-                    <span
-                      className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${
-                        TYPE_STYLES[tx.type] || "bg-slate-100 text-slate-600"
-                      }`}
-                    >
-                      {tx.type}
-                    </span>
-                  </td>
-                  <td
-                    className={`px-7 py-5 text-right font-black text-sm ${
-                      tx.amount < 0 ? "text-red-500" : "text-emerald-600"
-                    }`}
-                  >
-                    {tx.amount > 0 ? "+" : ""}₦
-                    {Math.abs(tx.amount).toLocaleString()}
-                  </td>
-                  <td className="px-7 py-5">
-                    <p className="text-sm font-bold text-slate-800">
-                      {tx.description}
-                    </p>
-                    <p className="text-[9px] text-slate-400 font-mono mt-0.5">
-                      UID ···{tx.user_id?.slice(-8)}
-                    </p>
-                  </td>
-                  <td className="px-7 py-5 text-right">
-                    <p className="text-[10px] font-bold text-slate-500">
-                      {new Date(tx.created_at).toLocaleDateString("en-NG", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </p>
-                    <p className="text-[9px] text-slate-300 font-mono">
-                      {new Date(tx.created_at).toLocaleTimeString("en-NG", {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </td>
-                </tr>
               ))}
-              {filtered.length === 0 && (
+            </div>
+            <button className="txn2-refresh" onClick={onRefresh}>
+              <i className="fa-solid fa-rotate" style={{ fontSize: 12 }} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div
+          style={{
+            background: "#fff",
+            border: "1.5px solid #f0eef9",
+            borderRadius: 20,
+            overflow: "hidden",
+          }}
+        >
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
                 <tr>
-                  <td
-                    colSpan={4}
-                    className="px-8 py-20 text-center flex flex-col items-center justify-center gap-4"
-                  >
-                    <i className="fa-solid fa-receipt text-slate-200 text-4xl block" />
-                    <span className="text-slate-400 font-black uppercase tracking-widest text-xs">
-                      No transactions found
-                    </span>
-                  </td>
+                  {[
+                    ["Type", "left"],
+                    ["Amount", "right"],
+                    ["Details", "left"],
+                    ["Timestamp", "right"],
+                  ].map(([h, align]) => (
+                    <th
+                      key={h}
+                      className="txn2-th"
+                      style={{ textAlign: align as any }}
+                    >
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {filtered.map((tx) => {
+                  const meta = TX_META[tx.type] ?? {
+                    accent: "#9b8fc2",
+                    light: "#f5f3ff",
+                    icon: "fa-circle",
+                  };
+                  return (
+                    <tr key={tx.id} className="txn2-tr">
+                      {/* Type */}
+                      <td className="txn2-td">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 10,
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: 32,
+                              height: 32,
+                              borderRadius: 9,
+                              background: meta.light,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <i
+                              className={`fa-solid ${meta.icon}`}
+                              style={{ color: meta.accent, fontSize: 12 }}
+                            />
+                          </div>
+                          <span
+                            style={{
+                              padding: "3px 9px",
+                              borderRadius: 7,
+                              background: meta.light,
+                              fontFamily: "'Syne',sans-serif",
+                              fontSize: 9,
+                              fontWeight: 700,
+                              textTransform: "uppercase" as const,
+                              letterSpacing: "0.06em",
+                              color: meta.accent,
+                              whiteSpace: "nowrap" as const,
+                            }}
+                          >
+                            {tx.type}
+                          </span>
+                        </div>
+                      </td>
+                      {/* Amount */}
+                      <td className="txn2-td" style={{ textAlign: "right" }}>
+                        <span
+                          className="font-display"
+                          style={{
+                            fontSize: 14,
+                            fontWeight: 700,
+                            color: tx.amount < 0 ? "#ef4444" : "#10b981",
+                          }}
+                        >
+                          {tx.amount > 0 ? "+" : ""}₦
+                          {Math.abs(tx.amount).toLocaleString()}
+                        </span>
+                      </td>
+                      {/* Details */}
+                      <td className="txn2-td">
+                        <p
+                          style={{
+                            margin: "0 0 2px",
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: "#1a1230",
+                            maxWidth: 300,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap" as const,
+                          }}
+                        >
+                          {tx.description}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: "monospace",
+                            fontSize: 10,
+                            color: "#c4b5fd",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          UID ···{tx.user_id?.slice(-8)}
+                        </p>
+                      </td>
+                      {/* Timestamp */}
+                      <td className="txn2-td" style={{ textAlign: "right" }}>
+                        <p
+                          style={{
+                            margin: "0 0 2px",
+                            fontSize: 11,
+                            color: "#475569",
+                          }}
+                        >
+                          {new Date(tx.created_at).toLocaleDateString("en-NG", {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: "monospace",
+                            fontSize: 10,
+                            color: "#c4b5fd",
+                          }}
+                        >
+                          {new Date(tx.created_at).toLocaleTimeString("en-NG", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </td>
+                    </tr>
+                  );
+                })}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      style={{ padding: "56px", textAlign: "center" }}
+                    >
+                      <i
+                        className="fa-solid fa-receipt"
+                        style={{
+                          fontSize: 32,
+                          color: "#ede9fe",
+                          display: "block",
+                          marginBottom: 12,
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontFamily: "'Syne',sans-serif",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          textTransform: "uppercase" as const,
+                          letterSpacing: "0.08em",
+                          color: "#c4b5fd",
+                        }}
+                      >
+                        No transactions found
+                      </span>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };

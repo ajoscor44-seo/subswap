@@ -216,7 +216,7 @@ const ComingSoon: React.FC = () => {
 
           {/* Headline */}
           <h1
-            className="reveal delay-2 text-5xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6"
+            className="reveal delay-2 text-4xl sm:text-5xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6"
             style={{
               fontFamily: "'Syne', sans-serif",
               color: "#f0f0ff",

@@ -146,7 +146,7 @@ const AboutUs: React.FC = () => {
               className="font-display"
               style={{
                 margin: "0 0 20px",
-                fontSize: "clamp(32px, 5vw, 56px)",
+                fontSize: "clamp(24px, 5vw, 56px)",
                 fontWeight: 800,
                 color: "#fff",
                 lineHeight: 1.1,
@@ -187,16 +187,7 @@ const AboutUs: React.FC = () => {
 
         {/* ── Problem / Solution ── */}
         <section style={{ padding: "80px 24px", background: "#fff" }}>
-          <div
-            style={{
-              maxWidth: 1200,
-              margin: "0 auto",
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: 64,
-              alignItems: "center",
-            }}
-          >
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-center max-w-6xl mx-auto">
             {/* Left: copy */}
             <div>
               <div className="ab-divider" />
@@ -356,21 +347,9 @@ const AboutUs: React.FC = () => {
         </section>
 
         {/* ── Stats strip ── */}
-        <section style={{ padding: "40px 24px 80px 0" }}>
+        <section className="px-4 my-5 md:my-20">
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-            <div
-              style={{
-                background:
-                  "linear-gradient(135deg, #1a1230 0%, #2d1f6e 55%, #3730a3 100%)",
-                borderRadius: 20,
-                padding: "48px 40px",
-                display: "grid",
-                gridTemplateColumns: "repeat(4,1fr)",
-                gap: 2,
-                position: "relative",
-                overflow: "hidden",
-              }}
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 items-center max-w-6xl mx-auto relative bg-linear-to-br from-[#1a1230] to-[#3730a3] rounded-2xl p-8 overflow-hidden">
               <div
                 style={{
                   position: "absolute",
@@ -442,7 +421,7 @@ const AboutUs: React.FC = () => {
         </section>
 
         {/* ── Values ── */}
-        <section style={{ padding: "40px 24px 80px 0px", background: "#fff" }}>
+        <section className="px-4 my-32 md:my-20">
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div style={{ marginBottom: 40 }}>
               <div className="ab-divider" />
@@ -530,7 +509,7 @@ const AboutUs: React.FC = () => {
         </section>
 
         {/* ── Bottom CTA ── */}
-        <section style={{ padding: "40px 24px 80px 0px" }}>
+        <section className="px-4 my-5 md:my-20">
           <div style={{ maxWidth: 1200, margin: "0 auto" }}>
             <div
               style={{

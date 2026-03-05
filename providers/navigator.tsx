@@ -24,7 +24,7 @@ const NavigatorContext = createContext<{
   changeTab: () => {},
 });
 
-const PROTECTED: TViewState[] = [
+export const PROTECTED: TViewState[] = [
   "dashboard",
   "transactions",
   "settings",

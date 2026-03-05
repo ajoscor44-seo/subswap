@@ -142,16 +142,9 @@ export const PopularServices: React.FC = () => {
             </div>
 
             {/* Right: social proof cluster */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "flex-end",
-                gap: 12,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <div style={{ display: "flex" }}>
+            <div className="flex flex-col items-center gap-x-8 gap-y-5 sm:items-end">
+              <div className="flex flex-col md:flex-row items-center gap-x-5">
+                <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
                     <img
                       key={i}
@@ -191,7 +184,7 @@ export const PopularServices: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <div style={{ display: "flex", gap: 2, marginBottom: 3 }}>
+                  <div className="flex gap-2 mt-3 mb-1 sm:mt-0 sm:mb-3">
                     {[1, 2, 3, 4, 5].map((s) => (
                       <i
                         key={s}
@@ -200,15 +193,7 @@ export const PopularServices: React.FC = () => {
                       />
                     ))}
                   </div>
-                  <p
-                    className="font-display"
-                    style={{
-                      margin: 0,
-                      fontSize: 11,
-                      fontWeight: 700,
-                      color: "#1a1230",
-                    }}
-                  >
+                  <p className="font-display m-0 text-sm font-bold text-[#1a1230]">
                     2,400+ active members
                   </p>
                 </div>

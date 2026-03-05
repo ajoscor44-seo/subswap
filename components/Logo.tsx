@@ -1,8 +1,8 @@
 import { useNavigator } from "@/providers/navigator";
 import React from "react";
-import discountZarWhiteLogo from "@/assets/discount-zar-white.png";
+import zarLogo from "@/assets/zar-logo.png";
 
-const Logo = () => {
+const Logo = ({ size }: { size?: number }) => {
   const { goTo } = useNavigator();
 
   return (
@@ -11,9 +11,9 @@ const Logo = () => {
       className="flex items-center gap-2 cursor-pointer group"
     >
       <img
-        src={discountZarWhiteLogo}
+        src={zarLogo}
         alt="DiscountZAR Logo"
-        className="h-16 w-24 object-cover rounded"
+        className={`h-${size || 10} rounded`}
       />
     </div>
   );
