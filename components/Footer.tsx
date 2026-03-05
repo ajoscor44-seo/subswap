@@ -192,16 +192,9 @@ const Footer: React.FC = () => {
         <div
           style={{ maxWidth: 1200, margin: "0 auto", padding: "56px 24px 0" }}
         >
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "2fr 1fr 1fr 1fr",
-              gap: 48,
-              marginBottom: 48,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-12 mb-12">
             {/* Brand column */}
-            <div>
+            <div className="col-span-2">
               <div className="ft-divider" />
               <div style={{ marginBottom: 16 }}>
                 <Logo size={16} />

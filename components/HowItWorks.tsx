@@ -48,23 +48,13 @@ const StepCard: React.FC<{ step: Step; index: number; inView: boolean }> = ({
             alignItems: "center",
           }}
         >
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: "50%",
-              background: "#fff",
-              border: "1.5px solid #ede9fe",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              boxShadow: "0 2px 8px rgba(124,92,252,0.1)",
-            }}
-          >
-            <i
-              className="fa-solid fa-arrow-right"
-              style={{ color: "#c4b5fd", fontSize: 11 }}
-            />
+          <div className="w-8 h-8 rounded-full bg-white border-[1.5px] border-[#ede9fe] flex items-center justify-center shadow-[0_2px_8px_rgba(124,92,252,0.1)]">
+            <span className="inline-flex md:hidden items-center gap-1">
+              <i className="fa-solid fa-arrow-down text-[#c4b5fd] text-sm" />
+            </span>
+            <span className="hidden md:inline-flex items-center gap-1">
+              <i className="fa-solid fa-arrow-right hidden md:inline text-[#c4b5fd] text-sm" />
+            </span>
           </div>
         </div>
       )}
@@ -412,12 +402,7 @@ export const HowItWorks: React.FC = () => {
           {/* ── Steps ── */}
           <div
             ref={ref}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3,1fr)",
-              gap: 20,
-              position: "relative",
-            }}
+            className="flex flex-col md:grid md:grid-cols-3 gap-8 relative"
           >
             {STEPS.map((step, i) => (
               <StepCard

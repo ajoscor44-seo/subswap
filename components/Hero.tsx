@@ -375,10 +375,11 @@ export const Hero: React.FC = () => {
 
             {/* Social proof */}
             <div
-              className={`hero-animate d5`}
-              style={{ display: "inline-flex", alignItems: "center", gap: 12 }}
+              className={
+                "hero-animate d5 flex flex-col md:flex-row items-center gap-x-3 w-fit mx-auto"
+              }
             >
-              <div style={{ display: "flex" }}>
+              <div className="flex items-center justify-center md:justify-start">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <img
                     key={i}
@@ -389,15 +390,8 @@ export const Hero: React.FC = () => {
                   />
                 ))}
               </div>
-              <div style={{ textAlign: "left" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 4,
-                    marginBottom: 2,
-                  }}
-                >
+              <div className="flex flex-col items-center md:items-start">
+                <div className="flex gap-2 mt-3 mb-1 md:my-0 sm:mb-3 justify-center md:justify-start">
                   {[1, 2, 3, 4, 5].map((s) => (
                     <i
                       key={s}
@@ -407,7 +401,7 @@ export const Hero: React.FC = () => {
                   ))}
                 </div>
                 <p
-                  className="font-display"
+                  className="font-display md:justify-start"
                   style={{
                     margin: 0,
                     fontSize: 12,
@@ -422,14 +416,7 @@ export const Hero: React.FC = () => {
           </div>
 
           {/* ── Stats row ── */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(4,1fr)",
-              gap: 14,
-              marginBottom: 64,
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-16">
             {STATS.map((stat, i) => (
               <div
                 key={i}
