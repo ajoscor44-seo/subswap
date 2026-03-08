@@ -53,14 +53,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     `}</style>
 
     <header
-      className="adm-hdr max-w-300 mx-auto"
+      className="adm-hdr"
       style={{
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 16,
+        gap: 12,
         flexWrap: "wrap",
-        padding: "20px 28px",
+        padding: "16px 20px",
         background: "#fff",
         borderBottom: "1.5px solid #f0eef9",
         position: "sticky",
@@ -69,7 +69,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       }}
     >
       {/* ── Brand ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="flex items-center gap-3">
         <div
           style={{
             width: 42,
@@ -132,8 +132,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       </div>
 
       {/* ── Right controls ── */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        {/* Refresh */}
+      <div className="flex items-center gap-3 max-w-full">
         <button
           onClick={onRefresh}
           disabled={isLoading}
@@ -144,6 +143,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             borderRadius: 10,
             border: "1.5px solid #ede9fe",
             background: "#fff",
+            padding: "0px 12px",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -172,18 +172,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         </button>
 
         {/* Tab switcher */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            background: "#fafafe",
-            border: "1.5px solid #f0eef9",
-            borderRadius: 14,
-            padding: 4,
-            gap: 2,
-            overflowX: "auto",
-          }}
-        >
+        <div className="flex-1 flex items-center bg-[#fafafe] border-[1.5px] border-[#f0eef9] rounded-[14px] p-1 gap-2 overflow-x-auto">
           {TABS.map((tab) => (
             <button
               key={tab.id}

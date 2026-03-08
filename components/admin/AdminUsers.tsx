@@ -176,9 +176,24 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
           font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.06em;
         }
+
+        /* ── Responsive ── */
+        .usr2-chips   { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+        .usr2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+        @media (max-width: 800px) {
+          .usr2-chips { grid-template-columns:repeat(2,1fr); }
+          .usr2-toolbar { flex-direction:column; align-items:stretch; }
+          .usr2-filter-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; justify-content:flex-start; }
+        }
+        @media (max-width: 440px) {
+          .usr2-chips { grid-template-columns:1fr 1fr; }
+          .usr2-stat-chip { padding:12px 14px; }
+          .usr2-fund-input { width:88px; }
+        }
       `}</style>
 
-      <div className="usr2 space-y-5 animate-in fade-in duration-300 max-w-300 mx-auto">
+      <div className="usr2 space-y-5 animate-in fade-in duration-300">
         {/* Stat chips */}
         <div
           style={{
@@ -427,11 +442,11 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                         )}
                         {u.is_verified && (
                           <span
-                            className="usr2-badge w-fit"
+                            className="usr2-badge"
                             style={{ background: "#f0fdf4", color: "#10b981" }}
                           >
                             <i
-                              className="fa-solid fa-circle-check"
+                              className="fa-solid fa-check"
                               style={{ fontSize: 8 }}
                             />{" "}
                             Verified

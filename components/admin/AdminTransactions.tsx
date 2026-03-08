@@ -100,9 +100,25 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         .txn2-td { padding: 13px 18px; border-bottom: 1px solid #fafafe; }
         .txn2-tr:hover .txn2-td { background: #fafafe; }
         .txn2-tr:last-child .txn2-td { border-bottom: none; }
+
+        /* ── Responsive ── */
+        .txn2-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .txn2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .txn2-toolbar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+
+        @media (max-width: 700px) {
+          .txn2-chips { grid-template-columns:1fr 1fr; }
+          .txn2-toolbar { flex-direction:column; align-items:stretch; }
+          .txn2-toolbar-right { justify-content:space-between; }
+          .txn2-filter-bar { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+        }
+        @media (max-width: 420px) {
+          .txn2-chips { grid-template-columns:1fr; }
+          .txn2-stat-chip { padding:12px 14px; }
+        }
       `}</style>
 
-      <div className="txn2 space-y-5 animate-in fade-in duration-300 max-w-300 mx-auto">
+      <div className="txn2 space-y-5 animate-in fade-in duration-300">
         {/* Summary chips */}
         <div
           style={{

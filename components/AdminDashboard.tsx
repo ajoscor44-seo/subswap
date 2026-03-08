@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { MasterAccount, User, Transaction } from "@/constants/types";
+import { AdminHeader } from "./admin/AdminHeader";
 import { AdminStats } from "./admin/AdminStats";
 import { AdminInventory } from "./admin/AdminInventory";
 import { AdminUsers } from "./admin/AdminUsers";
 import { AdminTransactions } from "./admin/AdminTransactions";
-import { AdminHeader } from "./admin/AdminHeader";
 
 type AdminTab = "stats" | "inventory" | "users" | "transactions";
 
@@ -233,6 +233,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .adm-content { animation: fadeUp 0.3s ease; }
+
+        /* ── Layout ── */
+        .adm-layout { max-width:1280px; margin:0 auto; padding:24px 24px 64px; display:grid; grid-template-columns:220px 1fr; gap:24px; align-items:start; }
+        .adm-sidebar { background:#fff; border:1.5px solid #f0eef9; border-radius:20px; overflow:hidden; position:sticky; top:20px; }
+
+        /* ── Mobile top bar (hidden on desktop) ── */
+        .adm-mobile-bar { display:none; align-items:center; justify-content:space-between; padding:0 16px; height:52px; background:#fff; border-bottom:1.5px solid #f0eef9; }
+        .adm-mobile-tab-scroll { display:none; overflow-x:auto; -webkit-overflow-scrolling:touch; background:#fff; border-bottom:1.5px solid #f0eef9; padding:8px 12px; gap:6px; }
+        .adm-mobile-tab-scroll::-webkit-scrollbar { display:none; }
+        .adm-mob-tab { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:99px; border:none; white-space:nowrap; cursor:pointer; font-family:'Syne',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; background:#f5f3ff; color:#b8addb; transition:all 0.18s; flex-shrink:0; }
+        .adm-mob-tab.active { background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; box-shadow:0 3px 10px rgba(124,92,252,0.3); }
+
+        @media (max-width: 900px) {
+          .adm-layout { grid-template-columns:1fr; padding:16px 12px 80px; gap:16px; }
+          .adm-sidebar { display:none; }
+          .adm-mobile-bar { display:flex; }
+          .adm-mobile-tab-scroll { display:flex; }
+        }
+
+        @media (max-width: 480px) {
+          .adm-layout { padding:12px 8px 80px; }
+        }
       `}</style>
 
       <div
@@ -633,7 +655,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </aside>
 
           {/* ── Main content ── */}
-          <main style={{ minWidth: 0 }}>
+          <main style={{ minWidth: 0, overflow: "hidden" }}>
             {/* Page header */}
             <div style={{ marginBottom: 20 }}>
               <p

@@ -445,13 +445,7 @@ export const OnboardingAnalytics: React.FC = () => {
         </div>
 
         {/* ── Three section cards ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 14,
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Section
             title="What do they share?"
             icon="fa-film"

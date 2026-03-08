@@ -252,7 +252,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="container mx-auto px-4 py-12 space-y-8">
+    <div className="container mx-auto space-y-8 pb-10">
       <FeedbackToast feedback={feedback} />
 
       <AdminHeader
@@ -262,42 +262,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         onRefresh={() => fetchData(true)}
       />
 
-      {activeTab === "stats" && (
-        <AdminStats
-          accounts={accounts}
-          users={allUsers}
-          transactions={transactions}
-        />
-      )}
+      <div className=" px-4 md:py-8 lg:py-12">
+        {activeTab === "stats" && (
+          <AdminStats
+            accounts={accounts}
+            users={allUsers}
+            transactions={transactions}
+          />
+        )}
 
-      {activeTab === "inventory" && (
-        <AdminInventory
-          accounts={accounts}
-          isLoading={isLoading}
-          onRefresh={() => fetchData(true)}
-          onAdd={handleAddAccount}
-          onUpdate={handleUpdateAccount}
-          onDelete={handleDeleteAccount}
-        />
-      )}
+        {activeTab === "inventory" && (
+          <AdminInventory
+            accounts={accounts}
+            isLoading={isLoading}
+            onRefresh={() => fetchData(true)}
+            onAdd={handleAddAccount}
+            onUpdate={handleUpdateAccount}
+            onDelete={handleDeleteAccount}
+          />
+        )}
 
-      {activeTab === "users" && (
-        <AdminUsers
-          users={allUsers}
-          currentUserId={user.id}
-          isLoading={isLoading}
-          onFundUser={handleFundUser}
-          onToggleBan={handleToggleBan}
-          onToggleVerify={handleToggleVerify}
-        />
-      )}
+        {activeTab === "users" && (
+          <AdminUsers
+            users={allUsers}
+            currentUserId={user.id}
+            isLoading={isLoading}
+            onFundUser={handleFundUser}
+            onToggleBan={handleToggleBan}
+            onToggleVerify={handleToggleVerify}
+          />
+        )}
 
-      {activeTab === "transactions" && (
-        <AdminTransactions
-          transactions={transactions}
-          onRefresh={() => fetchData(true)}
-        />
-      )}
+        {activeTab === "transactions" && (
+          <AdminTransactions
+            transactions={transactions}
+            onRefresh={() => fetchData(true)}
+          />
+        )}
+      </div>
     </div>
   );
 };
