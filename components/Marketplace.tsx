@@ -390,7 +390,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
             <p
               style={{
                 margin: 0,
-                fontFamily: "'DM Sans',sans-serif",
                 fontSize: 13,
                 fontWeight: 500,
                 color: "#1a1230",
@@ -615,7 +614,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         )}
 
         {/* ── Header ── */}
-        <div style={{ marginBottom: 28 }}>
+        <div>
           <p
             className="mkt-heading"
             style={{

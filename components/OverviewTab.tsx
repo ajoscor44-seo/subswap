@@ -1,6 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { User, Transaction } from "@/constants/types";
 import { Marketplace } from "./Marketplace";
+
+function useWindowWidth() {
+  const [width, setWidth] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth : 1200,
+  );
+  useEffect(() => {
+    const handle = () => setWidth(window.innerWidth);
+    window.addEventListener("resize", handle);
+    return () => window.removeEventListener("resize", handle);
+  }, []);
+  return width;
+}
 
 interface OverviewTabProps {
   user: User;
@@ -29,6 +41,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   changeTab,
   onPurchaseSuccess,
 }) => {
+  const windowWidth = useWindowWidth();
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+
   return (
     <>
       <style>{`
@@ -77,7 +93,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         .ov-stat { padding:20px 22px; border-radius:16px; border:1.5px solid #f0eef9; background:#fff; transition:box-shadow 0.2s,transform 0.2s; }
         .ov-stat:hover { box-shadow:0 8px 24px rgba(124,92,252,0.1); transform:translateY(-2px); }
 
-        .ov-tx-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; transition:background 0.15s; cursor:default; }
+        .ov-tx-row { display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px; transition:background 0.15s; cursor:default; min-width:0; overflow:hidden; }
         .ov-tx-row:hover { background:#fafafe; }
 
         .ov-icon { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0; }
@@ -103,7 +119,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         /* ── Responsive grid helpers ── */
         .ov-row1  { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
         .ov-row2  { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
-        .ov-row3  { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .ov-row3  { display:grid; gap:16px; }
 
         /* hero spans 2 of 3 columns by default */
         .ov-hero-cell  { grid-column: span 2; }
@@ -154,8 +170,22 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
         {/* ── Row 1: Hero + Savings ── */}
-        <div className="ov-row1 ov-fade">
-          <div className="ov-hero ov-hero-cell">
+        <div
+          className="ov-row1 ov-fade"
+          style={{
+            gridTemplateColumns: isMobile
+              ? "1fr"
+              : isTablet
+                ? "1fr 1fr"
+                : "1fr 1fr 1fr",
+          }}
+        >
+          <div
+            className="ov-hero ov-hero-cell"
+            style={{
+              gridColumn: isMobile ? "span 1" : isTablet ? "span 1" : "span 2",
+            }}
+          >
             <span className="ov-hero-naira">₦</span>
             <div style={{ position: "relative", zIndex: 1 }}>
               <p
@@ -306,7 +336,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* ── Row 2: Quick stats ── */}
-        <div className="ov-row2 ov-fade-2">
+        <div
+          className="ov-row2 ov-fade-2"
+          style={{
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(3,1fr)",
+          }}
+        >
           {[
             {
               label: "Active Stacks",
@@ -396,9 +431,15 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* ── Row 3: Transactions + Stacks ── */}
-        <div className="ov-row3 ov-fade-3">
+        <div
+          className="ov-row3 ov-fade-3"
+          style={{ gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}
+        >
           {/* Recent transactions */}
-          <div className="ov-card" style={{ padding: "24px" }}>
+          <div
+            className="ov-card"
+            style={{ padding: "24px", overflow: "hidden", minWidth: 0 }}
+          >
             <div
               style={{
                 display: "flex",
@@ -433,13 +474,16 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   const isPos = tx.amount > 0;
                   return (
                     <div key={tx.id} className="ov-tx-row">
-                      <div className="ov-icon" style={{ background: cfg.bg }}>
+                      <div
+                        className="ov-icon"
+                        style={{ background: cfg.bg, flexShrink: 0 }}
+                      >
                         <i
                           className={`fa-solid ${cfg.icon}`}
                           style={{ color: cfg.color }}
                         />
                       </div>
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
                         <p
                           style={{
                             margin: "0 0 2px",
@@ -477,6 +521,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           fontWeight: 800,
                           color: isPos ? "#16a34a" : "#ef4444",
                           flexShrink: 0,
+                          whiteSpace: "nowrap" as const,
                         }}
                       >
                         {isPos ? "+" : "−"}₦
@@ -526,7 +571,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           </div>
 
           {/* Active stacks */}
-          <div className="ov-card" style={{ padding: "24px" }}>
+          <div
+            className="ov-card"
+            style={{ padding: "24px", overflow: "hidden", minWidth: 0 }}
+          >
             <div
               style={{
                 display: "flex",
