@@ -85,8 +85,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
-
         .th-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
         .th-root * { box-sizing: border-box; }
         .th-heading { font-family: 'Syne', sans-serif; }
@@ -98,6 +96,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           border-radius: 16px;
           padding: 18px 20px;
           transition: box-shadow 0.2s, transform 0.2s;
+          min-width: 140px;
+          flex: 1;
         }
         .th-stat:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.1); transform: translateY(-2px); }
 
@@ -178,6 +178,71 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+
+        /* ── Table scroll container ── */
+        .th-table-scroll {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          width: 100%;
+        }
+        .th-table-scroll::-webkit-scrollbar { height: 4px; }
+        .th-table-scroll::-webkit-scrollbar-track { background: #f5f3ff; }
+        .th-table-scroll::-webkit-scrollbar-thumb { background: #c4b5fd; border-radius: 99px; }
+
+        /* ── Fixed-width table inner ── */
+        .th-table-inner { min-width: 600px; width: 100%; }
+        .th-table-inner-admin { min-width: 760px; width: 100%; }
+
+        /* ── Column widths (non-admin): type | amount | description | date ── */
+        .th-col-type        { width: 130px; flex-shrink: 0; }
+        .th-col-amount      { width: 120px; flex-shrink: 0; text-align: right; }
+        .th-col-description { flex: 1; min-width: 0; padding: 0 16px; }
+        .th-col-date        { width: 110px; flex-shrink: 0; text-align: right; }
+        /* Admin extra col */
+        .th-col-user        { width: 130px; flex-shrink: 0; }
+
+        /* ── Header + row share same flex layout ── */
+        .th-header-row, .th-data-row {
+          display: flex;
+          align-items: center;
+          padding: 0 20px;
+          gap: 0;
+          min-width: 0;
+        }
+        .th-header-row {
+          padding: 10px 20px;
+          background: #fafafe;
+          border-bottom: 1.5px solid #f0eef9;
+          position: sticky;
+          top: 0;
+          z-index: 1;
+        }
+        .th-data-row {
+          padding: 14px 20px;
+          border-bottom: 1px solid #f5f3ff;
+          transition: background 0.15s;
+          cursor: default;
+        }
+        .th-data-row:last-child { border-bottom: none; }
+        .th-data-row:hover { background: #fafafe; }
+
+        /* ── Summary stats scroll ── */
+        .th-stats-scroll {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+        .th-stats-scroll::-webkit-scrollbar { display: none; }
+        .th-stats-inner {
+          display: grid;
+          grid-template-columns: repeat(3, minmax(140px, 1fr));
+          gap: 12px;
+          min-width: 420px;
+        }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+          .th-header-row, .th-data-row { padding: 12px 16px; }
+        }
       `}</style>
 
       <div
@@ -185,7 +250,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         style={{ padding: isDashboardView ? 0 : "32px 0" }}
       >
         {/* ── Header ── */}
-        <div style={{ padding: isDashboardView ? "28px 28px 0" : "0 0 24px" }}>
+        <div style={{ padding: isDashboardView ? "20px 20px 0" : "0 0 24px" }}>
           <p
             className="th-heading"
             style={{
@@ -232,7 +297,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               display: "grid",
               gridTemplateColumns: "repeat(3,1fr)",
               gap: 12,
-              padding: isDashboardView ? "20px 28px" : "20px 0",
+              padding: isDashboardView ? "20px" : "20px 0",
             }}
           >
             <div className="th-stat">
@@ -258,7 +323,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   color: "#16a34a",
                 }}
               >
-                +₦{totalIn.toLocaleString()}
+                ₦{totalIn.toLocaleString()}
               </p>
             </div>
             <div className="th-stat">
@@ -284,7 +349,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   color: "#ef4444",
                 }}
               >
-                -₦{totalOut.toLocaleString()}
+                ₦{totalOut.toLocaleString()}
               </p>
             </div>
             <div className="th-stat">
@@ -322,7 +387,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             display: "flex",
             flexDirection: "column",
             gap: 12,
-            padding: isDashboardView ? "0 28px 20px" : "0 0 20px",
+            padding: isDashboardView ? "0 20px 20px" : "0 0 20px",
           }}
         >
           <div
@@ -352,293 +417,298 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         </div>
 
         {/* ── Table / List ── */}
-        <div
-          style={{
-            borderTop: "1.5px solid #f0eef9",
-            margin: isDashboardView ? "0" : "0",
-          }}
-        >
-          {/* Desktop header row */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: user.isAdmin
-                ? "1fr 120px 120px 2fr 110px"
-                : "120px 120px 2fr 110px",
-              padding: "10px 28px",
-              background: "#fafafe",
-              borderBottom: "1.5px solid #f0eef9",
-            }}
-          >
-            {user.isAdmin && (
-              <span
-                style={{
-                  fontSize: 9,
-                  fontFamily: "'Syne',sans-serif",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#c4b5fd",
-                }}
-              >
-                User
-              </span>
-            )}
-            <span
-              style={{
-                fontSize: 9,
-                fontFamily: "'Syne',sans-serif",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#c4b5fd",
-              }}
+        <div style={{ borderTop: "1.5px solid #f0eef9" }}>
+          <div className="th-table-scroll">
+            <div
+              className={
+                user.isAdmin ? "th-table-inner-admin" : "th-table-inner"
+              }
             >
-              Type
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontFamily: "'Syne',sans-serif",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#c4b5fd",
-                textAlign: "right",
-              }}
-            >
-              Amount
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontFamily: "'Syne',sans-serif",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#c4b5fd",
-              }}
-            >
-              Description
-            </span>
-            <span
-              style={{
-                fontSize: 9,
-                fontFamily: "'Syne',sans-serif",
-                fontWeight: 700,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#c4b5fd",
-                textAlign: "right",
-              }}
-            >
-              Date
-            </span>
-          </div>
-
-          {isLoading ? (
-            <div style={{ padding: "8px 28px" }}>
-              {[...Array(5)].map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                    padding: "16px 0",
-                    borderBottom: "1px solid #f5f3ff",
-                  }}
-                >
-                  <div
-                    className="th-skeleton"
+              {/* ── Header ── */}
+              <div className="th-header-row">
+                {user.isAdmin && (
+                  <span
+                    className="th-col-user"
                     style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: 10,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div style={{ flex: 1 }}>
-                    <div
-                      className="th-skeleton"
-                      style={{ height: 11, width: "40%", marginBottom: 8 }}
-                    />
-                    <div
-                      className="th-skeleton"
-                      style={{ height: 10, width: "70%" }}
-                    />
-                  </div>
-                  <div
-                    className="th-skeleton"
-                    style={{ height: 14, width: 80 }}
-                  />
-                </div>
-              ))}
-            </div>
-          ) : filtered.length > 0 ? (
-            <div>
-              {filtered.map((tx, i) => {
-                const cfg = getTypeConfig(tx.type);
-                const isPos = tx.amount > 0;
-                return (
-                  <div
-                    key={tx.id}
-                    className="th-row th-row-anim"
-                    style={{
-                      gridTemplateColumns: user.isAdmin
-                        ? "1fr 120px 120px 2fr 110px"
-                        : "120px 120px 2fr 110px",
-                      display: "grid",
-                      alignItems: "center",
-                      padding: "14px 28px",
-                      animationDelay: `${Math.min(i * 30, 300)}ms`,
+                      fontSize: 9,
+                      fontFamily: "'Syne',sans-serif",
+                      fontWeight: 700,
+                      textTransform: "uppercase" as const,
+                      letterSpacing: "0.08em",
+                      color: "#c4b5fd",
                     }}
                   >
-                    {/* Mobile-friendly: on small screens show compact card */}
-                    {user.isAdmin && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                        }}
-                      >
-                        <div
-                          className="th-icon-circle"
-                          style={{ background: cfg.bg }}
-                        >
-                          <i
-                            className={`fa-solid ${cfg.icon}`}
-                            style={{ color: cfg.color }}
-                          />
-                        </div>
-                        <span
-                          style={{
-                            fontFamily: "monospace",
-                            fontSize: 10,
-                            color: "#94a3b8",
-                          }}
-                        >
-                          {tx.user_id === user.id
-                            ? "Self"
-                            : `···${tx.user_id.slice(-6)}`}
-                        </span>
-                      </div>
-                    )}
+                    User
+                  </span>
+                )}
+                <span
+                  className="th-col-type"
+                  style={{
+                    fontSize: 9,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
+                    color: "#c4b5fd",
+                  }}
+                >
+                  Type
+                </span>
+                <span
+                  className="th-col-amount"
+                  style={{
+                    fontSize: 9,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
+                    color: "#c4b5fd",
+                  }}
+                >
+                  Amount
+                </span>
+                <span
+                  className="th-col-description"
+                  style={{
+                    fontSize: 9,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
+                    color: "#c4b5fd",
+                  }}
+                >
+                  Description
+                </span>
+                <span
+                  className="th-col-date"
+                  style={{
+                    fontSize: 9,
+                    fontFamily: "'Syne',sans-serif",
+                    fontWeight: 700,
+                    textTransform: "uppercase" as const,
+                    letterSpacing: "0.08em",
+                    color: "#c4b5fd",
+                  }}
+                >
+                  Date
+                </span>
+              </div>
 
-                    {/* Type badge (non-admin gets icon here) */}
+              {/* ── Rows ── */}
+              {isLoading ? (
+                <div style={{ padding: "8px 20px" }}>
+                  {[...Array(5)].map((_, i) => (
                     <div
+                      key={i}
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: user.isAdmin ? 0 : 10,
+                        gap: 16,
+                        padding: "16px 0",
+                        borderBottom: "1px solid #f5f3ff",
                       }}
                     >
-                      {!user.isAdmin && (
+                      <div
+                        className="th-skeleton"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: 10,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ flex: 1 }}>
                         <div
-                          className="th-icon-circle"
-                          style={{ background: cfg.bg, marginRight: 10 }}
+                          className="th-skeleton"
+                          style={{ height: 11, width: "40%", marginBottom: 8 }}
+                        />
+                        <div
+                          className="th-skeleton"
+                          style={{ height: 10, width: "70%" }}
+                        />
+                      </div>
+                      <div
+                        className="th-skeleton"
+                        style={{ height: 14, width: 80 }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : filtered.length > 0 ? (
+                <div>
+                  {filtered.map((tx, i) => {
+                    const cfg = getTypeConfig(tx.type);
+                    const isPos = tx.amount > 0;
+                    return (
+                      <div
+                        key={tx.id}
+                        className="th-data-row th-row-anim"
+                        style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                      >
+                        {/* Admin: user col */}
+                        {user.isAdmin && (
+                          <div
+                            className="th-col-user"
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                            }}
+                          >
+                            <div
+                              className="th-icon-circle"
+                              style={{ background: cfg.bg }}
+                            >
+                              <i
+                                className={`fa-solid ${cfg.icon}`}
+                                style={{ color: cfg.color }}
+                              />
+                            </div>
+                            <span
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: 10,
+                                color: "#94a3b8",
+                                whiteSpace: "nowrap" as const,
+                              }}
+                            >
+                              {tx.user_id === user.id
+                                ? "Self"
+                                : `···${tx.user_id.slice(-6)}`}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Type col */}
+                        <div
+                          className="th-col-type"
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 8,
+                          }}
                         >
-                          <i
-                            className={`fa-solid ${cfg.icon}`}
-                            style={{ color: cfg.color }}
-                          />
+                          {!user.isAdmin && (
+                            <div
+                              className="th-icon-circle"
+                              style={{ background: cfg.bg }}
+                            >
+                              <i
+                                className={`fa-solid ${cfg.icon}`}
+                                style={{ color: cfg.color }}
+                              />
+                            </div>
+                          )}
+                          <span
+                            className="th-badge"
+                            style={{ background: cfg.bg, color: cfg.color }}
+                          >
+                            {tx.type}
+                          </span>
                         </div>
-                      )}
-                      <span
-                        className="th-badge"
-                        style={{ background: cfg.bg, color: cfg.color }}
-                      >
-                        {tx.type}
-                      </span>
-                    </div>
 
-                    {/* Amount */}
-                    <div style={{ textAlign: "right" }}>
-                      <span
-                        className={isPos ? "th-amount-pos" : "th-amount-neg"}
-                        style={{ fontSize: 14 }}
-                      >
-                        {isPos ? "+" : "−"}₦
-                        {Math.abs(tx.amount).toLocaleString()}
-                      </span>
-                    </div>
+                        {/* Amount col */}
+                        <div className="th-col-amount">
+                          <span
+                            className={
+                              isPos ? "th-amount-pos" : "th-amount-neg"
+                            }
+                            style={{
+                              fontSize: 14,
+                              whiteSpace: "nowrap" as const,
+                            }}
+                          >
+                            {isPos ? "+" : "−"}₦
+                            {Math.abs(tx.amount).toLocaleString()}
+                          </span>
+                        </div>
 
-                    {/* Description */}
-                    <div style={{ padding: "0 16px" }}>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: 12,
-                          color: "#475569",
-                          fontWeight: 400,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {tx.description || "No description provided"}
-                      </p>
-                    </div>
+                        {/* Description col */}
+                        <div className="th-col-description">
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 12,
+                              color: "#475569",
+                              fontWeight: 400,
+                              whiteSpace: "nowrap" as const,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {tx.description || "No description provided"}
+                          </p>
+                        </div>
 
-                    {/* Date */}
-                    <div style={{ textAlign: "right" }}>
-                      <p
-                        style={{
-                          margin: "0 0 2px",
-                          fontSize: 11,
-                          fontFamily: "'Syne',sans-serif",
-                          fontWeight: 700,
-                          color: "#1a1230",
-                        }}
-                      >
-                        {formatDate(tx.created_at)}
-                      </p>
-                      <p style={{ margin: 0, fontSize: 10, color: "#c4b5fd" }}>
-                        {formatTime(tx.created_at)}
-                      </p>
-                    </div>
+                        {/* Date col */}
+                        <div className="th-col-date">
+                          <p
+                            style={{
+                              margin: "0 0 2px",
+                              fontSize: 11,
+                              fontFamily: "'Syne',sans-serif",
+                              fontWeight: 700,
+                              color: "#1a1230",
+                              whiteSpace: "nowrap" as const,
+                            }}
+                          >
+                            {formatDate(tx.created_at)}
+                          </p>
+                          <p
+                            style={{
+                              margin: 0,
+                              fontSize: 10,
+                              color: "#c4b5fd",
+                              whiteSpace: "nowrap" as const,
+                            }}
+                          >
+                            {formatTime(tx.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "56px 32px" }}>
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 14,
+                      background: "#f5f3ff",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      margin: "0 auto 14px",
+                    }}
+                  >
+                    <i
+                      className="fa-solid fa-receipt"
+                      style={{ color: "#c4b5fd", fontSize: 20 }}
+                    />
                   </div>
-                );
-              })}
+                  <p
+                    className="th-heading"
+                    style={{
+                      margin: "0 0 4px",
+                      fontSize: 13,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.08em",
+                      color: "#b8addb",
+                    }}
+                  >
+                    No transactions found
+                  </p>
+                  <p style={{ margin: 0, color: "#c4b5fd", fontSize: 13 }}>
+                    Try adjusting your filters
+                  </p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div style={{ textAlign: "center", padding: "56px 32px" }}>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 14,
-                  background: "#f5f3ff",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 14px",
-                }}
-              >
-                <i
-                  className="fa-solid fa-receipt"
-                  style={{ color: "#c4b5fd", fontSize: 20 }}
-                />
-              </div>
-              <p
-                className="th-heading"
-                style={{
-                  margin: "0 0 4px",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                  color: "#b8addb",
-                }}
-              >
-                No transactions found
-              </p>
-              <p style={{ margin: 0, color: "#c4b5fd", fontSize: 13 }}>
-                Try adjusting your filters
-              </p>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </>

@@ -469,7 +469,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       `}</style>
 
       <div
-        className="st-root bg-white p-8 rounded-3xl"
+        className="st-root bg-white p-5 rounded-2xl"
         style={{ display: "flex", flexDirection: "column", gap: 20 }}
       >
         {/* ── Header ── */}
@@ -501,16 +501,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           </h2>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: 16,
-            alignItems: "start",
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start st-fade-2">
           {/* ── LEFT column ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="flex flex-col gap-4">
             {/* Profile photo */}
             <div className="st-card st-fade-2">
               <p className="st-label" style={{ marginBottom: 16 }}>
@@ -774,19 +767,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
 
         {/* ── Save bar ── */}
-        <div
-          className="st-fade-4"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "18px 24px",
-            borderRadius: 16,
-            background: "#fff",
-            border: "1.5px solid #f0eef9",
-            boxShadow: "0 4px 16px rgba(124,92,252,0.06)",
-          }}
-        >
+        <div className="st-fade-4 flex flex-col md:flex-row items-start gap-y-3 md:items-center justify-between py-4 px-6 rounded-xl bg-white border border-[#f0eef9] box-shadow-[0_4px_16px_rgba(124,92,252,0.06)]">
           <div>
             <p
               className="font-display"
