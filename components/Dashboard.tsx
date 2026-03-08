@@ -444,7 +444,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
           .db-topbar     { display: flex !important; }
           .db-mobile-nav { display: flex !important; justify-content: space-around; align-items: flex-start; }
           .db-layout     { grid-template-columns: 1fr !important; }
-          .db-main       { padding-bottom: 88px !important; }
         }
       `}</style>
 
@@ -752,7 +751,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                     background: "#fff",
                     borderRadius: 15,
                     border: "1.5px solid #f0eef9",
-                    padding: "32px",
+                    padding: "20px 15px",
                   }}
                 >
                   <Marketplace

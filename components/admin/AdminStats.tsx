@@ -1,6 +1,6 @@
 import { MasterAccount, Transaction } from "@/constants/types";
 import React, { useMemo } from "react";
-import { OnboardingAnalytics } from "../OnboardingAnalytics";
+import { OnboardingAnalytics } from "./OnboardingAnalytics";
 
 interface AdminStatsProps {
   accounts: MasterAccount[];
@@ -203,17 +203,42 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         .ast2-mini.green  { background:linear-gradient(145deg,#052e16,#14532d); }
         .ast2-mini.amber  { background:linear-gradient(145deg,#1c1407,#78350f); }
         .ast2-mini.indigo { background:linear-gradient(145deg,#0f0a2e,#1e1b4b); }
+
+        /* ── Responsive ── */
+        .ast2-kpi-row  { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .ast2-mini-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+
+        /* Panel row: hard containment so neither column can stretch the other */
+        .ast2-panel-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; min-width:0; overflow:hidden; }
+        .ast2-panel-row > * { min-width:0; overflow:hidden; }
+
+        /* Recent activity rows: full overflow containment chain */
+        .ast2-activity-row { display:flex; align-items:center; gap:12px; min-width:0; overflow:hidden; }
+        .ast2-activity-text { flex:1; min-width:0; overflow:hidden; }
+        .ast2-activity-desc { margin:0 0 2px; font-size:12px; font-weight:500; color:#1a1230; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .ast2-activity-time { margin:0; font-size:10px; font-family:monospace; color:#c4b5fd; }
+        .ast2-activity-amt  { font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; font-family:'Syne',sans-serif; }
+
+        @media (max-width: 900px) {
+          .ast2-kpi-row  { grid-template-columns:1fr 1fr; }
+          .ast2-mini-row { grid-template-columns:1fr 1fr; }
+          .ast2-panel-row{ grid-template-columns:1fr; }
+          .ast2-health   { flex-direction:column; align-items:flex-start; padding:20px; gap:16px; }
+          .ast2-kpi      { padding:20px; min-height:120px; }
+          .ast2-kpi-value{ font-size:28px !important; }
+          .ast2-mini     { padding:16px; }
+          .ast2-mini-value{ font-size:22px !important; }
+        }
+
+        @media (max-width: 560px) {
+          .ast2-kpi-row  { grid-template-columns:1fr; }
+          .ast2-mini-row { grid-template-columns:1fr 1fr; }
+        }
       `}</style>
 
-      <div className="ast2 space-y-6 animate-in fade-in duration-300 max-w-300 mx-auto">
+      <div className="ast2 space-y-6 animate-in fade-in duration-300">
         {/* ── Primary KPI hero cards ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3,1fr)",
-            gap: 14,
-          }}
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Platform Escrow */}
           <div className="ast2-kpi">
             <span className="ast2-kpi-watermark">₦</span>
@@ -267,15 +292,9 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         </div>
 
         {/* ── Secondary mini-hero cards ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(4,1fr)",
-            gap: 12,
-          }}
-        >
+        <div className="flex overflow-auto max-w-screen md:grid grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Total Members */}
-          <div className="ast2-mini">
+          <div className="ast2-mini min-w-xs md:min-w-0">
             <div className="ast2-mini-icon" style={{ color: "#a78bfa" }}>
               <i className="fa-solid fa-users" />
             </div>
@@ -285,7 +304,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
           </div>
 
           {/* Active Logs */}
-          <div className="ast2-mini indigo">
+          <div className="ast2-mini min-w-xs md:min-w-0 indigo">
             <div className="ast2-mini-icon" style={{ color: "#818cf8" }}>
               <i className="fa-solid fa-layer-group" />
             </div>
@@ -299,7 +318,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
 
           {/* Slot Fill Rate */}
           <div
-            className={`ast2-mini ${stats.fillRate > 80 ? "green" : "amber"}`}
+            className={`ast2-mini min-w-xs md:min-w-0 ${stats.fillRate > 80 ? "green" : "amber"}`}
           >
             <div
               className="ast2-mini-icon"
@@ -315,7 +334,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
           </div>
 
           {/* Verified Members */}
-          <div className="ast2-mini green">
+          <div className="ast2-mini min-w-xs md:min-w-0 green">
             <div className="ast2-mini-icon" style={{ color: "#34d399" }}>
               <i className="fa-solid fa-user-check" />
             </div>
@@ -326,11 +345,12 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         </div>
 
         {/* Two-col panels */}
-        <div
-          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}
-        >
+        <div className="ast2-panel-row">
           {/* Inventory health */}
-          <div className="ast2-panel">
+          <div
+            className="ast2-panel"
+            style={{ minWidth: 0, overflow: "hidden" }}
+          >
             <p className="ast2-panel-title">
               <i
                 className="fa-solid fa-layer-group"
@@ -346,6 +366,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                     padding: "32px 0",
                     color: "#c4b5fd",
                     fontSize: 13,
+                    fontFamily: "'DM Sans',sans-serif",
                   }}
                 >
                   No inventory yet
@@ -449,7 +470,10 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
           </div>
 
           {/* Recent activity */}
-          <div className="ast2-panel">
+          <div
+            className="ast2-panel"
+            style={{ minWidth: 0, overflow: "hidden" }}
+          >
             <p className="ast2-panel-title">
               <i
                 className="fa-solid fa-bolt"
@@ -465,6 +489,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                     padding: "32px 0",
                     color: "#c4b5fd",
                     fontSize: 13,
+                    fontFamily: "'DM Sans',sans-serif",
                   }}
                 >
                   No transactions yet
@@ -473,10 +498,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
               {stats.recentTx.map((tx) => {
                 const meta = TX_META[tx.type] ?? TX_META["Withdrawal"];
                 return (
-                  <div
-                    key={tx.id}
-                    style={{ display: "flex", alignItems: "center", gap: 12 }}
-                  >
+                  <div key={tx.id} className="ast2-activity-row">
                     <div
                       style={{
                         width: 34,
@@ -494,27 +516,9 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                         style={{ color: meta.accent, fontSize: 12 }}
                       />
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p
-                        style={{
-                          margin: "0 0 2px",
-                          fontSize: 12,
-                          fontWeight: 500,
-                          color: "#1a1230",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap" as const,
-                        }}
-                      >
-                        {tx.description}
-                      </p>
-                      <p
-                        style={{
-                          margin: 0,
-                          fontSize: 10,
-                          color: "#c4b5fd",
-                        }}
-                      >
+                    <div className="ast2-activity-text">
+                      <p className="ast2-activity-desc">{tx.description}</p>
+                      <p className="ast2-activity-time">
                         {new Date(tx.created_at).toLocaleString("en-NG", {
                           month: "short",
                           day: "numeric",
@@ -524,13 +528,8 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                       </p>
                     </div>
                     <span
-                      className="font-display"
-                      style={{
-                        fontSize: 13,
-                        fontWeight: 700,
-                        color: tx.amount >= 0 ? "#10b981" : "#ef4444",
-                        flexShrink: 0,
-                      }}
+                      className="ast2-activity-amt"
+                      style={{ color: tx.amount >= 0 ? "#10b981" : "#ef4444" }}
                     >
                       {tx.amount > 0 ? "+" : ""}₦
                       {Math.abs(tx.amount).toLocaleString()}
@@ -571,6 +570,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                 margin: 0,
                 fontSize: 12,
                 color: "rgba(255,255,255,0.35)",
+                fontFamily: "'DM Sans',sans-serif",
               }}
             >
               Automated slot management · Real-time inventory tracking
@@ -595,7 +595,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
               },
             ].map((s, i, arr) => (
               <React.Fragment key={s.label}>
-                <div style={{ textAlign: "center", padding: "0 28px" }}>
+                <div className="text-center px-4 md:px-7">
                   <p
                     className="font-display"
                     style={{

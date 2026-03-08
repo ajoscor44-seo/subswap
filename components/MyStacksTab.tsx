@@ -109,14 +109,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
         .dot-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
       `}</style>
 
-      <div
-        className="bg-white p-8 rounded-2xl"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: 20,
-        }}
-      >
+      <div className="bg-white px-5 py-6 flex flex-col rounded-2xl gap-5">
         {/* ── Header ── */}
         <div
           style={{

@@ -115,6 +115,17 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         }
         .inv2-action.edit:hover { background: linear-gradient(135deg,#7c5cfc,#6366f1); color: #fff; box-shadow: 0 3px 8px rgba(124,92,252,0.3); }
         .inv2-action.del:hover  { background: #fef2f2; color: #ef4444; }
+
+        /* ── Responsive ── */
+        .inv2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .inv2-chips   { display:flex; gap:8px; flex-wrap:wrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+        @media (max-width: 640px) {
+          .inv2-toolbar { flex-direction:column; align-items:stretch; }
+          .inv2-add-btn { width:100%; justify-content:center; }
+          .inv2-chips   { flex-wrap:nowrap; }
+          .inv2-stat-chip { flex-shrink:0; }
+        }
       `}</style>
 
       {showForm && (
@@ -128,7 +139,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         />
       )}
 
-      <div className="inv2 space-y-5 animate-in fade-in duration-30 max-w-300 mx-auto">
+      <div className="inv2 space-y-5 animate-in fade-in duration-300">
         {/* Toolbar */}
         <div
           style={{

@@ -40,7 +40,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
         .wt-root * { box-sizing: border-box; }
         .wt-heading { font-family: 'Syne', sans-serif; }
 
-        .wt-card { background: #fff; border: 1.5px solid #f0eef9; border-radius: 20px; transition: box-shadow 0.25s, transform 0.25s; }
+        .wt-card { background: #fff; border: 1.5px solid #f0eef9; border-radius: 20px; transition: box-shadow 0.25s, transform 0.25s; min-width: 0; overflow: hidden; }
 
         .wt-balance-card {
           border-radius: 20px;
@@ -50,10 +50,10 @@ const WalletTab: React.FC<WalletTabProps> = ({
         .wt-balance-card::before { content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.04); }
         .wt-balance-card::after  { content:''; position:absolute; bottom:-60px; left:-20px; width:240px; height:240px; border-radius:50%; background:rgba(124,92,252,0.15); }
 
-        .wt-input-wrap { display:flex; align-items:center; border:1.5px solid #ede9fe; border-radius:14px; background:#fafafe; overflow:hidden; transition:border-color 0.2s,box-shadow 0.2s; }
+        .wt-input-wrap { display:flex; align-items:center; border:1.5px solid #ede9fe; border-radius:14px; background:#fafafe; overflow:hidden; transition:border-color 0.2s,box-shadow 0.2s; max-width:100%; min-width:0; }
         .wt-input-wrap.focused { border-color:#7c5cfc; box-shadow:0 0 0 4px rgba(124,92,252,0.1); }
         .wt-input-prefix { padding:0 4px 0 18px; font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:#7c5cfc; pointer-events:none; flex-shrink:0; }
-        .wt-input { flex:1; border:none; background:transparent; padding:16px 12px; font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#1a1230; outline:none; }
+        .wt-input { flex:1; min-width:0; max-width:100%; border:none; background:transparent; padding:16px 12px; font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#1a1230; outline:none; }
         .wt-input::placeholder { color:#d8d0f8; font-weight:500; }
 
         .wt-quick-btn { padding:13px 10px; border-radius:12px; border:1.5px solid #ede9fe; background:#fff; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#7c5cfc; cursor:pointer; transition:all 0.2s; text-align:center; }
@@ -68,14 +68,14 @@ const WalletTab: React.FC<WalletTabProps> = ({
         .wt-mini-row { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid #f5f3ff; }
         .wt-mini-row:last-child { border-bottom:none; }
 
-        .wt-security { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:12px; background:#f5f3ff; border:1px solid #ede9fe; margin-top:12px; }
+        .wt-security { display:flex; align-items:center; justify-content:center; gap:8px; padding:12px; border-radius:12px; background:#f5f3ff; border:1px solid #ede9fe; margin-top:12px; overflow:hidden; min-width:0; }
 
         @keyframes countUp { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
         .wt-amount-preview { animation: countUp 0.25s ease forwards; }
 
         /* ── Layout grid ── */
-        .wt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; }
-        .wt-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .wt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start; min-width: 0; }
+        .wt-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; min-width: 0; }
 
         /* ── Responsive ── */
         @media (max-width: 767px) {
@@ -108,10 +108,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
         }
       `}</style>
 
-      <div
-        className="wt-root wt-outer bg-white rounded-2xl"
-        style={{ padding: "32px" }}
-      >
+      <div className="wt-root wt-outer bg-white rounded-2xl p-5">
         {/* Header */}
         <div className="wt-header" style={{ marginBottom: 24 }}>
           <p
@@ -143,7 +140,15 @@ const WalletTab: React.FC<WalletTabProps> = ({
 
         <div className="wt-grid">
           {/* ── LEFT: Balance card + stats ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              minWidth: 0,
+              overflow: "hidden",
+            }}
+          >
             {/* Balance hero card */}
             <div className="wt-balance-card">
               <div style={{ position: "relative", zIndex: 1 }}>
@@ -384,7 +389,15 @@ const WalletTab: React.FC<WalletTabProps> = ({
           </div>
 
           {/* ── RIGHT: Fund form ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 16,
+              minWidth: 0,
+              overflow: "hidden",
+            }}
+          >
             <div className="wt-card" style={{ padding: "24px 24px 20px" }}>
               <p
                 className="wt-heading"
