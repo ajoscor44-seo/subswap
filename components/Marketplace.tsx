@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { ProductCategory, User, MasterAccount } from "@/constants/types";
 import { supabase } from "../lib/supabase";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
+import { triggerEmail } from "@/lib/send-email";
 
 interface Toast {
   message: string;
@@ -107,6 +108,15 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       });
       if (error) throw error;
       showToast(`Success! Taking you to your new stack...`);
+      await triggerEmail("purchase", {
+        email: user.email,
+        username: user.username,
+        serviceName: account.service_name,
+        price: account.price,
+        masterEmail: account.master_email,
+        masterPassword: account.master_password,
+        fulfillmentType: account.fulfillment_type,
+      });
       if (onPurchaseSuccess) setTimeout(() => onPurchaseSuccess(), 1500);
     } catch (err: any) {
       showToast(err.message || "Purchase failed. Please try again.", "error");

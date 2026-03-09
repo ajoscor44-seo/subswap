@@ -1,3 +1,4 @@
+import Footer from "@/components/Footer";
 import React, { useState, useEffect, useRef } from "react";
 
 // ─── Floating orb ─────────────────────────────────────────────────────────────
@@ -344,6 +345,7 @@ const ComingSoon: React.FC = () => {
           </p>
         </div>
       </div>
+      <Footer />
     </>
   );
 };

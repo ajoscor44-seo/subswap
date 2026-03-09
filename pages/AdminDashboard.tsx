@@ -15,6 +15,7 @@ import {
   Transaction,
 } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
+import { triggerEmail } from "@/lib/send-email";
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({
   user,
@@ -162,6 +163,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     targetId: string,
     username: string,
     amount: number,
+    email: string,
   ) => {
     if (!window.confirm(`Credit ₦${amount.toLocaleString()} to @${username}?`))
       return;
@@ -193,6 +195,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       fetchData(true);
 
       if (onRefreshUser && targetId === user.id) onRefreshUser();
+      await triggerEmail("wallet_funded", {
+        email,
+        username,
+        amount,
+        newBalance,
+      });
     } catch (err: any) {
       showFeedback(err.message, "error");
     } finally {
@@ -204,6 +212,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     targetId: string,
     currentStatus: boolean,
     username: string,
+    email: string,
   ) => {
     const action = currentStatus ? "Restore" : "Restrict";
     if (!window.confirm(`${action} access for @${username}?`)) return;
@@ -219,6 +228,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
         `@${username} access ${currentStatus ? "restored" : "restricted"}.`,
       );
       fetchData(true);
+      await triggerEmail(
+        currentStatus ? "account_restored" : "account_banned",
+        {
+          email,
+          username,
+        },
+      );
     } catch (err: any) {
       showFeedback(err.message, "error");
     } finally {
@@ -230,6 +246,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
     targetId: string,
     currentStatus: boolean,
     username: string,
+    email: string,
   ) => {
     setIsLoading(true);
     try {
@@ -252,7 +269,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="container mx-auto space-y-8 pb-10">
+    <div className="container mx-auto space-y-8 pb-10 max-w-292">
       <FeedbackToast feedback={feedback} />
 
       <AdminHeader

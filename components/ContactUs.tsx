@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Footer from "./Footer";
 
 const WA_NUMBER = "2347053428345";
 
@@ -715,6 +716,7 @@ const ContactUs: React.FC = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };

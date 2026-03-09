@@ -9,16 +9,19 @@ interface AdminUsersProps {
     userId: string,
     username: string,
     amount: number,
+    email: string,
   ) => Promise<void>;
   onToggleBan: (
     userId: string,
     currentStatus: boolean,
     username: string,
+    email: string,
   ) => Promise<void>;
   onToggleVerify: (
     userId: string,
     currentStatus: boolean,
     username: string,
+    email: string,
   ) => Promise<void>;
 }
 
@@ -536,7 +539,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                           onClick={async () => {
                             const amt = parseFloat(fundAmounts[u.id]);
                             if (!isNaN(amt) && amt > 0) {
-                              await onFundUser(u.id, u.username, amt);
+                              await onFundUser(u.id, u.username, amt, u.email);
                               setFundAmounts((prev) => ({
                                 ...prev,
                                 [u.id]: "",
@@ -561,7 +564,12 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                         <button
                           className={`usr2-action-btn ${u.is_verified ? "verify-on" : "verify-off"}`}
                           onClick={() =>
-                            onToggleVerify(u.id, u.is_verified, u.username)
+                            onToggleVerify(
+                              u.id,
+                              u.is_verified,
+                              u.username,
+                              u.email,
+                            )
                           }
                           title={
                             u.is_verified
@@ -577,7 +585,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                         <button
                           className={`usr2-action-btn ${u.is_banned ? "unban" : "ban"}`}
                           onClick={() =>
-                            onToggleBan(u.id, u.is_banned, u.username)
+                            onToggleBan(u.id, u.is_banned, u.username, u.email)
                           }
                           title={
                             u.is_banned ? "Restore access" : "Restrict access"

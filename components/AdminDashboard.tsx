@@ -6,6 +6,7 @@ import { AdminStats } from "./admin/AdminStats";
 import { AdminInventory } from "./admin/AdminInventory";
 import { AdminUsers } from "./admin/AdminUsers";
 import { AdminTransactions } from "./admin/AdminTransactions";
+import { triggerEmail } from "@/lib/send-email";
 
 type AdminTab = "stats" | "inventory" | "users" | "transactions";
 
@@ -85,7 +86,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
   }, [activeTab]);
 
   // ── Fund user ──────────────────────────────────────────────────────────────
-  const handleFundUser = async (targetId: string, username: string) => {
+  const handleFundUser = async (
+    targetId: string,
+    username: string,
+    email: string,
+  ) => {
     const amount = parseFloat(fundAmount[targetId]);
     if (isNaN(amount) || amount <= 0) {
       showFeedback("Enter a valid amount", "error");
@@ -119,6 +124,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showFeedback(`₦${amount.toLocaleString()} credited to @${username}`);
       setFundAmount({ ...fundAmount, [targetId]: "" });
       await fetchData(true);
+      await triggerEmail("wallet_funded", {
+        email,
+        username,
+        amount,
+        newBalance,
+      });
       if (onRefreshUser && targetId === user.id) onRefreshUser();
     } catch (err: any) {
       showFeedback(err.message, "error");

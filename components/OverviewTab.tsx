@@ -752,7 +752,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   onClick={() => changeTab("explore")}
                   style={{ fontSize: 11 }}
                 >
-                  Browse marketplace →
+                  Browse marketplace{" "}
+                  <i
+                    className="fa-solid fa-chevron-right"
+                    style={{ color: "#7c5cfc", fontSize: 11 }}
+                  />
                 </button>
               </div>
             )}
