@@ -8,9 +8,8 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const APP_BASE_URL = typeof Deno !== "undefined"
-  ? (Deno.env.get("APP_URL") ?? "https://discountzar.com")
-  : "https://discountzar.com";
+const APP_BASE_URL =
+  (globalThis as any)?.Deno?.env?.get?.("APP_URL") ?? "https://discountzar.com";
 const LOGO_URL = `${APP_BASE_URL}/icons/icon-192x192.png`;
 
 function layout(

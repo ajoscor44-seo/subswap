@@ -13,18 +13,28 @@ import { AuthError, Session } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
 import { triggerEmail } from "@/lib/send-email";
 
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  let t: ReturnType<typeof setTimeout> | null = null;
+  const timeout = new Promise<T>((_, reject) => {
+    t = setTimeout(() => reject(new Error(`Timeout: ${label}`)), ms);
+  });
+  return Promise.race([p, timeout]).finally(() => {
+    if (t) clearTimeout(t);
+  }) as Promise<T>;
+}
+
 const AuthContext = createContext<{
   loading: boolean;
   user: User | null;
   session: Session | null;
   /** True when the current session's email has been verified (email_confirmed_at set). */
   emailVerified: boolean;
-  signUp: (data: ISignUp) => Promise<AuthError>;
-  login: (email: string, password: string) => Promise<AuthError>;
+  signUp: (data: ISignUp) => Promise<AuthError | null>;
+  login: (email: string, password: string) => Promise<AuthError | null>;
   logout: () => void;
   refreshSession?: () => Promise<void>;
   /** Resend the verification email (for the current session user's email). */
-  resendVerificationEmail?: (email: string) => Promise<{ error: unknown }>;
+  resendVerificationEmail?: (email: string) => Promise<AuthError | null>;
   showLoginModal: boolean;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -33,11 +43,11 @@ const AuthContext = createContext<{
   user: null,
   session: null,
   emailVerified: false,
-  signUp: async () => Promise.resolve({ error: null }),
-  login: async () => Promise.resolve({ error: null }),
+  signUp: async () => Promise.resolve(null),
+  login: async () => Promise.resolve(null),
   logout: () => {},
   refreshSession: async () => Promise.resolve(),
-  resendVerificationEmail: async () => Promise.resolve({ error: null }),
+  resendVerificationEmail: async () => Promise.resolve(null),
   showLoginModal: false,
   openLoginModal: () => {},
   closeLoginModal: () => {},
@@ -50,67 +60,118 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const timeout = setTimeout(() => setLoading(false), 3000);
+    let cancelled = false;
+
+    // Auth init should never block UI indefinitely.
+    const initTimeout = setTimeout(() => {
+      if (!cancelled) setLoading(false);
+    }, 3000);
+
+    const loadProfileAndSync = async (sess: Session) => {
+      const verified = !!sess.user.email_confirmed_at;
+      if (!verified) {
+        setUser(null);
+        return;
+      }
+
+      // Fetch profile with a timeout so we never hang the UI.
+      const profile = await withTimeout(
+        fetchUserProfile(sess.user.id),
+        8000,
+        "fetchUserProfile",
+      ).catch((err) => {
+        console.error("[auth] profile fetch failed", err);
+        return null;
+      });
+
+      if (!profile) {
+        setUser(null);
+        return;
+      }
+
+      setUser(profile);
+
+      // Best-effort: mark profile verified and send welcome email once.
+      try {
+        const { data: row, error } = await supabase
+          .from("profiles")
+          .select("is_verified, welcome_email_sent")
+          .eq("id", sess.user.id)
+          .single();
+        if (error) {
+          console.error("[auth] read profile flags failed", error);
+          return;
+        }
+
+        const updates: Record<string, unknown> = {};
+        if (!row?.is_verified) updates.is_verified = true;
+
+        if (!row?.welcome_email_sent) {
+          try {
+            await triggerEmail("welcome", {
+              email: sess.user.email ?? "",
+              username:
+                sess.user.user_metadata?.username ?? profile.username ?? "there",
+            });
+            updates.welcome_email_sent = true;
+          } catch (err) {
+            console.error("[auth] welcome email failed", err);
+          }
+        }
+
+        if (Object.keys(updates).length > 0) {
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update(updates)
+            .eq("id", sess.user.id);
+          if (updateError) console.error("[auth] update profile flags failed", updateError);
+        }
+      } catch (err) {
+        console.error("[auth] post-verify sync failed", err);
+      }
+    };
+
+    // Explicit initial session fetch to avoid relying on INITIAL_SESSION event.
+    supabase.auth
+      .getSession()
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error) console.error("[auth] getSession failed", error);
+        setSession(data.session);
+        if (!data.session) setUser(null);
+        // Don't await; keep UI responsive.
+        if (data.session) void loadProfileAndSync(data.session);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      clearTimeout(timeout);
+      clearTimeout(initTimeout);
+      if (cancelled) return;
       setSession(session);
+      setLoading(false);
       if (!session) {
         setUser(null);
-        setLoading(false);
         return;
       }
-      // Only fetch profile and allow access when email is verified
-      const verified = !!session.user.email_confirmed_at;
-      if (!verified) {
-        setUser(null);
-        setLoading(false);
-        return;
-      }
-      const profile = await fetchUserProfile(session.user.id);
-      if (profile) {
-        setUser(profile);
-        // Sync is_verified on profile when they've just verified
-        const { data: row } = await supabase
-          .from("profiles")
-          .select("is_verified, welcome_email_sent")
-          .eq("id", session.user.id)
-          .single();
-        const updates: Record<string, unknown> = {};
-        if (!row?.is_verified) updates.is_verified = true;
-        if (!row?.welcome_email_sent) {
-          updates.welcome_email_sent = true;
-          await triggerEmail("welcome", {
-            email: session.user.email ?? "",
-            username:
-              session.user.user_metadata?.username ??
-              profile.username ??
-              "there",
-          });
-        }
-        if (Object.keys(updates).length > 0) {
-          await supabase
-            .from("profiles")
-            .update(updates)
-            .eq("id", session.user.id);
-          if (updates.welcome_email_sent) {
-            const refreshed = await fetchUserProfile(session.user.id);
-            if (refreshed) setUser(refreshed);
-          }
-        }
-      }
-      setLoading(false);
+      // Don't await; avoid hanging the UI.
+      void loadProfileAndSync(session);
     });
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
-      clearTimeout(timeout);
+      clearTimeout(initTimeout);
     };
   }, []);
 
-  const login = async (email: string, password: string): Promise<AuthError> => {
+  const login = async (
+    email: string,
+    password: string,
+  ): Promise<AuthError | null> => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -125,7 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       );
     }
     window.location.href = "/#/dashboard";
-    return error;
+    return null;
   };
 
   const signUp = async ({
@@ -133,7 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password,
     username,
     name,
-  }: ISignUp): Promise<AuthError> => {
+  }: ISignUp): Promise<AuthError | null> => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -146,7 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
     if (error) return error;
     // Do not redirect: user must verify email first. UI shows verify-email screen.
-    return error;
+    return null;
   };
 
   const logout = async () => {
@@ -166,7 +227,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(session);
   };
 
-  const resendVerificationEmail = async (email: string) => {
+  const resendVerificationEmail = async (
+    email: string,
+  ): Promise<AuthError | null> => {
     const { error } = await supabase.auth.resend({
       type: "signup",
       email,

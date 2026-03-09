@@ -77,6 +77,7 @@ export const pageViews: TViewState[] = [
   "transactions",
   "marketplace",
   "settings",
+  "verify-email",
 ];
 
 export const PLATFORMS: Platform[] = [

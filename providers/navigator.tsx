@@ -76,6 +76,18 @@ export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
     setIsReady(true);
   }, [authLoading, syncView]);
 
+  // Fail-safe: never let the app be stuck behind the global loader forever.
+  // If auth init hangs for any reason (storage quirks, network stalls), we still render
+  // the public pages and let auth settle later.
+  useEffect(() => {
+    if (isReady) return;
+    const t = setTimeout(() => {
+      syncView();
+      setIsReady(true);
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [isReady, syncView]);
+
   useEffect(() => {
     window.addEventListener("hashchange", syncView);
     return () => window.removeEventListener("hashchange", syncView);
