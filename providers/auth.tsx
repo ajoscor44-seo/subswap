@@ -87,8 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
     });
+    if (error) return error;
     window.location.href = "/#/dashboard";
-
     return error;
   };
 
@@ -108,8 +108,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    if (error) return error;
     window.location.href = "/#/dashboard";
-
     return error;
   };
 
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const isAdmin =
-      data.email.toLowerCase() === "joscor@wsv.com.ng" || data.role === "admin";
+      data.role === "admin" || data.is_admin === true;
 
     const profile: User = {
       id: data.id,

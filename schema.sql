@@ -3,11 +3,12 @@
 -- Target: Supabase / PostgreSQL
 
 -- 1. UPDATE PROFILES
--- Add verification status for badges
+-- Add verification status for badges and admin flag (optional; role = 'admin' also grants admin)
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS merchant_rating DECIMAL(3,2) DEFAULT 5.00,
-ADD COLUMN IF NOT EXISTS phone_number TEXT;
+ADD COLUMN IF NOT EXISTS phone_number TEXT,
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
 
 -- 2. UPDATE MASTER ACCOUNTS
 -- Add ownership and rich content fields
@@ -87,3 +88,54 @@ FOR ALL USING (auth.uid() = owner_id);
 -- Ensure all profiles are visible so we can show merchant info in marketplace
 DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
 CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
+
+-- Users can update only their own profile (name, username, avatar, etc.)
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile" ON public.profiles
+FOR UPDATE USING (auth.uid() = id)
+WITH CHECK (auth.uid() = id);
+
+-- Admins can update any profile (for funding, ban, verify)
+DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
+CREATE POLICY "Admins can update any profile" ON public.profiles
+FOR UPDATE USING (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
+)
+WITH CHECK (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
+);
+
+-- Transactions: enable RLS and restrict read/insert to own or admin
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can read own transactions" ON public.transactions;
+CREATE POLICY "Users can read own transactions" ON public.transactions
+FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own transactions" ON public.transactions;
+CREATE POLICY "Users can insert own transactions" ON public.transactions
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Admins can read all transactions" ON public.transactions;
+CREATE POLICY "Admins can read all transactions" ON public.transactions
+FOR SELECT USING (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
+);
+DROP POLICY IF EXISTS "Admins can insert any transaction" ON public.transactions;
+CREATE POLICY "Admins can insert any transaction" ON public.transactions
+FOR INSERT WITH CHECK (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
+);
+
+-- user_subscriptions: users can read and insert their own (purchase_slot_v2 does insert via SECURITY DEFINER)
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can read own subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Users can read own subscriptions" ON public.user_subscriptions
+FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own subscriptions" ON public.user_subscriptions;
+CREATE POLICY "Users can insert own subscriptions" ON public.user_subscriptions
+FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- master_accounts: allow admins to manage all rows (insert/update/delete)
+DROP POLICY IF EXISTS "Admins can manage all master accounts" ON public.master_accounts;
+CREATE POLICY "Admins can manage all master accounts" ON public.master_accounts
+FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
+);

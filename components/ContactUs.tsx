@@ -704,10 +704,10 @@ const ContactUs: React.FC = () => {
                       }}
                     >
                       <i
-                        className="fa-solid fa-lock"
+                        className="fa-solid fa-clock"
                         style={{ marginRight: 4, fontSize: 10 }}
                       />
-                      Your message is private and encrypted
+                      We typically respond within 2 hours
                     </p>
                   </form>
                 </>

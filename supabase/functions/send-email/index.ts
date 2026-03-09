@@ -12,6 +12,28 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const FROM_NOREPLY = "DiscountZAR <noreply@discountzar.com>";
 const FROM_SUPPORT = "DiscountZAR Support <support@discountzar.com>";
 
+const ADMIN_ONLY_TYPES = ["wallet_funded", "account_banned", "account_restored", "admin_message"];
+
+async function getAuthUser(req: Request): Promise<{ id: string; email?: string } | null> {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  if (!token) return null;
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return { id: user.id, email: user.email };
+}
+
+async function isAdmin(userId: string): Promise<boolean> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, is_admin")
+    .eq("id", userId)
+    .single();
+  return profile?.role === "admin" || profile?.is_admin === true;
+}
+
 async function resend(to: string, subject: string, html: string, from = FROM_NOREPLY) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -37,20 +59,36 @@ serve(async (req) => {
   }
 
   try {
-    const { type, payload } = await req.json();
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
+    }
+    const body = await req.json();
+    const { type, payload } = body;
 
-    // For admin_message: verify the caller is actually an admin
-    if (type === "admin_message") {
-      const authHeader = req.headers.get("Authorization") ?? "";
-      const token = authHeader.replace("Bearer ", "");
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-      const { data: { user }, error } = await supabase.auth.getUser(token);
-      if (error || !user) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    if (!type || typeof payload !== "object") {
+      return new Response(JSON.stringify({ error: "Missing type or payload" }), { status: 400 });
+    }
+
+    // Require valid JWT for all email types (no unauthenticated sending)
+    const authUser = await getAuthUser(req);
+    if (!authUser) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
+    // Admin-only types: caller must be an admin
+    if (ADMIN_ONLY_TYPES.includes(type)) {
+      const ok = await isAdmin(authUser.id);
+      if (!ok) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
       }
-      const { data: profile } = await supabase
-        .from("profiles").select("is_admin").eq("id", user.id).single();
-      if (!profile?.is_admin) {
+    } else if (type === "welcome") {
+      // Welcome: only allow sending to the authenticated user's own email
+      if (payload.email !== authUser.email) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      }
+    } else if (type === "purchase") {
+      // Purchase: only allow sending to the authenticated user's own email (buyer)
+      if (payload.email !== authUser.email) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
       }
     }
