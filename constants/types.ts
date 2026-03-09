@@ -128,11 +128,6 @@ export interface AdminStats {
   topServices: { name: string; purchases: number; revenue: number }[];
 }
 
-export interface AdminDashboardProps {
-  user: User;
-  onRefreshUser?: () => void;
-}
-
 export interface FormState {
   email: string;
   name: string;

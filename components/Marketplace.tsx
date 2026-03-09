@@ -1,20 +1,14 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { ProductCategory, User, MasterAccount } from "@/constants/types";
+import { ProductCategory, MasterAccount } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
 import { triggerEmail } from "@/lib/send-email";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/providers/auth";
+import { useNavigator } from "@/providers/navigator";
 
-interface MarketplaceProps {
-  user: User | null;
-  onAuthRequired: () => void;
-  onPurchaseSuccess?: () => void;
-}
-
-export const Marketplace: React.FC<MarketplaceProps> = ({
-  user,
-  onAuthRequired,
-  onPurchaseSuccess,
-}) => {
+export const Marketplace: React.FC = () => {
+  const { user } = useAuth();
+  const { changeView } = useNavigator();
   const [dbProducts, setDbProducts] = useState<MasterAccount[]>([]);
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -56,7 +50,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
   const handleJoin = async (account: MasterAccount) => {
     if (!user) {
-      onAuthRequired();
+      toast.error("You need to be logged in to join a plan.");
       return;
     }
     if (user.balance < account.price) {
@@ -84,7 +78,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         masterPassword: account.master_password,
         fulfillmentType: account.fulfillment_type,
       });
-      if (onPurchaseSuccess) setTimeout(() => onPurchaseSuccess(), 1500);
+      setTimeout(() => changeView("dashboard"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
@@ -144,8 +138,8 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
             if (activeAccount && newBalance >= activeAccount.price) {
               handleJoin(activeAccount);
-            } else if (onPurchaseSuccess) {
-              onPurchaseSuccess();
+            } else {
+              changeView("dashboard");
             }
           } catch (err: any) {
             toast.error(err.message || "Failed to update balance");

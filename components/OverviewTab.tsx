@@ -19,7 +19,6 @@ interface OverviewTabProps {
   activeSubscriptions: any[];
   recentTransactions: Transaction[];
   changeTab: (tab: string) => void;
-  onPurchaseSuccess?: () => void;
 }
 
 const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
@@ -39,7 +38,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   activeSubscriptions,
   recentTransactions,
   changeTab,
-  onPurchaseSuccess,
 }) => {
   const windowWidth = useWindowWidth();
   const isMobile = windowWidth < 768;
@@ -785,11 +783,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
               Browse and join a shared plan in seconds.
             </p>
           </div>
-          <Marketplace
-            user={user}
-            onAuthRequired={() => {}}
-            onPurchaseSuccess={onPurchaseSuccess}
-          />
+          <Marketplace />
         </div>
       </div>
     </>

@@ -7,7 +7,6 @@ import { AdminUsers } from "@/components/admin/AdminUsers";
 import { AdminTransactions } from "@/components/admin/AdminTransactions";
 import { FeedbackToast } from "@/components/admin/FeedbackToast";
 import {
-  AdminDashboardProps,
   AdminTab,
   Feedback,
   MasterAccount,
@@ -15,11 +14,10 @@ import {
 } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
 import { triggerEmail } from "@/lib/send-email";
+import { useAuth } from "@/providers/auth";
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({
-  user,
-  onRefreshUser,
-}) => {
+const AdminDashboard: React.FC = () => {
+  const { user, refreshSession } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>("stats");
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
@@ -193,7 +191,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({
       showFeedback(`₦${amount.toLocaleString()} credited to @${username}`);
       fetchData(true);
 
-      if (onRefreshUser && targetId === user.id) onRefreshUser();
+      if (targetId === user.id) refreshSession();
       await triggerEmail("wallet_funded", {
         email,
         username,

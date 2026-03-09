@@ -12,13 +12,9 @@ import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
 import { toast } from "react-hot-toast";
 
-interface DashboardProps {
-  onPurchaseSuccess?: () => void;
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
+export const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const { dashboardTab, changeTab } = useNavigator();
+  const { dashboardTab, changeTab, changeView } = useNavigator();
 
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
@@ -134,7 +130,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
               "success",
             );
             fetchData();
-            if (onPurchaseSuccess) onPurchaseSuccess();
+            changeView("dashboard");
           } catch (err: any) {
             showStatus(err.message || "Failed to update balance.", "error");
           }
@@ -715,7 +711,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                   activeSubscriptions={activeSubscriptions}
                   recentTransactions={recentTransactions}
                   changeTab={changeTab}
-                  onPurchaseSuccess={onPurchaseSuccess}
                 />
               )}
               {dashboardTab === "stacks" && (
@@ -736,11 +731,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                     padding: "20px 15px",
                   }}
                 >
-                  <Marketplace
-                    user={user}
-                    onAuthRequired={() => {}}
-                    onPurchaseSuccess={onPurchaseSuccess}
-                  />
+                  <Marketplace />
                 </div>
               )}
               {dashboardTab === "wallet" && (

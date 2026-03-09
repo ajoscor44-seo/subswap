@@ -10,7 +10,6 @@ import { useAuth } from "@/providers/auth";
 import ComingSoon from "./ComingSoon";
 import { SyncLoader } from "react-spinners";
 import VerifyEmailScreen from "@/components/VerifyEmailScreen";
-import { supabase } from "@/lib/supabase";
 
 const View = () => {
   const { currentView, isReady } = useNavigator();
@@ -18,7 +17,6 @@ const View = () => {
     user,
     session,
     emailVerified,
-    logout,
     refreshSession,
     loading,
     resendVerificationEmail,
@@ -69,21 +67,7 @@ const View = () => {
 
             <button
               className="w-full bg-slate-900 text-white py-3 rounded-xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all text-xs"
-              onClick={async () => {
-                try {
-                  await supabase.auth.signOut();
-                } catch {}
-                try {
-                  // Clear Supabase auth keys in localStorage (sb-*)
-                  for (let i = localStorage.length - 1; i >= 0; i--) {
-                    const k = localStorage.key(i);
-                    if (!k) continue;
-                    if (k.startsWith("sb-")) localStorage.removeItem(k);
-                  }
-                } catch {}
-                window.location.href = "/#/home";
-                window.location.reload();
-              }}
+              onClick={refreshSession}
             >
               Reset session and reload
             </button>
@@ -123,9 +107,9 @@ const View = () => {
       return user ? <Dashboard /> : <Hero />;
     case "admin":
       return user?.isAdmin ? (
-        <AdminDashboard user={user} onRefreshUser={refreshSession} />
+        <AdminDashboard />
       ) : user ? (
-        <Dashboard user={user} />
+        <Dashboard />
       ) : (
         <Hero />
       );

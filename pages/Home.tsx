@@ -13,10 +13,6 @@ const Home = () => {
   const { user, openLoginModal } = useAuth();
   const { changeView } = useNavigator();
 
-  const handlePurchaseSuccess = () => {
-    changeView("dashboard");
-  };
-
   return (
     <div className="animate-in fade-in duration-700">
       <Hero
@@ -26,11 +22,7 @@ const Home = () => {
       <HowItWorks />
       <Features />
       <div className="container mx-auto max-w-6xl px-4 py-20" id="marketplace">
-        <Marketplace
-          user={user}
-          onAuthRequired={() => openLoginModal()}
-          onPurchaseSuccess={handlePurchaseSuccess}
-        />
+        <Marketplace />
       </div>
       <Faq />
       <Footer />
