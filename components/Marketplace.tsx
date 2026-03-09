@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ProductCategory, User, MasterAccount } from "@/constants/types";
-import { supabase } from "../lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { triggerEmail } from "@/lib/send-email";
+import { toast } from "react-hot-toast";
 
 interface Toast {
   message: string;
@@ -25,7 +26,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
-  const [toast, setToast] = useState<Toast | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   // Quick Fund State
@@ -55,14 +55,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
   const handleFlutterPayment = useFlutterwave(fwConfig);
 
-  const showToast = (
-    message: string,
-    type: "success" | "error" = "success",
-  ) => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
-
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -82,6 +74,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       if (error) throw error;
     } catch (err) {
       console.error("Error fetching marketplace:", err);
+      toast.error("Failed to fetch marketplace items.");
     } finally {
       setIsLoading(false);
     }
@@ -107,7 +100,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         p_amount: account.price,
       });
       if (error) throw error;
-      showToast(`Success! Taking you to your new stack...`);
+      toast.success(`Success! Taking you to your new stack...`);
       await triggerEmail("purchase", {
         email: user.email,
         username: user.username,
@@ -119,7 +112,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       });
       if (onPurchaseSuccess) setTimeout(() => onPurchaseSuccess(), 1500);
     } catch (err: any) {
-      showToast(err.message || "Purchase failed. Please try again.", "error");
+      toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
       setIsProcessing(null);
     }
@@ -147,20 +140,22 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
               .from("profiles")
               .update({ balance: user.balance + amount })
               .eq("id", user.id);
-            showToast(`₦${amount.toLocaleString()} added successfully!`);
+            toast.success(`₦${amount.toLocaleString()} added successfully!`);
             setShowFundModal(false);
             if (activeAccount && user.balance + amount >= activeAccount.price)
               handleJoin(activeAccount);
             else if (onPurchaseSuccess) onPurchaseSuccess();
           } catch (err: any) {
-            showToast(err.message, "error");
+            toast.error(err.message);
           }
         } else {
-          showToast("Payment was not successful", "error");
+          toast.error("Payment was not successful");
         }
         closePaymentModal();
       },
-      onClose: () => console.log("Payment modal closed"),
+      onClose: () => {
+        toast.success("Payment cancelled");
+      },
     });
   };
 
@@ -193,13 +188,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
         .mkt-root * { box-sizing: border-box; }
 
         .mkt-heading { font-family: 'Syne', sans-serif; }
-
-        /* Toast */
-        @keyframes toastIn {
-          from { opacity: 0; transform: translateY(-12px) scale(0.96); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .mkt-toast { animation: toastIn 0.3s cubic-bezier(0.34,1.56,0.64,1) forwards; }
 
         /* Card */
         .mkt-card {
@@ -370,46 +358,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
       `}</style>
 
       <div className="mkt-root" style={{ position: "relative" }}>
-        {/* ── Toast ── */}
-        {toast && (
-          <div
-            className="mkt-toast"
-            style={{
-              position: "fixed",
-              top: 88,
-              right: 20,
-              zIndex: 9999,
-              display: "flex",
-              alignItems: "center",
-              gap: 10,
-              padding: "12px 20px",
-              borderRadius: 14,
-              background: toast.type === "success" ? "#fff" : "#fef2f2",
-              border: `1.5px solid ${toast.type === "success" ? "#d8d0f8" : "#fca5a5"}`,
-              boxShadow: "0 12px 32px rgba(0,0,0,0.1)",
-              maxWidth: 320,
-            }}
-          >
-            <i
-              className={`fa-solid ${toast.type === "success" ? "fa-circle-check" : "fa-triangle-exclamation"}`}
-              style={{
-                color: toast.type === "success" ? "#10b981" : "#ef4444",
-                fontSize: 16,
-              }}
-            />
-            <p
-              style={{
-                margin: 0,
-                fontSize: 13,
-                fontWeight: 500,
-                color: "#1a1230",
-              }}
-            >
-              {toast.message}
-            </p>
-          </div>
-        )}
-
         {/* ── Quick Fund Modal ── */}
         {showFundModal && (
           <div

@@ -14,7 +14,6 @@ const App: React.FC = () => {
         <NavigatorProvider>
           <Navbar />
           <View />
-          {/* <Footer /> */}
           <Toaster />
         </NavigatorProvider>
       </AuthProvider>
