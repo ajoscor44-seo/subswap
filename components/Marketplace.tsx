@@ -1,14 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { ProductCategory, User, MasterAccount } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
-import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { triggerEmail } from "@/lib/send-email";
 import { toast } from "react-hot-toast";
-
-interface Toast {
-  message: string;
-  type: "success" | "error";
-}
 
 interface MarketplaceProps {
   user: User | null;
@@ -34,26 +28,6 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
   const [activeAccount, setActiveAccount] = useState<MasterAccount | null>(
     null,
   );
-
-  const fwConfig = {
-    public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
-    tx_ref: Date.now().toString(),
-    amount: neededAmount,
-    currency: "NGN",
-    payment_options: "card,mobilemoney,ussd",
-    customer: {
-      email: user?.email || "",
-      phone_number: "",
-      name: user?.name || user?.username || "",
-    },
-    customizations: {
-      title: "DiscountZAR Wallet Top-up",
-      description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
-      logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
-    },
-  };
-
-  const handleFlutterPayment = useFlutterwave(fwConfig);
 
   useEffect(() => {
     fetchProducts();
@@ -120,42 +94,67 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
 
   const handleFlutterwavePayment = (amount: number) => {
     if (!user) return;
-    const config = {
-      ...fwConfig,
+    // @ts-ignore — FlutterwaveCheckout is injected by the v3 script tag
+    FlutterwaveCheckout({
+      public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
+      tx_ref: `tx-qf-${Date.now()}-${Math.floor(Math.random() * 9999)}`,
       amount,
-      tx_ref: `tx-qf-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    };
-    handleFlutterPayment({
-      ...config,
-      callback: async (response) => {
-        if (response.status === "successful") {
+      currency: "NGN",
+      payment_options: "card,mobilemoney,ussd",
+      customer: {
+        email: user.email,
+        phone_number: "",
+        name: user.name || user.username || "",
+      },
+      customizations: {
+        title: "DiscountZAR Wallet Top-up",
+        description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
+        logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
+      },
+      callback: async (response: any) => {
+        if (
+          response.status === "successful" ||
+          response.status === "completed"
+        ) {
           try {
+            const newBalance = Number(user?.balance || 0) + amount;
+
+            const { error: balanceError } = await supabase
+              .from("profiles")
+              .update({ balance: newBalance })
+              .eq("id", user.id);
+            if (balanceError) throw balanceError;
+
             await supabase.from("transactions").insert({
               user_id: user.id,
               amount,
               type: "Deposit",
               description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
             });
-            await supabase
-              .from("profiles")
-              .update({ balance: user.balance + amount })
-              .eq("id", user.id);
+
+            await triggerEmail("wallet_funded", {
+              email: user.email,
+              username: user.username,
+              amount,
+              newBalance,
+            });
+
             toast.success(`₦${amount.toLocaleString()} added successfully!`);
             setShowFundModal(false);
-            if (activeAccount && user.balance + amount >= activeAccount.price)
+
+            if (activeAccount && newBalance >= activeAccount.price) {
               handleJoin(activeAccount);
-            else if (onPurchaseSuccess) onPurchaseSuccess();
+            } else if (onPurchaseSuccess) {
+              onPurchaseSuccess();
+            }
           } catch (err: any) {
-            toast.error(err.message);
+            toast.error(err.message || "Failed to update balance");
           }
         } else {
           toast.error("Payment was not successful");
         }
-        closePaymentModal();
       },
-      onClose: () => {
-        toast.success("Payment cancelled");
-      },
+      onclose: () => toast("Payment cancelled", { icon: "👋" }),
     });
   };
 
@@ -607,6 +606,7 @@ export const Marketplace: React.FC<MarketplaceProps> = ({
             flexDirection: "column",
             gap: 14,
             marginBottom: 32,
+            marginTop: 8,
           }}
         >
           <div className="mkt-search-wrap" style={{ maxWidth: 560 }}>

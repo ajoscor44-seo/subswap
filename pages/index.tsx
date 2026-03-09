@@ -102,7 +102,7 @@ const View = () => {
         }
       : undefined;
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-slate-50 to-white p-4">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-slate-50 to-white p-4">
         <VerifyEmailScreen
           email={email}
           onDismiss={() => {}}
@@ -125,7 +125,7 @@ const View = () => {
       return user?.isAdmin ? (
         <AdminDashboard user={user} onRefreshUser={refreshSession} />
       ) : user ? (
-        <Dashboard user={user} onLogout={logout} />
+        <Dashboard user={user} />
       ) : (
         <Hero />
       );

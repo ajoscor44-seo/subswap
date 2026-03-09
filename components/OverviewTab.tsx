@@ -23,7 +23,7 @@ interface OverviewTabProps {
 }
 
 const TYPE_ICON: Record<string, { icon: string; bg: string; color: string }> = {
-  Deposit: { icon: "fa-arrow-down-to-line", bg: "#f0fdf4", color: "#16a34a" },
+  Deposit: { icon: "fa-arrow-down", bg: "#f0fdf4", color: "#16a34a" },
   Purchase: { icon: "fa-bag-shopping", bg: "#f0eef9", color: "#7c5cfc" },
   Withdrawal: {
     icon: "fa-arrow-up-from-line",

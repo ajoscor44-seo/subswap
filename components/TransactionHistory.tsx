@@ -9,7 +9,7 @@ interface TransactionHistoryProps {
 
 const TYPE_CONFIG: Record<string, { bg: string; color: string; icon: string }> =
   {
-    Deposit: { bg: "#f0fdf4", color: "#16a34a", icon: "fa-arrow-down-to-line" },
+    Deposit: { bg: "#f0fdf4", color: "#16a34a", icon: "fa-arrow-down" },
     Purchase: { bg: "#f0eef9", color: "#7c5cfc", icon: "fa-bag-shopping" },
     Withdrawal: {
       bg: "#fef2f2",
