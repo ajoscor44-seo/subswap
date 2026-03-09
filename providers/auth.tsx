@@ -17,10 +17,14 @@ const AuthContext = createContext<{
   loading: boolean;
   user: User | null;
   session: Session | null;
+  /** True when the current session's email has been verified (email_confirmed_at set). */
+  emailVerified: boolean;
   signUp: (data: ISignUp) => Promise<AuthError>;
   login: (email: string, password: string) => Promise<AuthError>;
   logout: () => void;
   refreshSession?: () => Promise<void>;
+  /** Resend the verification email (for the current session user's email). */
+  resendVerificationEmail?: (email: string) => Promise<{ error: unknown }>;
   showLoginModal: boolean;
   openLoginModal: () => void;
   closeLoginModal: () => void;
@@ -28,10 +32,12 @@ const AuthContext = createContext<{
   loading: true,
   user: null,
   session: null,
+  emailVerified: false,
   signUp: async () => Promise.resolve({ error: null }),
   login: async () => Promise.resolve({ error: null }),
   logout: () => {},
   refreshSession: async () => Promise.resolve(),
+  resendVerificationEmail: async () => Promise.resolve({ error: null }),
   showLoginModal: false,
   openLoginModal: () => {},
   closeLoginModal: () => {},
@@ -54,17 +60,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!session) {
         setUser(null);
         setLoading(false);
+        return;
       }
-      if (event === "SIGNED_IN" && session?.user) {
-        const isNewUser = // check if created_at is within last 60 seconds
-          Date.now() - new Date(session.user.created_at).getTime() < 60_000;
-        if (isNewUser) {
+      // Only fetch profile and allow access when email is verified
+      const verified = !!session.user.email_confirmed_at;
+      if (!verified) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      const profile = await fetchUserProfile(session.user.id);
+      if (profile) {
+        setUser(profile);
+        // Sync is_verified on profile when they've just verified
+        const { data: row } = await supabase
+          .from("profiles")
+          .select("is_verified, welcome_email_sent")
+          .eq("id", session.user.id)
+          .single();
+        const updates: Record<string, unknown> = {};
+        if (!row?.is_verified) updates.is_verified = true;
+        if (!row?.welcome_email_sent) {
+          updates.welcome_email_sent = true;
           await triggerEmail("welcome", {
-            email: session.user.email,
-            username: session.user.user_metadata?.username ?? "there",
+            email: session.user.email ?? "",
+            username:
+              session.user.user_metadata?.username ??
+              profile.username ??
+              "there",
           });
         }
+        if (Object.keys(updates).length > 0) {
+          await supabase
+            .from("profiles")
+            .update(updates)
+            .eq("id", session.user.id);
+          if (updates.welcome_email_sent) {
+            const refreshed = await fetchUserProfile(session.user.id);
+            if (refreshed) setUser(refreshed);
+          }
+        }
       }
+      setLoading(false);
     });
 
     return () => {
@@ -73,21 +110,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   }, []);
 
-  useEffect(() => {
-    if (session?.user) {
-      fetchUserProfile(session.user.id).then((profile) => {
-        setUser(profile);
-        setLoading(false);
-      });
-    }
-  }, [session]);
-
   const login = async (email: string, password: string): Promise<AuthError> => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) return error;
+    if (data?.user && !data.user.email_confirmed_at) {
+      await supabase.auth.signOut();
+      return new AuthError(
+        "Please verify your email before signing in. Check your inbox for the verification link.",
+        400,
+        "EmailNotConfirmed",
+      );
+    }
     window.location.href = "/#/dashboard";
     return error;
   };
@@ -109,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
     if (error) return error;
-    window.location.href = "/#/dashboard";
+    // Do not redirect: user must verify email first. UI shows verify-email screen.
     return error;
   };
 
@@ -128,6 +164,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setSession(session);
+  };
+
+  const resendVerificationEmail = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: "signup",
+      email,
+    });
+    return error;
   };
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
@@ -150,8 +194,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return null;
     }
 
-    const isAdmin =
-      data.role === "admin" || data.is_admin === true;
+    const isAdmin = data.role === "admin" || data.is_admin === true;
 
     const profile: User = {
       id: data.id,
@@ -176,14 +219,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const openLoginModal = () => setShowLoginModal(true);
   const closeLoginModal = () => setShowLoginModal(false);
 
+  const emailVerified = !!session?.user?.email_confirmed_at;
+
   const data = {
     loading,
     user,
     session,
+    emailVerified,
     login,
     logout,
     signUp,
     refreshSession,
+    resendVerificationEmail,
     showLoginModal,
     openLoginModal,
     closeLoginModal,

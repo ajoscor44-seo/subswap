@@ -9,16 +9,35 @@ import { useNavigator } from "@/providers/navigator";
 import { useAuth } from "@/providers/auth";
 import ComingSoon from "./ComingSoon";
 import { SyncLoader } from "react-spinners";
-// import AdminDashboard from "@/components/AdminDashboard";
+import VerifyEmailScreen from "@/components/VerifyEmailScreen";
 
 const View = () => {
   const { currentView, isReady } = useNavigator();
-  const { user, logout, refreshSession, loading } = useAuth();
+  const { user, logout, refreshSession, loading, resendVerificationEmail } =
+    useAuth();
 
   if (loading || !isReady) {
     return (
       <div className="flex items-center justify-center flex-1">
         <SyncLoader color="#4F46E5" />
+      </div>
+    );
+  }
+
+  if (currentView === "verify-email") {
+    const resend = user?.email
+      ? async () => {
+          await resendVerificationEmail(user.email);
+          refreshSession();
+        }
+      : undefined;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-slate-50 to-white p-4">
+        <VerifyEmailScreen
+          email={user?.email ?? ""}
+          onDismiss={() => {}}
+          onResend={resend}
+        />
       </div>
     );
   }

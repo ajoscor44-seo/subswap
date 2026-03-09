@@ -8,7 +8,8 @@ export type TViewState =
   | "about"
   | "contact"
   | "marketplace"
-  | "transactions";
+  | "transactions"
+  | "verify-email";
 
 export type UserRole = "admin" | "user";
 

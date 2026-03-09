@@ -1,14 +1,31 @@
-import React from "react";
+import React, { useState } from "react";
 
 interface VerifyEmailScreenProps {
   email: string;
   onDismiss: () => void;
+  onResend?: () => void | Promise<void>;
 }
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
   email,
   onDismiss,
-}) => (
+  onResend,
+}) => {
+  const [resending, setResending] = useState(false);
+  const [resendDone, setResendDone] = useState(false);
+
+  const handleResend = async () => {
+    if (!onResend || resending) return;
+    setResending(true);
+    try {
+      await onResend();
+      setResendDone(true);
+    } finally {
+      setResending(false);
+    }
+  };
+
+  return (
   <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
     <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 md:p-12 shadow-2xl text-center border border-slate-100 animate-in zoom-in-95 duration-300">
       <div className="h-20 w-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-sm">
@@ -20,9 +37,22 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
       <p className="text-slate-500 font-medium mb-2 leading-relaxed text-sm">
         We sent a verification link to
       </p>
-      <p className="text-slate-900 font-black text-sm mb-8 bg-slate-50 rounded-xl py-3 px-4 border border-slate-100">
+      <p className="text-slate-900 font-black text-sm mb-6 bg-slate-50 rounded-xl py-3 px-4 border border-slate-100">
         {email}
       </p>
+      <p className="text-slate-500 text-xs mb-4 leading-relaxed">
+        Click the link in that email to verify your account. Then you can sign in and use DiscountZAR.
+      </p>
+      {onResend && (
+        <button
+          type="button"
+          onClick={handleResend}
+          disabled={resending}
+          className="text-indigo-600 hover:text-indigo-800 text-sm font-bold disabled:opacity-50 mb-4"
+        >
+          {resending ? "Sending…" : resendDone ? "Email sent again" : "Didn't get it? Resend verification email"}
+        </button>
+      )}
       <button
         onClick={onDismiss}
         className="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all"
@@ -30,10 +60,11 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
         Got it — continue
       </button>
       <p className="text-[10px] text-slate-300 font-bold mt-4 uppercase tracking-widest">
-        You can complete setup now
+        You can complete setup after verifying
       </p>
     </div>
   </div>
-);
+  );
+};
 
 export default VerifyEmailScreen;

@@ -8,6 +8,11 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+const APP_BASE_URL = typeof Deno !== "undefined"
+  ? (Deno.env.get("APP_URL") ?? "https://discountzar.com")
+  : "https://discountzar.com";
+const LOGO_URL = `${APP_BASE_URL}/icons/icon-192x192.png`;
+
 function layout(
   content: string,
   footer = "You're receiving this because you have a DiscountZAR account.",
@@ -22,8 +27,8 @@ function layout(
 
   <tr><td style="background:linear-gradient(135deg,#1a1230 0%,#2d1f6e 55%,#3730a3 100%);padding:28px 32px;border-radius:20px 20px 0 0;text-align:center;">
     <table cellpadding="0" cellspacing="0" style="margin:0 auto;"><tr>
-      <td style="width:34px;height:34px;background:linear-gradient(135deg,#7c5cfc,#6366f1);border-radius:9px;text-align:center;line-height:34px;font-size:16px;">⚡</td>
-      <td style="padding-left:10px;font-size:19px;font-weight:800;color:#fff;letter-spacing:-0.02em;">DiscountZAR</td>
+      <td style="width:40px;height:40px;vertical-align:middle;text-align:center;"><img src="${LOGO_URL}" alt="DiscountZAR" width="40" height="40" style="display:block;border-radius:10px;" /></td>
+      <td style="padding-left:12px;font-size:19px;font-weight:800;color:#fff;letter-spacing:-0.02em;vertical-align:middle;">DiscountZAR</td>
     </tr></table>
   </td></tr>
 
@@ -47,7 +52,7 @@ function btn(label: string, url: string) {
   const safeUrl = escapeHtml(url);
   return `<table cellpadding="0" cellspacing="0" style="margin:24px 0;"><tr>
     <td style="background:linear-gradient(135deg,#7c5cfc,#6366f1);border-radius:12px;">
-      <a href="${safeUrl}" style="display:block;padding:15px 32px;font-size:13px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;">${safeLabel} →</a>
+      <a href="${safeUrl}" style="display:block;padding:15px 32px;font-size:13px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.05em;text-transform:uppercase;">${safeLabel} <span style="opacity:0.9;margin-left:4px;">▶</span></a>
     </td></tr></table>`;
 }
 

@@ -4,11 +4,13 @@
 
 -- 1. UPDATE PROFILES
 -- Add verification status for badges and admin flag (optional; role = 'admin' also grants admin)
+-- welcome_email_sent: set to true after sending welcome email (once per user, after email verification)
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS merchant_rating DECIMAL(3,2) DEFAULT 5.00,
 ADD COLUMN IF NOT EXISTS phone_number TEXT,
-ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
 
 -- 2. UPDATE MASTER ACCOUNTS
 -- Add ownership and rich content fields

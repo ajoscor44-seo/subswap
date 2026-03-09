@@ -6,21 +6,25 @@ import toast from "react-hot-toast";
 import Logo from "@/components/Logo";
 import { DEFAULT_FORM, type FormState } from "@/constants/types";
 import VerifyEmailScreen from "./VerifyEmailScreen";
-import OnboardingFlow from "./OnboardingFlow";
 import SocialButtons from "./SocialButtons";
 import Divider from "./Divider";
 import InputField from "./InputField";
 
 const LoginModal: React.FC = () => {
-  const { signUp, login, closeLoginModal } = useAuth();
-
+  const {
+    signUp,
+    login,
+    closeLoginModal,
+    user,
+    refreshSession,
+    resendVerificationEmail,
+  } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
-  const [onboardingUserId, setOnboardingUserId] = useState<string | null>(null);
 
   const setField =
     (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -47,15 +51,11 @@ const LoginModal: React.FC = () => {
       const err = await signUp(form);
       setLoading(false);
 
-      if (err) {
+      if (err?.message) {
         setError(err.message || "Failed to create account");
         return;
       }
 
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setOnboardingUserId(user?.id ?? "pending");
       setSignUpSuccess(true);
     } else {
       setLoading(true);
@@ -72,26 +72,20 @@ const LoginModal: React.FC = () => {
     }
   };
 
-  // ── State: verify email
-  if (onboardingUserId && signUpSuccess) {
+  // ── State: verify email (after signup; no session until they click the link)
+  if (signUpSuccess) {
+    const resend = user?.email
+      ? async () => {
+          await resendVerificationEmail(user.email);
+          refreshSession();
+        }
+      : undefined;
+
     return (
       <VerifyEmailScreen
         email={form.email}
         onDismiss={() => setSignUpSuccess(false)}
-      />
-    );
-  }
-
-  // ── State: onboarding survey
-  if (!signUpSuccess && onboardingUserId) {
-    return (
-      <OnboardingFlow
-        userId={onboardingUserId}
-        onComplete={() => {
-          setOnboardingUserId(null);
-          closeLoginModal();
-          toast.success("Welcome aboard! 🎉");
-        }}
+        onResend={resend}
       />
     );
   }
