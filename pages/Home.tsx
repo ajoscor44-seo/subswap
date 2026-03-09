@@ -5,19 +5,11 @@ import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
 import { Marketplace } from "@/components/Marketplace";
 import { PopularServices } from "@/components/PopularServices";
-import { useAuth } from "@/providers/auth";
-import { useNavigator } from "@/providers/navigator";
-import React from "react";
 
 const Home = () => {
-  const { user, openLoginModal } = useAuth();
-  const { changeView } = useNavigator();
-
   return (
     <div className="animate-in fade-in duration-700">
-      <Hero
-        onGetStarted={() => (user ? changeView("dashboard") : openLoginModal())}
-      />
+      <Hero />
       <PopularServices />
       <HowItWorks />
       <Features />

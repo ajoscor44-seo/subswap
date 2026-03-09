@@ -50,8 +50,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     const fetchTransactions = async () => {
       setIsLoading(true);
       try {
-        let query = supabase.from("transactions").select("*");
-        if (!user.isAdmin) query = query.eq("user_id", user.id);
+        let query = supabase
+          .from("transactions")
+          .select("*")
+          .eq("user_id", user.id);
         const { data, error } = await query.order("created_at", {
           ascending: false,
         });
@@ -284,9 +286,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               fontWeight: 400,
             }}
           >
-            {user.isAdmin
-              ? "Global platform transaction history."
-              : "Your complete wallet and subscription history."}
+            Your complete wallet and subscription history.
           </p>
         </div>
 

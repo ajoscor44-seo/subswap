@@ -76,7 +76,7 @@ export function verificationEmail(url: string) {
     `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">Verify your email</h1>
     <p style="margin:0 0 4px;font-size:14px;color:#9b8fc2;line-height:1.7;">
-      You're one step away from accessing the best subscription deals in South Africa.
+      You're one step away from accessing the best subscription deals.
     </p>
     ${btn("Verify Email Address", safeUrl)}
     <p style="margin:12px 0 6px;font-size:12px;color:#c4b5fd;">Or paste this link into your browser:</p>

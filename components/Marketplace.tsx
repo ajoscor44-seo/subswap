@@ -7,8 +7,8 @@ import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 
 export const Marketplace: React.FC = () => {
-  const { user } = useAuth();
-  const { changeView } = useNavigator();
+  const { user, refreshProfile } = useAuth();
+  const { goTo } = useNavigator();
   const [dbProducts, setDbProducts] = useState<MasterAccount[]>([]);
   const [filter, setFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -78,7 +78,8 @@ export const Marketplace: React.FC = () => {
         masterPassword: account.master_password,
         fulfillmentType: account.fulfillment_type,
       });
-      setTimeout(() => changeView("dashboard"), 1500);
+      refreshProfile && (await refreshProfile());
+      setTimeout(() => goTo("dashboard"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
@@ -113,11 +114,11 @@ export const Marketplace: React.FC = () => {
           try {
             const newBalance = Number(user?.balance || 0) + amount;
 
-            const { error: balanceError } = await supabase
+            const { error } = await supabase
               .from("profiles")
               .update({ balance: newBalance })
               .eq("id", user.id);
-            if (balanceError) throw balanceError;
+            if (error) throw error;
 
             await supabase.from("transactions").insert({
               user_id: user.id,
@@ -139,7 +140,7 @@ export const Marketplace: React.FC = () => {
             if (activeAccount && newBalance >= activeAccount.price) {
               handleJoin(activeAccount);
             } else {
-              changeView("dashboard");
+              goTo("dashboard");
             }
           } catch (err: any) {
             toast.error(err.message || "Failed to update balance");

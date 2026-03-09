@@ -13,8 +13,8 @@ import { NAV_ITEMS } from "@/constants/data";
 import { toast } from "react-hot-toast";
 
 export const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const { dashboardTab, changeTab, changeView } = useNavigator();
+  const { user, logout, refreshProfile } = useAuth();
+  const { dashboardTab, changeTab, goTo } = useNavigator();
 
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
@@ -70,6 +70,7 @@ export const Dashboard: React.FC = () => {
         .order("created_at", { ascending: false })
         .limit(3);
       if (txs) setRecentTransactions(txs);
+      refreshProfile && (await refreshProfile());
     } catch (err: any) {
       console.error("Dashboard sync error:", err);
     } finally {
@@ -130,7 +131,7 @@ export const Dashboard: React.FC = () => {
               "success",
             );
             fetchData();
-            changeView("dashboard");
+            goTo("dashboard");
           } catch (err: any) {
             showStatus(err.message || "Failed to update balance.", "error");
           }
@@ -162,7 +163,10 @@ export const Dashboard: React.FC = () => {
         >
           <div className="db-avatar-ring">
             <img
-              src={user.avatar}
+              src={
+                user.avatar ||
+                `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`
+              }
               alt={user.username}
               referrerPolicy="no-referrer"
               onError={(e) => {

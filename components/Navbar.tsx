@@ -246,7 +246,10 @@ const Navbar: React.FC = () => {
                     }}
                   >
                     <img
-                      src={user.avatar}
+                      src={
+                        user.avatar ||
+                        `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`
+                      }
                       style={{
                         width: "100%",
                         height: "100%",

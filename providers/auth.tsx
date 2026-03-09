@@ -33,6 +33,7 @@ const AuthContext = createContext<{
   login: (email: string, password: string) => Promise<AuthError | null>;
   logout: () => void;
   refreshSession?: () => Promise<void>;
+  refreshProfile?: () => Promise<void>;
   /** Resend the verification email (for the current session user's email). */
   resendVerificationEmail?: (email: string) => Promise<AuthError | null>;
   showLoginModal: boolean;
@@ -229,6 +230,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setSession(session);
   };
 
+  const refreshProfile = async () => {
+    if (!session?.user) return;
+    const profile = await fetchUserProfile(session.user.id);
+    setUser(profile);
+  };
+
   const resendVerificationEmail = async (
     email: string,
   ): Promise<AuthError | null> => {
@@ -268,7 +275,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       username: data.username,
       avatar:
         data.avatar ||
-        `https://lh6.googleusercontent.com/proxy/ZLGihPRfkkerdJBqfRKKFRWQcXDCfMMuuK_6_IDH6Mfhu0VI3Du2L9eOTiz0yKsIftOesQQnj0whQCZFudjFH-cXgBKnebrpknuWtjKkDcRC5Ik`,
+        `https://ui-avatars.com/api/?name=${data.username}&background=ede9fe&color=7c5cfc&size=36`,
       balance: Number(data.balance) || 0,
       isAdmin,
       isVerified: Boolean(data.is_verified),
@@ -295,6 +302,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
     signUp,
     refreshSession,
+    refreshProfile,
     resendVerificationEmail,
     showLoginModal,
     openLoginModal,
