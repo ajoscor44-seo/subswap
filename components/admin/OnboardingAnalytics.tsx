@@ -280,13 +280,20 @@ export const OnboardingAnalytics: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase
-      .from("user_onboarding")
-      .select("*")
-      .then(({ data }) => {
-        if (data) setRows(data as OnboardingRow[]);
-        setLoading(false);
-      });
+    const fetchOnboadingResponses = async () => {
+      const { data, error } = await supabase
+        .from("user_onboarding")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("Error fetching onboarding responses:", error);
+      } else if (data) {
+        setRows(data as OnboardingRow[]);
+      }
+      setLoading(false);
+    };
+
+    fetchOnboadingResponses();
   }, []);
 
   const useCaseTally = useMemo(() => tally(rows, "use_case"), [rows]);
