@@ -15,7 +15,6 @@ const LoginModal: React.FC = () => {
     signUp,
     login,
     closeLoginModal,
-    user,
     refreshSession,
     resendVerificationEmail,
   } = useAuth();
@@ -25,6 +24,7 @@ const LoginModal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
+  const [needsVerification, setNeedsVerification] = useState(false);
 
   const setField =
     (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -63,7 +63,16 @@ const LoginModal: React.FC = () => {
       setLoading(false);
 
       if (err) {
-        setError(err.message || "Failed to login");
+        const msg = err.message || "Failed to login";
+        const looksUnverified =
+          err.name === "EmailNotConfirmed" ||
+          (/email/i.test(msg) && /(confirm|verify)/i.test(msg));
+        if (looksUnverified) {
+          setNeedsVerification(true);
+          setError(null);
+          return;
+        }
+        setError(msg);
         return;
       }
 
@@ -73,10 +82,10 @@ const LoginModal: React.FC = () => {
   };
 
   // ── State: verify email (after signup; no session until they click the link)
-  if (signUpSuccess) {
-    const resend = user?.email
+  if (signUpSuccess || needsVerification) {
+    const resend = form.email
       ? async () => {
-          await resendVerificationEmail(user.email);
+          await resendVerificationEmail(form.email);
           refreshSession();
         }
       : undefined;
@@ -84,8 +93,12 @@ const LoginModal: React.FC = () => {
     return (
       <VerifyEmailScreen
         email={form.email}
-        onDismiss={() => setSignUpSuccess(false)}
+        onDismiss={() => {
+          setSignUpSuccess(false);
+          setNeedsVerification(false);
+        }}
         onResend={resend}
+        autoResend
       />
     );
   }

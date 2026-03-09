@@ -1,18 +1,29 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 interface VerifyEmailScreenProps {
   email: string;
   onDismiss: () => void;
   onResend?: () => void | Promise<void>;
+  /** If true, auto-send the verification email when shown (throttled). */
+  autoResend?: boolean;
+  /** Minimum time between automatic resends. Default: 2 minutes. */
+  autoResendThrottleMs?: number;
 }
 
 const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
   email,
   onDismiss,
   onResend,
+  autoResend = false,
+  autoResendThrottleMs = 120_000,
 }) => {
   const [resending, setResending] = useState(false);
   const [resendDone, setResendDone] = useState(false);
+
+  const resendThrottleKey = useMemo(
+    () => `dz_verify_email_last_sent:${email.toLowerCase()}`,
+    [email],
+  );
 
   const handleResend = async () => {
     if (!onResend || resending) return;
@@ -20,10 +31,25 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
     try {
       await onResend();
       setResendDone(true);
+      try {
+        localStorage.setItem(resendThrottleKey, String(Date.now()));
+      } catch {}
     } finally {
       setResending(false);
     }
   };
+
+  useEffect(() => {
+    if (!autoResend) return;
+    if (!email || !onResend) return;
+    try {
+      const raw = localStorage.getItem(resendThrottleKey);
+      const last = raw ? Number(raw) : 0;
+      if (last && Date.now() - last < autoResendThrottleMs) return;
+    } catch {}
+    void handleResend();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoResend, autoResendThrottleMs, email, onResend, resendThrottleKey]);
 
   return (
   <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md">
@@ -50,7 +76,11 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({
           disabled={resending}
           className="text-indigo-600 hover:text-indigo-800 text-sm font-bold disabled:opacity-50 mb-4"
         >
-          {resending ? "Sending…" : resendDone ? "Email sent again" : "Didn't get it? Resend verification email"}
+          {resending
+            ? "Sending…"
+            : resendDone
+              ? "Email sent again"
+              : "Didn't get it? Resend verification email"}
         </button>
       )}
       <button

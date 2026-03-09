@@ -27,7 +27,7 @@ After the user clicks the link in the verification email, Supabase redirects the
 3. Under **Redirect URLs**, add:
    - Production: `https://discountzar.com/**`
    - Local: `http://localhost:5173/**`  
-   (The `/**` allows any path after the origin.)
+     (The `/**` allows any path after the origin.)
 
 Save. Supabase will redirect to your Site URL (or the path you use in the confirmation link) after verification.
 
@@ -35,12 +35,12 @@ Save. Supabase will redirect to your Site URL (or the path you use in the confir
 
 ## 3. Use your own verification email (optional)
 
-The app can send the verification email via Resend (same templates as the rest of the app) using the `send-auth-email` Edge Function:
+The app can send the verification email via Resend (same templates as the rest of the app) using the `send-email` Edge Function:
 
 1. In **Authentication** → **Hooks**, add an **Auth Hook**.
 2. Choose **Send Email** (or “Customize email” / “Send email with custom template”, depending on your Supabase version).
-3. Point it to your Edge Function that sends the verification email (e.g. `send-auth-email`).
-4. Ensure the function receives the Supabase payload (e.g. `confirmation_url`) and sends the email with your template.
+3. Point it to your Edge Function that sends the verification email (e.g. `send-email`).
+4. **Important:** Supabase signs the webhook payload. Your function must verify it using `SEND_EMAIL_HOOK_SECRET` (see step 5).
 
 If you use the built-in Supabase emails instead, skip this step; Supabase will send its default verification email.
 
@@ -61,11 +61,13 @@ The app sets `is_verified = true` when it sees `email_confirmed_at` on the auth 
 
 ## 5. Edge Function env (for custom emails)
 
-If you use the `send-auth-email` function:
+If you use the `send-email` function:
 
 1. Go to **Project Settings** → **Edge Functions** (or **Secrets**).
 2. Set:
    - `RESEND_API_KEY` – your Resend API key.
+   - `SUPABASE_URL` – your project URL (usually already present in Supabase Edge Functions).
+   - `SEND_EMAIL_HOOK_SECRET` – generated in **Authentication → Hooks** (looks like `v1,whsec_...`).
 
 If you use the shared email templates with the app logo:
 
@@ -82,7 +84,8 @@ Email templates use the app logo at:
 
 Ensure that URL is publicly reachable:
 
-- In production, deploy your app so `https://your-domain.com/icons/icon-192x192.png` serves the file from `public/icons/icon-192x192.png`.
+- In production, deploy your app so `https://your-domain.com/icons/icon-192x192.png` serves the file from `public/icons
+/icon-192x192.png`.
 - If you use a different domain for the app, set `APP_URL` in Edge Function secrets to that domain.
 
 ---
@@ -90,7 +93,7 @@ Ensure that URL is publicly reachable:
 ## Flow summary
 
 1. User signs up → no session yet; UI shows “Check your inbox”.
-2. User receives verification email (from Supabase or `send-auth-email`) with a link.
+2. User receives verification email (from Supabase or `send-email`) with a link.
 3. User clicks link → Supabase confirms email and redirects to your app.
 4. App gets a session with `email_confirmed_at` set → user is treated as verified.
 5. App sets `profiles.is_verified = true` and, once, sends the **welcome email** and sets `profiles.welcome_email_sent = true`.

@@ -91,11 +91,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(profile);
 
-      // Best-effort: mark profile verified and send welcome email once.
+      // Best-effort: send welcome email once after email verification.
       try {
         const { data: row, error } = await supabase
           .from("profiles")
-          .select("is_verified, welcome_email_sent")
+          .select("welcome_email_sent")
           .eq("id", sess.user.id)
           .single();
         if (error) {
@@ -104,14 +104,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const updates: Record<string, unknown> = {};
-        if (!row?.is_verified) updates.is_verified = true;
 
         if (!row?.welcome_email_sent) {
           try {
             await triggerEmail("welcome", {
               email: sess.user.email ?? "",
               username:
-                sess.user.user_metadata?.username ?? profile.username ?? "there",
+                sess.user.user_metadata?.username ??
+                profile.username ??
+                "there",
             });
             updates.welcome_email_sent = true;
           } catch (err) {
@@ -124,7 +125,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .from("profiles")
             .update(updates)
             .eq("id", sess.user.id);
-          if (updateError) console.error("[auth] update profile flags failed", updateError);
+          if (updateError)
+            console.error("[auth] update profile flags failed", updateError);
         }
       } catch (err) {
         console.error("[auth] post-verify sync failed", err);

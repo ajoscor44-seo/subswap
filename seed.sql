@@ -2,7 +2,7 @@
 -- ELEVATE SPECIFIC USER TO ADMIN
 -- This targets the user provided by the owner
 UPDATE public.profiles 
-SET role = 'admin', is_verified = TRUE
+SET role = 'admin', is_verified = TRUE, is_admin = TRUE
 WHERE email = 'joscor@wsv.com.ng';
 
 -- DiscountZAR DEMO DATA SEED
