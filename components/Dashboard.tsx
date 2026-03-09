@@ -11,6 +11,7 @@ import WalletTab from "./WalletTab";
 import OverviewTab from "./OverviewTab";
 import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
+import { toast } from "react-hot-toast";
 
 interface DashboardProps {
   user: User;
@@ -63,27 +64,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
     });
   }, [subscriptions]);
 
-  const fwConfig = {
-    public_key:
-      import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY ||
-      "FLWPUBK_TEST-1ee9d1185c08b3332a2192bcf4702b37-X",
-    tx_ref: Date.now().toString(),
-    amount: 0,
-    currency: "NGN",
-    payment_options: "card,mobilemoney,ussd",
-    customer: {
-      email: user.email,
-      phone_number: "",
-      name: user.name || user.username,
-    },
-    customizations: {
-      title: "DiscountZAR Wallet Top-up",
-      description: "Payment for wallet credit",
-      logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
-    },
-  };
-  const handleFlutterPayment = useFlutterwave(fwConfig);
-
   const showStatus = (text: string, type: "success" | "error" = "success") => {
     setStatusMsg({ text, type });
     setTimeout(() => setStatusMsg(null), 4000);
@@ -121,18 +101,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
   };
 
   const handleFlutterwavePayment = (amount: number) => {
-    const config = {
-      ...fwConfig,
-      amount,
+    const fwConfig = {
+      public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY!,
       tx_ref: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      amount,
+      currency: "NGN",
+      payment_options: "card, mobilemoney, ussd",
+      customer: {
+        email: user.email,
+        phone_number: "",
+        name: user.name || user.username,
+      },
       customizations: {
-        ...fwConfig.customizations,
+        title: "DiscountZAR Wallet Top-up",
         description: `Payment for ₦${amount.toLocaleString()} wallet credit`,
+        logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
       },
     };
 
+    const handleFlutterPayment = useFlutterwave(fwConfig);
     handleFlutterPayment({
-      ...config,
+      ...fwConfig,
       callback: async (response) => {
         if (response.status === "successful") {
           try {
@@ -160,7 +149,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
         }
         closePaymentModal();
       },
-      onClose: () => {},
+      onClose: () => {
+        toast.success("Payment cancelled");
+      },
     });
   };
 

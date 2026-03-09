@@ -2,6 +2,7 @@ import { OUR_FEATURES, STATS, VALUES } from "@/constants/data";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 import React from "react";
+import Footer from "./Footer";
 
 const AboutUs: React.FC = () => {
   const { user, openLoginModal } = useAuth();
@@ -601,6 +602,7 @@ const AboutUs: React.FC = () => {
           </div>
         </section>
       </div>
+      <Footer />
     </>
   );
 };

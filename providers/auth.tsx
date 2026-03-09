@@ -11,6 +11,7 @@ import { supabase } from "@/lib/supabase";
 import { ISignUp } from "@/constants/interfaces";
 import { AuthError, Session } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
+import { triggerEmail } from "@/lib/send-email";
 
 const AuthContext = createContext<{
   loading: boolean;
@@ -47,12 +48,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       clearTimeout(timeout);
       setSession(session);
       if (!session) {
         setUser(null);
         setLoading(false);
+      }
+      if (event === "SIGNED_IN" && session?.user) {
+        const isNewUser = // check if created_at is within last 60 seconds
+          Date.now() - new Date(session.user.created_at).getTime() < 60_000;
+        if (isNewUser) {
+          await triggerEmail("welcome", {
+            email: session.user.email,
+            username: session.user.user_metadata?.username ?? "there",
+          });
+        }
       }
     });
 
@@ -76,8 +87,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email,
       password,
     });
+    if (error) return error;
     window.location.href = "/#/dashboard";
-
     return error;
   };
 
@@ -97,8 +108,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         },
       },
     });
+    if (error) return error;
     window.location.href = "/#/dashboard";
-
     return error;
   };
 
@@ -140,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const isAdmin =
-      data.email.toLowerCase() === "joscor@wsv.com.ng" || data.role === "admin";
+      data.role === "admin" || data.is_admin === true;
 
     const profile: User = {
       id: data.id,
