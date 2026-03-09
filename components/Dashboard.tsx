@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { User, Transaction } from "@/constants/types";
+import { Transaction } from "@/constants/types";
 import { Marketplace } from "./Marketplace";
 import TransactionHistory from "./TransactionHistory";
 import { supabase } from "../lib/supabase";
-import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 import { SettingsTab } from "./SettingsTab";
@@ -13,22 +12,9 @@ import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
 import { toast } from "react-hot-toast";
 
-interface DashboardProps {
-  user: User;
-  onLogout: () => void;
-  initialTab?:
-    | "overview"
-    | "stacks"
-    | "explore"
-    | "wallet"
-    | "history"
-    | "settings";
-  onPurchaseSuccess?: () => void;
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
-  const { user, logout } = useAuth();
-  const { dashboardTab, changeTab } = useNavigator();
+export const Dashboard: React.FC = () => {
+  const { user, logout, refreshProfile } = useAuth();
+  const { dashboardTab, changeTab, goTo } = useNavigator();
 
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
@@ -84,6 +70,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
         .order("created_at", { ascending: false })
         .limit(3);
       if (txs) setRecentTransactions(txs);
+      refreshProfile && (await refreshProfile());
     } catch (err: any) {
       console.error("Dashboard sync error:", err);
     } finally {
@@ -101,12 +88,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
   };
 
   const handleFlutterwavePayment = (amount: number) => {
-    const fwConfig = {
+    // @ts-ignore — FlutterwaveCheckout is injected by the v3 script tag
+    FlutterwaveCheckout({
       public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY!,
-      tx_ref: `tx-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      tx_ref: `tx-${Date.now()}-${Math.floor(Math.random() * 9999)}`,
       amount,
       currency: "NGN",
-      payment_options: "card, mobilemoney, ussd",
+      payment_options: "card,mobilemoney,ussd",
       customer: {
         email: user.email,
         phone_number: "",
@@ -117,41 +105,41 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
         description: `Payment for ₦${amount.toLocaleString()} wallet credit`,
         logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
       },
-    };
-
-    const handleFlutterPayment = useFlutterwave(fwConfig);
-    handleFlutterPayment({
-      ...fwConfig,
-      callback: async (response) => {
-        if (response.status === "successful") {
+      callback: async (response: any) => {
+        if (
+          response.status === "successful" ||
+          response.status === "completed"
+        ) {
           try {
+            const newBalance = Number(user?.balance || 0) + amount;
+
+            const { error: balanceError } = await supabase
+              .from("profiles")
+              .update({ balance: newBalance })
+              .eq("id", user.id);
+            if (balanceError) throw balanceError;
+
             await supabase.from("transactions").insert({
               user_id: user.id,
               amount,
               type: "Deposit",
-              description: `Flutterwave Top-up: ₦${amount.toLocaleString()}`,
+              description: `Wallet Top-up: ₦${amount.toLocaleString()}`,
             });
-            await supabase
-              .from("profiles")
-              .update({ balance: user.balance + amount })
-              .eq("id", user.id);
+
             showStatus(
-              `₦${amount.toLocaleString()} added successfully!`,
+              `₦${amount.toLocaleString()} added to your wallet!`,
               "success",
             );
             fetchData();
-            if (onPurchaseSuccess) onPurchaseSuccess();
+            goTo("dashboard");
           } catch (err: any) {
-            showStatus(err.message, "error");
+            showStatus(err.message || "Failed to update balance.", "error");
           }
         } else {
-          showStatus("Payment was not successful", "error");
+          showStatus("Payment was not completed.", "error");
         }
-        closePaymentModal();
       },
-      onClose: () => {
-        toast.success("Payment cancelled");
-      },
+      onclose: () => toast("Payment cancelled", { icon: "👋" }),
     });
   };
 
@@ -175,7 +163,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
         >
           <div className="db-avatar-ring">
             <img
-              src={user.avatar}
+              src={
+                user.avatar ||
+                `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`
+              }
               alt={user.username}
               referrerPolicy="no-referrer"
               onError={(e) => {
@@ -724,7 +715,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                   activeSubscriptions={activeSubscriptions}
                   recentTransactions={recentTransactions}
                   changeTab={changeTab}
-                  onPurchaseSuccess={onPurchaseSuccess}
                 />
               )}
               {dashboardTab === "stacks" && (
@@ -745,11 +735,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onPurchaseSuccess }) => {
                     padding: "20px 15px",
                   }}
                 >
-                  <Marketplace
-                    user={user}
-                    onAuthRequired={() => {}}
-                    onPurchaseSuccess={onPurchaseSuccess}
-                  />
+                  <Marketplace />
                 </div>
               )}
               {dashboardTab === "wallet" && (

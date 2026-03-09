@@ -9,7 +9,7 @@ interface TransactionHistoryProps {
 
 const TYPE_CONFIG: Record<string, { bg: string; color: string; icon: string }> =
   {
-    Deposit: { bg: "#f0fdf4", color: "#16a34a", icon: "fa-arrow-down-to-line" },
+    Deposit: { bg: "#f0fdf4", color: "#16a34a", icon: "fa-arrow-down" },
     Purchase: { bg: "#f0eef9", color: "#7c5cfc", icon: "fa-bag-shopping" },
     Withdrawal: {
       bg: "#fef2f2",
@@ -50,8 +50,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     const fetchTransactions = async () => {
       setIsLoading(true);
       try {
-        let query = supabase.from("transactions").select("*");
-        if (!user.isAdmin) query = query.eq("user_id", user.id);
+        let query = supabase
+          .from("transactions")
+          .select("*")
+          .eq("user_id", user.id);
         const { data, error } = await query.order("created_at", {
           ascending: false,
         });
@@ -284,9 +286,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               fontWeight: 400,
             }}
           >
-            {user.isAdmin
-              ? "Global platform transaction history."
-              : "Your complete wallet and subscription history."}
+            Your complete wallet and subscription history.
           </p>
         </div>
 

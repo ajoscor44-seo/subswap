@@ -8,7 +8,8 @@ export type TViewState =
   | "about"
   | "contact"
   | "marketplace"
-  | "transactions";
+  | "transactions"
+  | "verify-email";
 
 export type UserRole = "admin" | "user";
 
@@ -125,11 +126,6 @@ export interface AdminStats {
   verifiedUsers: number;
   recentTransactions: Transaction[];
   topServices: { name: string; purchases: number; revenue: number }[];
-}
-
-export interface AdminDashboardProps {
-  user: User;
-  onRefreshUser?: () => void;
 }
 
 export interface FormState {

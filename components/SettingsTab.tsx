@@ -344,7 +344,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 }) => {
   const [name, setName] = useState(user.name || "");
   const [username, setUsername] = useState(user.username || "");
-  const [avatarUrl, setAvatarUrl] = useState(user.avatar || "");
+  const [avatarUrl, setAvatarUrl] = useState(
+    user.avatar ||
+      `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`,
+  );
   const [saving, setSaving] = useState(false);
 
   const handleAvatarUploaded = async (url: string) => {

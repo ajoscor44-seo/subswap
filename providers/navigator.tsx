@@ -39,7 +39,11 @@ const parseHash = (): TViewState | null => {
 const resolveView = (
   hash: TViewState | null,
   user: ReturnType<typeof useAuth>["user"],
+  session: ReturnType<typeof useAuth>["session"],
+  emailVerified: boolean,
 ): TViewState => {
+  if (session && !emailVerified) return "verify-email";
+
   if (!hash) {
     return user ? (user.isAdmin ? "admin" : "dashboard") : "home";
   }
@@ -56,21 +60,33 @@ const resolveView = (
 };
 
 export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, session, emailVerified, loading: authLoading } = useAuth();
   const [currentView, setCurrentView] = useState<TViewState>("home");
   const [dashboardTab, setDashboardTab] = useState<string>("overview");
   const [isReady, setIsReady] = useState(false);
 
   const syncView = useCallback(() => {
-    const resolved = resolveView(parseHash(), user);
+    const resolved = resolveView(parseHash(), user, session, emailVerified);
     setCurrentView(resolved);
-  }, [user]);
+  }, [user, session, emailVerified]);
 
   useEffect(() => {
     if (authLoading) return;
     syncView();
     setIsReady(true);
   }, [authLoading, syncView]);
+
+  // Fail-safe: never let the app be stuck behind the global loader forever.
+  // If auth init hangs for any reason (storage quirks, network stalls), we still render
+  // the public pages and let auth settle later.
+  useEffect(() => {
+    if (isReady) return;
+    const t = setTimeout(() => {
+      syncView();
+      setIsReady(true);
+    }, 6000);
+    return () => clearTimeout(t);
+  }, [isReady, syncView]);
 
   useEffect(() => {
     window.addEventListener("hashchange", syncView);
@@ -79,11 +95,11 @@ export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
 
   const goTo = useCallback(
     (view: TViewState) => {
-      const resolved = resolveView(view, user);
+      const resolved = resolveView(view, user, session, emailVerified);
       window.location.hash = `#/${resolved}`;
       window.scrollTo({ top: 0, behavior: "smooth" });
     },
-    [user],
+    [user, session, emailVerified],
   );
 
   const changeTab = useCallback((tab: string) => setDashboardTab(tab), []);

@@ -27,6 +27,24 @@ const Navbar: React.FC = () => {
     };
   }, [menuOpen]);
 
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      const dropdown = document.querySelector(".nb-dropdown");
+      const balanceBtn = document.querySelector(".nb-balance");
+      if (
+        dropdown &&
+        !dropdown.contains(e.target as Node) &&
+        balanceBtn &&
+        !balanceBtn.contains(e.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
+
   const allLinks = [
     ...NAV_LINKS,
     ...(user
@@ -228,7 +246,10 @@ const Navbar: React.FC = () => {
                     }}
                   >
                     <img
-                      src={user.avatar}
+                      src={
+                        user.avatar ||
+                        `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`
+                      }
                       style={{
                         width: "100%",
                         height: "100%",
@@ -509,10 +530,6 @@ const Navbar: React.FC = () => {
 
                     {isDropdownOpen && (
                       <>
-                        <div
-                          className="fixed inset-0 z-198"
-                          onClick={() => setIsDropdownOpen(false)}
-                        />
                         <div className="nb-dropdown">
                           <div
                             style={{

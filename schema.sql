@@ -4,11 +4,13 @@
 
 -- 1. UPDATE PROFILES
 -- Add verification status for badges and admin flag (optional; role = 'admin' also grants admin)
+-- welcome_email_sent: set to true after sending welcome email (once per user, after email verification)
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS merchant_rating DECIMAL(3,2) DEFAULT 5.00,
 ADD COLUMN IF NOT EXISTS phone_number TEXT,
-ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;
+ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
 
 -- 2. UPDATE MASTER ACCOUNTS
 -- Add ownership and rich content fields
@@ -139,3 +141,27 @@ CREATE POLICY "Admins can manage all master accounts" ON public.master_accounts
 FOR ALL USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
 );
+
+-- 5. Ensure a profiles row exists for every auth user
+-- If you don't already have this trigger in your Supabase project, new signups will not
+-- have a corresponding row in public.profiles, which breaks the app (balance, roles, etc).
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, name, username, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+    NULLIF(NEW.raw_user_meta_data->>'username', ''),
+    'user'
+  )
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
