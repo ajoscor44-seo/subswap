@@ -22,6 +22,8 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
 }) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<TxFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -34,6 +36,12 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
       return matchesSearch && matchesFilter;
     });
   }, [transactions, search, filter]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
 
   const totals = useMemo(
     () => ({
@@ -49,6 +57,11 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
   );
 
   const TX_FILTERS: TxFilter[] = ["all", "Deposit", "Purchase", "Withdrawal"];
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
@@ -100,6 +113,26 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         .txn2-td { padding: 13px 18px; border-bottom: 1px solid #fafafe; }
         .txn2-tr:hover .txn2-td { background: #fafafe; }
         .txn2-tr:last-child .txn2-td { border-bottom: none; }
+
+        /* Pagination */
+        .txn2-pagination {
+          display: flex; align-items: center; justify-content: center;
+          gap: 8px; margin-top: 24px;
+        }
+        .txn2-page-btn {
+          width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
+          background: #fff; color: #9b8fc2; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          transition: all 0.2s;
+        }
+        .txn2-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
+        .txn2-page-btn.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 10px rgba(124,92,252,0.25);
+        }
+        .txn2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         /* ── Responsive ── */
         .txn2-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
@@ -212,7 +245,10 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         >
           <SearchBar
             value={search}
-            onChange={setSearch}
+            onChange={(val) => {
+              setSearch(val);
+              setCurrentPage(1);
+            }}
             placeholder="Search by description, type, user..."
           />
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -221,7 +257,10 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                 <button
                   key={f}
                   className={`txn2-filter-btn ${filter === f ? "active" : ""}`}
-                  onClick={() => setFilter(f)}
+                  onClick={() => {
+                    setFilter(f);
+                    setCurrentPage(1);
+                  }}
                 >
                   {f}
                 </button>
@@ -264,7 +303,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((tx) => {
+                {paginatedTransactions.map((tx) => {
                   const meta = TX_META[tx.type] ?? {
                     accent: "#9b8fc2",
                     light: "#f5f3ff",
@@ -423,6 +462,37 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="txn2-pagination pb-6">
+              <button
+                className="txn2-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  className={`txn2-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                className="txn2-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

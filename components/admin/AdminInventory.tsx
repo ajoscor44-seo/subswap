@@ -1,5 +1,5 @@
 import { MasterAccount } from "@/constants/types";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { SearchBar } from "./SearchBar";
 import { LogForm } from "./LogForm";
 import { INITIAL_FORM } from "@/constants/data";
@@ -26,13 +26,23 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
   const [formData, setFormData] =
     useState<Partial<MasterAccount>>(INITIAL_FORM);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  const filtered = accounts.filter(
-    (a) =>
-      a.service_name.toLowerCase().includes(search.toLowerCase()) ||
-      a.master_email.toLowerCase().includes(search.toLowerCase()) ||
-      a.category?.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = useMemo(() => {
+    return accounts.filter(
+      (a) =>
+        a.service_name.toLowerCase().includes(search.toLowerCase()) ||
+        a.master_email.toLowerCase().includes(search.toLowerCase()) ||
+        a.category?.toLowerCase().includes(search.toLowerCase()),
+    );
+  }, [accounts, search]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedAccounts = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
 
   const handleEdit = (acc: MasterAccount) => {
     setFormData(acc);
@@ -54,6 +64,11 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
       await onAdd(formData);
     }
     handleCancel();
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const slotFillPct = (acc: MasterAccount) =>
@@ -116,6 +131,26 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         .inv2-action.edit:hover { background: linear-gradient(135deg,#7c5cfc,#6366f1); color: #fff; box-shadow: 0 3px 8px rgba(124,92,252,0.3); }
         .inv2-action.del:hover  { background: #fef2f2; color: #ef4444; }
 
+        /* Pagination */
+        .inv2-pagination {
+          display: flex; align-items: center; justify-content: center;
+          gap: 8px; margin-top: 24px;
+        }
+        .inv2-page-btn {
+          width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
+          background: #fff; color: #9b8fc2; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          transition: all 0.2s;
+        }
+        .inv2-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
+        .inv2-page-btn.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 10px rgba(124,92,252,0.25);
+        }
+        .inv2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         /* ── Responsive ── */
         .inv2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .inv2-chips   { display:flex; gap:8px; flex-wrap:wrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
@@ -152,7 +187,10 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         >
           <SearchBar
             value={search}
-            onChange={setSearch}
+            onChange={(val) => {
+              setSearch(val);
+              setCurrentPage(1);
+            }}
             placeholder="Search logs, emails, categories..."
           />
           <button
@@ -276,7 +314,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((acc) => {
+                {paginatedAccounts.map((acc) => {
                   const pct = slotFillPct(acc);
                   const full = acc.available_slots === 0;
                   const barColor =
@@ -536,6 +574,37 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="inv2-pagination pb-6">
+              <button
+                className="inv2-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  className={`inv2-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                className="inv2-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

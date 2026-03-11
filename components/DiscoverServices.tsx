@@ -141,6 +141,7 @@ export const DiscoverServices: React.FC = () => {
               type: "Deposit",
               description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
             });
+
             await triggerEmail("wallet_funded", {
               email: user.email,
               username: user.username,

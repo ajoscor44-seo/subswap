@@ -11,6 +11,7 @@ import OverviewTab from "./OverviewTab";
 import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
 import { toast } from "react-hot-toast";
+import { triggerEmail } from "@/lib/send-email";
 
 export const Dashboard: React.FC = () => {
   const { user, logout, refreshProfile } = useAuth();
@@ -124,6 +125,13 @@ export const Dashboard: React.FC = () => {
               amount,
               type: "Deposit",
               description: `Wallet Top-up: ₦${amount.toLocaleString()}`,
+            });
+
+            await triggerEmail("wallet_funded", {
+              email: user.email,
+              username: user.username,
+              amount,
+              newBalance,
             });
 
             showStatus(

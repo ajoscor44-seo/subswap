@@ -36,6 +36,8 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
   const [search, setSearch] = useState("");
   const [fundAmounts, setFundAmounts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "banned" | "verified">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -49,6 +51,12 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
       return matchesSearch;
     });
   }, [users, search, filter]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedUsers = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
 
   const stats = useMemo(
     () => ({
@@ -96,6 +104,11 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
     { id: "verified", label: "Verified" },
     { id: "banned", label: "Banned" },
   ];
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <>
@@ -179,6 +192,26 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
           font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.06em;
         }
+
+        /* Pagination */
+        .usr2-pagination {
+          display: flex; align-items: center; justify-content: center;
+          gap: 8px; margin-top: 24px;
+        }
+        .usr2-page-btn {
+          width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
+          background: #fff; color: #9b8fc2; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          transition: all 0.2s;
+        }
+        .usr2-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
+        .usr2-page-btn.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 10px rgba(124,92,252,0.25);
+        }
+        .usr2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
         /* ── Responsive ── */
         .usr2-chips   { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
@@ -268,7 +301,10 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
         >
           <SearchBar
             value={search}
-            onChange={setSearch}
+            onChange={(val) => {
+              setSearch(val);
+              setCurrentPage(1);
+            }}
             placeholder="Find by name, email, username..."
           />
           <div className="usr2-filter-bar">
@@ -276,7 +312,10 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
               <button
                 key={f.id}
                 className={`usr2-filter-btn ${filter === f.id ? "active" : ""}`}
-                onClick={() => setFilter(f.id)}
+                onClick={() => {
+                  setFilter(f.id);
+                  setCurrentPage(1);
+                }}
               >
                 {f.label}
               </button>
@@ -315,7 +354,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
+                {paginatedUsers.map((u) => (
                   <tr
                     key={u.id}
                     className={`usr2-tr ${u.is_banned ? "banned" : ""}`}
@@ -636,6 +675,37 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="usr2-pagination pb-6">
+              <button
+                className="usr2-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  className={`usr2-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                className="usr2-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>
