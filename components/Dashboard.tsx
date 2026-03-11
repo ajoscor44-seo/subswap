@@ -139,11 +139,13 @@ export const Dashboard: React.FC = () => {
           showStatus("Payment was not completed.", "error");
         }
       },
-      onclose: () => toast("Payment cancelled", { icon: "👋" }),
+      onclose: async () => {
+        await refreshProfile();
+      },
     });
   };
 
-  // ── Sidebar content (reused in desktop aside + mobile drawer) ──────────────
+  // ── Sidebar conten ──────────────
   const SidebarContent = () => (
     <>
       {/* Profile */}

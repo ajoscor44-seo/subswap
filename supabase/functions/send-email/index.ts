@@ -9,7 +9,7 @@ const RESEND_KEY = Deno.env.get("RESEND_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-const FROM_NOREPLY = "DiscountZAR <noreply@discountzar.com>";
+const FROM_JOSCOR = "DiscountZAR <joscor@discountzar.com>";
 const FROM_SUPPORT = "DiscountZAR Support <support@discountzar.com>";
 
 const ADMIN_ONLY_TYPES = ["wallet_funded", "account_banned", "account_restored", "admin_message"];
@@ -34,7 +34,7 @@ async function isAdmin(userId: string): Promise<boolean> {
   return profile?.role === "admin" || profile?.is_admin === true;
 }
 
-async function resend(to: string, subject: string, html: string, from = FROM_NOREPLY) {
+async function resend(to: string, subject: string, html: string, from = FROM_JOSCOR) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { "Authorization": `Bearer ${RESEND_KEY}`, "Content-Type": "application/json" },

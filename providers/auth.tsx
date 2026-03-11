@@ -4,8 +4,9 @@ import {
   useState,
   ReactNode,
   useEffect,
+  useRef,
 } from "react";
-import { User } from "@/constants/types";
+import { MasterAccount, User } from "@/constants/types";
 import LoginModal from "@/components/LoginModal";
 import { supabase } from "@/lib/supabase";
 import { ISignUp } from "@/constants/interfaces";
@@ -25,6 +26,8 @@ function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
 
 const AuthContext = createContext<{
   loading: boolean;
+  productsLoading: boolean;
+  products: MasterAccount[];
   user: User | null;
   session: Session | null;
   /** True when the current session's email has been verified (email_confirmed_at set). */
@@ -34,6 +37,7 @@ const AuthContext = createContext<{
   logout: () => void;
   refreshSession?: () => Promise<void>;
   refreshProfile?: () => Promise<void>;
+  refreshProducts?: () => Promise<void>;
   /** Resend the verification email (for the current session user's email). */
   resendVerificationEmail?: (email: string) => Promise<AuthError | null>;
   showLoginModal: boolean;
@@ -41,6 +45,8 @@ const AuthContext = createContext<{
   closeLoginModal: () => void;
 }>({
   loading: true,
+  productsLoading: false,
+  products: [],
   user: null,
   session: null,
   emailVerified: false,
@@ -49,6 +55,7 @@ const AuthContext = createContext<{
   logout: () => {},
   refreshSession: async () => Promise.resolve(),
   resendVerificationEmail: async () => Promise.resolve(null),
+  refreshProducts: async () => Promise.resolve(),
   showLoginModal: false,
   openLoginModal: () => {},
   closeLoginModal: () => {},
@@ -59,11 +66,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<MasterAccount[]>([]);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const welcomeEmailSending = useRef(false);
+
+  const fetchProducts = async () => {
+    setProductsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("master_accounts")
+        .select(
+          `*, owner:profiles!owner_id (username, is_verified, avatar, merchant_rating)`,
+        )
+        .gt("available_slots", 0)
+        .order("created_at", { ascending: false });
+
+      if (data) setProducts(data as MasterAccount[]);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error fetching products:", err);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
 
-    // Auth init should never block UI indefinitely.
     const initTimeout = setTimeout(() => {
       if (!cancelled) setLoading(false);
     }, 3000);
@@ -75,7 +104,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      // Fetch profile with a timeout so we never hang the UI.
       const profile = await withTimeout(
         fetchUserProfile(sess.user.id),
         8000,
@@ -92,7 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(profile);
 
-      // Best-effort: send welcome email once after email verification.
+      await fetchProducts();
       try {
         const { data: row, error } = await supabase
           .from("profiles")
@@ -106,7 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const updates: Record<string, unknown> = {};
 
-        if (!row?.welcome_email_sent) {
+        if (!row?.welcome_email_sent && !welcomeEmailSending.current) {
+          welcomeEmailSending.current = true;
           try {
             await triggerEmail("welcome", {
               email: sess.user.email ?? "",
@@ -118,6 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             updates.welcome_email_sent = true;
           } catch (err) {
             console.error("[auth] welcome email failed", err);
+            welcomeEmailSending.current = false;
           }
         }
 
@@ -134,7 +164,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
-    // Explicit initial session fetch to avoid relying on INITIAL_SESSION event.
     supabase.auth
       .getSession()
       .then(({ data, error }) => {
@@ -142,7 +171,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (error) console.error("[auth] getSession failed", error);
         setSession(data.session);
         if (!data.session) setUser(null);
-        // Don't await; keep UI responsive.
         if (data.session) void loadProfileAndSync(data.session);
       })
       .finally(() => {
@@ -154,13 +182,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       clearTimeout(initTimeout);
       if (cancelled) return;
+      if (event === "INITIAL_SESSION") return;
+
       setSession(session);
       setLoading(false);
       if (!session) {
         setUser(null);
         return;
       }
-      // Don't await; avoid hanging the UI.
       void loadProfileAndSync(session);
     });
 
@@ -228,12 +257,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setSession(session);
+    window.location.reload();
   };
 
   const refreshProfile = async () => {
     if (!session?.user) return;
     const profile = await fetchUserProfile(session.user.id);
     setUser(profile);
+  };
+
+  const refreshProducts = async () => {
+    await fetchProducts();
   };
 
   const resendVerificationEmail = async (
@@ -295,7 +329,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const data = {
     loading,
+    productsLoading,
     user,
+    products,
     session,
     emailVerified,
     login,
@@ -304,6 +340,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshSession,
     refreshProfile,
     resendVerificationEmail,
+    refreshProducts,
     showLoginModal,
     openLoginModal,
     closeLoginModal,
