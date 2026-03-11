@@ -37,6 +37,8 @@ const AuthContext = createContext<{
   signUp: (data: ISignUp) => Promise<AuthError | null>;
   login: (email: string, password: string) => Promise<AuthError | null>;
   logout: () => void;
+  resetPassword: (email: string) => Promise<AuthError | null>;
+  updatePassword: (password: string) => Promise<AuthError | null>;
   refreshSession?: () => Promise<void>;
   refreshProfile?: () => Promise<void>;
   refreshProducts?: () => Promise<void>;
@@ -58,6 +60,8 @@ const AuthContext = createContext<{
   signUp: async () => Promise.resolve(null),
   login: async () => Promise.resolve(null),
   logout: () => {},
+  resetPassword: async () => Promise.resolve(null),
+  updatePassword: async () => Promise.resolve(null),
   refreshSession: async () => Promise.resolve(),
   resendVerificationEmail: async () => Promise.resolve(null),
   refreshProducts: async () => Promise.resolve(),
@@ -273,6 +277,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = "/#/home";
   };
 
+  const resetPassword = async (email: string): Promise<AuthError | null> => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/#/reset-password`,
+    });
+    return error;
+  };
+
+  const updatePassword = async (password: string): Promise<AuthError | null> => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return error;
+  };
+
   const refreshSession = async () => {
     const {
       data: { session },
@@ -370,6 +386,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     login,
     logout,
     signUp,
+    resetPassword,
+    updatePassword,
     refreshSession,
     refreshProfile,
     resendVerificationEmail,

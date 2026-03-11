@@ -9,6 +9,7 @@ export type TViewState =
   | "contact"
   | "marketplace"
   | "transactions"
+  | "reset-password"
   | "verify-email";
 
 export type UserRole = "admin" | "user";
@@ -54,6 +55,7 @@ export interface MasterAccount {
   description: string;
   icon_url: string;
   category: string;
+  domain?: string;
   owner_id?: string;
   features?: string[];
   fulfillment_type?: FulfillmentType;
@@ -166,6 +168,7 @@ export interface Platform {
   domain: string;
   category: PlatformCategory;
   hint?: string;
+  icon_url?: string;
 }
 
 export type PlatformCategory =

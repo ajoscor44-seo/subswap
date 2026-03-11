@@ -1,5 +1,6 @@
 import { CATEGORIES, CATEGORY_META, PLATFORMS } from "@/constants/data";
 import { Platform, PlatformCategory } from "@/constants/types";
+import { supabase } from "@/lib/supabase";
 import React, {
   useState,
   useRef,
@@ -10,12 +11,18 @@ import React, {
 
 const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID!;
 
-export const logoUrl = (domain: string, size = 64) =>
-  `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
+export const logoUrl = (domain: string, size = 64, name?: string) => {
+  if (!domain || domain === 'custom' || domain === '') {
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "S")}&background=6366f1&color=fff&size=${size}`;
+  }
+  if (domain.startsWith('http')) return domain;
+  return `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
+}
 
 interface BrandLogoProps {
-  domain: string;
+  domain?: string;
   name: string;
+  iconUrl?: string;
   size?: number;
   className?: string;
 }
@@ -23,23 +30,25 @@ interface BrandLogoProps {
 export const BrandLogo: React.FC<BrandLogoProps> = ({
   domain,
   name,
+  iconUrl,
   size = 40,
   className = "",
 }) => {
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
 
-  const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+  const initials = useMemo(() => {
+    if (!name) return "??";
+    return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+  }, [name]);
 
   const bg = useMemo(() => {
     let h = 0;
-    for (const c of domain) h = (h * 31 + c.charCodeAt(0)) % 360;
+    const str = domain || name || "default";
+    for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360;
     return `hsl(${h},65%,48%)`;
-  }, [domain]);
+  }, [domain, name]);
+
+  const finalSrc = iconUrl || logoUrl(domain || "", size, name);
 
   return (
     <div
@@ -54,7 +63,7 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
       </div>
 
       <img
-        src={logoUrl(domain, size)}
+        src={finalSrc}
         alt={name}
         className="absolute inset-0 w-full h-full object-contain transition-opacity duration-300"
         style={{ opacity: state === "loaded" ? 1 : 0 }}
@@ -72,21 +81,30 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 export interface ServicePickerProps {
   value: Platform | null;
   onChange: (platform: Platform) => void;
+  isAdmin?: boolean;
 }
 
 export const ServicePicker: React.FC<ServicePickerProps> = ({
   value,
   onChange,
+  isAdmin = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<PlatformCategory | null>(
     null,
   );
+  const [customPlatforms, setCustomPlatforms] = useState<Platform[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const fetchCustomPlatforms = async () => {
+    const { data } = await supabase.from("custom_platforms").select("*");
+    if (data) setCustomPlatforms(data as Platform[]);
+  };
+
   useEffect(() => {
+    fetchCustomPlatforms();
     const handler = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) {
         setOpen(false);
@@ -101,9 +119,11 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
     if (open) setTimeout(() => inputRef.current?.focus(), 60);
   }, [open]);
 
+  const allPlatforms = useMemo(() => [...PLATFORMS, ...customPlatforms], [customPlatforms]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    return PLATFORMS.filter((p) => {
+    return allPlatforms.filter((p) => {
       const matchQ =
         !q ||
         p.name.toLowerCase().includes(q) ||
@@ -112,9 +132,8 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
       const matchCat = !activeCategory || p.category === activeCategory;
       return matchQ && matchCat;
     });
-  }, [query, activeCategory]);
+  }, [query, activeCategory, allPlatforms]);
 
-  // Grouped only when not searching
   const grouped = useMemo<Record<string, Platform[]>>(() => {
     if (query) return {};
     const map: Record<string, Platform[]> = {};
@@ -155,7 +174,7 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
       >
         {value ? (
           <>
-            <BrandLogo domain={value.domain} name={value.name} size={44} />
+            <BrandLogo domain={value.domain} name={value.name} iconUrl={value.icon_url} size={44} />
             <div className="flex-1 min-w-0">
               <p className="font-black text-slate-900 text-sm leading-tight truncate">
                 {value.name}
@@ -163,13 +182,13 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
               <div className="flex items-center gap-2 mt-1">
                 <span
                   className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
-                  style={{ background: meta!.color + "18", color: meta!.color }}
+                  style={{ background: (meta?.color || "#6366f1") + "18", color: meta?.color || "#6366f1" }}
                 >
-                  <i className={`fa-solid ${meta!.icon} mr-1`} />
+                  <i className={`fa-solid ${meta?.icon || "fa-layer-group"} mr-1`} />
                   {value.category}
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium">
-                  {value.domain}
+                  {value.domain || 'Custom'}
                 </span>
               </div>
             </div>
@@ -197,7 +216,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         />
       </button>
 
-      {/* ── Dropdown panel ── */}
       {open && (
         <div
           className="
@@ -209,7 +227,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         "
           style={{ maxHeight: 460 }}
         >
-          {/* Search bar */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
             <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm shrink-0" />
             <input
@@ -234,7 +251,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
-          {/* Category rail — hidden when searching */}
           {!query && (
             <div className="flex items-center gap-1.5 px-3 py-2.5 overflow-x-auto no-scrollbar border-b border-slate-100 shrink-0">
               <Pill
@@ -258,30 +274,38 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             </div>
           )}
 
-          {/* Results */}
           <div className="overflow-y-auto flex-1 p-2">
-            {filtered.length === 0 ? (
+            {isAdmin && query && (
+              <button
+                type="button"
+                onClick={() => handleSelect({ name: query, domain: '', category: 'Streaming' })}
+                className="w-full flex items-center gap-3 px-3 py-4 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 text-left mb-2 group hover:border-indigo-400 hover:bg-indigo-50 transition-all"
+              >
+                <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-200">
+                  <i className="fa-solid fa-plus" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-black text-indigo-700 leading-tight">Create Custom Platform</p>
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">Use "{query}"</p>
+                </div>
+              </button>
+            )}
+
+            {filtered.length === 0 && !query ? (
               <div className="py-14 text-center">
                 <i className="fa-solid fa-face-thinking text-slate-200 text-4xl mb-3 block" />
-                <p className="text-slate-400 font-bold text-sm">
-                  No platforms found
-                </p>
-                <p className="text-slate-300 text-xs mt-1">
-                  Try a different keyword
-                </p>
+                <p className="text-slate-400 font-bold text-sm">No platforms found</p>
               </div>
             ) : query ? (
-              // Flat list when searching
               filtered.map((p) => (
                 <PlatformItem
-                  key={p.domain}
+                  key={p.domain + p.name}
                   platform={p}
-                  selected={value?.domain === p.domain}
+                  selected={value?.name === p.name}
                   onSelect={handleSelect}
                 />
               ))
             ) : (
-              // Grouped by category
               Object.entries(grouped).map(([cat, platforms]) => (
                 <div key={cat} className="mb-1">
                   <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
@@ -297,9 +321,9 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
                   </div>
                   {(platforms as Platform[]).map((p) => (
                     <PlatformItem
-                      key={p.domain}
+                      key={p.domain + p.name}
                       platform={p}
-                      selected={value?.domain === p.domain}
+                      selected={value?.name === p.name}
                       onSelect={handleSelect}
                     />
                   ))}
@@ -308,7 +332,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
-          {/* Footer */}
           <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between shrink-0">
             <span className="text-[10px] text-slate-400 font-medium">
               {filtered.length} platform{filtered.length !== 1 ? "s" : ""}
@@ -337,8 +360,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
   );
 };
 
-// ─── Platform row ─────────────────────────────────────────────────────────────
-
 const PlatformItem: React.FC<{
   platform: Platform;
   selected: boolean;
@@ -356,7 +377,7 @@ const PlatformItem: React.FC<{
       }
     `}
   >
-    <BrandLogo domain={platform.domain} name={platform.name} size={36} />
+    <BrandLogo domain={platform.domain} name={platform.name} iconUrl={platform.icon_url} size={36} />
 
     <div className="flex-1 min-w-0">
       <p
@@ -380,8 +401,6 @@ const PlatformItem: React.FC<{
     )}
   </button>
 );
-
-// ─── Category pill ────────────────────────────────────────────────────────────
 
 const Pill: React.FC<{
   label: string;

@@ -10,6 +10,7 @@ import { useAuth } from "@/providers/auth";
 import ComingSoon from "./ComingSoon";
 import { SyncLoader } from "react-spinners";
 import VerifyEmailScreen from "@/components/VerifyEmailScreen";
+import ResetPasswordPage from "./ResetPassword";
 
 const View = () => {
   const { currentView, isReady } = useNavigator();
@@ -104,6 +105,8 @@ const View = () => {
     case "dashboard":
     case "settings":
       return user ? <Dashboard /> : <Hero />;
+    case "reset-password":
+      return <ResetPasswordPage />;
     case "admin":
       return user?.isAdmin ? (
         <AdminDashboard />
