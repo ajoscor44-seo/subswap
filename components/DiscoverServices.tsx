@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MasterAccount } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
 import { triggerEmail } from "@/lib/send-email";
@@ -17,12 +17,45 @@ export const DiscoverServices: React.FC = () => {
   const { goTo } = useNavigator();
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
+  // Scroll controls
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
   // Quick Fund State
   const [showFundModal, setShowFundModal] = useState(false);
   const [neededAmount, setNeededAmount] = useState(0);
   const [activeAccount, setActiveAccount] = useState<MasterAccount | null>(
     null,
   );
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 8);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+
+  // Re-check after products load and on scroll/resize
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Small delay to let DOM settle after render
+    const t = setTimeout(checkScroll, 50);
+    el.addEventListener("scroll", checkScroll, { passive: true });
+    window.addEventListener("resize", checkScroll);
+    return () => {
+      clearTimeout(t);
+      el.removeEventListener("scroll", checkScroll);
+      window.removeEventListener("resize", checkScroll);
+    };
+  }, [products, checkScroll]);
+
+  const scroll = (dir: "left" | "right") => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir === "right" ? 260 : -260, behavior: "smooth" });
+  };
 
   const handleJoin = async (account: MasterAccount) => {
     if (!user) {
@@ -56,6 +89,7 @@ export const DiscoverServices: React.FC = () => {
       });
       refreshProfile && (await refreshProfile());
       await refreshProducts();
+      setTimeout(() => goTo("dashboard"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
@@ -88,7 +122,6 @@ export const DiscoverServices: React.FC = () => {
           response.status === "completed"
         ) {
           try {
-            // Fetch fresh balance before updating
             const { data: freshProfile } = await supabase
               .from("profiles")
               .select("balance")
@@ -108,7 +141,6 @@ export const DiscoverServices: React.FC = () => {
               type: "Deposit",
               description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
             });
-
             await triggerEmail("wallet_funded", {
               email: user.email,
               username: user.username,
@@ -131,8 +163,8 @@ export const DiscoverServices: React.FC = () => {
           toast.error("Payment was not successful");
         }
       },
-      onclose: () => async () => {
-        await refreshProfile();
+      onclose: async () => {
+        await refreshProducts();
       },
     });
   };
@@ -155,42 +187,28 @@ export const DiscoverServices: React.FC = () => {
         .dcv-root * { box-sizing: border-box; }
         .dcv-heading { font-family: 'Syne', sans-serif; }
 
-        /* Card */
         .dcv-card {
-          background: #ffffff;
-          border: 1.5px solid #f0eef9;
-          border-radius: 20px;
+          background: #ffffff; border: 1.5px solid #f0eef9; border-radius: 20px;
           overflow: hidden;
           transition: box-shadow 0.35s ease, transform 0.35s ease, border-color 0.25s ease;
-          display: flex;
-          flex-direction: column;
-          position: relative;
-          min-width: 220px;
-          width: 220px;
-          flex-shrink: 0;
+          display: flex; flex-direction: column; position: relative;
+          min-width: 220px; width: 220px; flex-shrink: 0;
         }
         .dcv-card:hover {
           box-shadow: 0 24px 48px -8px rgba(99,76,201,0.14), 0 4px 16px -4px rgba(99,76,201,0.08);
-          transform: translateY(-4px);
-          border-color: #d8d0f8;
+          transform: translateY(-4px); border-color: #d8d0f8;
         }
 
         .dcv-card-img-wrap {
-          width: 64px; height: 64px;
-          border-radius: 50%;
-          overflow: hidden;
-          border: 3px solid #ede9fe;
-          box-shadow: 0 4px 16px rgba(124,92,252,0.15);
-          flex-shrink: 0;
-          transition: box-shadow 0.3s ease, transform 0.3s ease;
+          width: 64px; height: 64px; border-radius: 50%; overflow: hidden;
+          border: 3px solid #ede9fe; box-shadow: 0 4px 16px rgba(124,92,252,0.15);
+          flex-shrink: 0; transition: box-shadow 0.3s ease, transform 0.3s ease;
         }
         .dcv-card:hover .dcv-card-img-wrap {
-          box-shadow: 0 8px 24px rgba(124,92,252,0.25);
-          transform: scale(1.05);
+          box-shadow: 0 8px 24px rgba(124,92,252,0.25); transform: scale(1.05);
         }
         .dcv-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* Slots bar */
         .dcv-bar-bg { background: #f0eef9; border-radius: 99px; height: 5px; overflow: hidden; }
         .dcv-bar-fill {
           height: 100%; border-radius: 99px;
@@ -199,133 +217,77 @@ export const DiscoverServices: React.FC = () => {
         }
         .dcv-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
-        /* Join button */
         .dcv-join-btn {
-          width: 100%;
-          padding: 8px;
-          border-radius: 10px;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          font-size: 12px;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
-          border: none;
-          cursor: pointer;
-          transition: all 0.2s ease;
+          width: 100%; padding: 8px; border-radius: 10px;
+          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+          letter-spacing: 0.04em; text-transform: uppercase; border: none;
+          cursor: pointer; transition: all 0.2s ease;
           display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         .dcv-join-btn.primary {
           background: linear-gradient(135deg, #7c5cfc 0%, #6366f1 100%);
-          color: #fff;
-          box-shadow: 0 4px 16px rgba(124,92,252,0.3);
+          color: #fff; box-shadow: 0 4px 16px rgba(124,92,252,0.3);
         }
         .dcv-join-btn.primary:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.4); transform: translateY(-1px); }
         .dcv-join-btn.fund {
           background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
-          color: #fff;
-          box-shadow: 0 4px 16px rgba(245,158,11,0.28);
+          color: #fff; box-shadow: 0 4px 16px rgba(245,158,11,0.28);
         }
         .dcv-join-btn.fund:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.38); transform: translateY(-1px); }
         .dcv-join-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
         .dcv-join-btn:active:not(:disabled) { transform: scale(0.98) !important; }
 
-        /* Filter pills */
-        .dcv-pill {
-          padding: 7px 16px;
-          border-radius: 99px;
-          font-family: 'Syne', sans-serif;
-          font-size: 10px;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
-          cursor: pointer;
-          border: 1.5px solid #ede9fe;
-          background: #fff;
-          color: #9b8fc2;
-          white-space: nowrap;
-          transition: all 0.2s ease;
-          flex-shrink: 0;
-        }
-        .dcv-pill:hover { border-color: #c4b5fd; color: #6d4fc8; }
-        .dcv-pill.active {
-          background: linear-gradient(135deg, #7c5cfc, #6366f1);
-          color: #fff;
-          border-color: transparent;
-          box-shadow: 0 4px 12px rgba(124,92,252,0.28);
-        }
-
-        /* Search */
-        .dcv-search-wrap { position: relative; }
-        .dcv-search-input {
-          width: 100%;
-          background: #fff;
-          border: 1.5px solid #ede9fe;
-          border-radius: 12px;
-          padding: 10px 16px 10px 42px;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
-          color: #1a1230;
-          outline: none;
-          transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .dcv-search-input::placeholder { color: #c4b5fd; }
-        .dcv-search-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 3px rgba(124,92,252,0.1); }
-        .dcv-search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #c4b5fd; font-size: 13px; pointer-events: none; }
-
-        /* Category badge */
         .dcv-cat-badge {
-          display: inline-block;
-          padding: 2px 8px;
-          border-radius: 6px;
-          background: #f0eef9;
-          color: #7c5cfc;
-          font-size: 9px;
-          font-family: 'Syne', sans-serif;
-          font-weight: 700;
-          text-transform: uppercase;
-          letter-spacing: 0.06em;
+          display: inline-block; padding: 2px 8px; border-radius: 6px;
+          background: #f0eef9; color: #7c5cfc; font-size: 9px;
+          font-family: 'Syne', sans-serif; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.06em;
         }
 
-        /* Urgency dot */
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
         .dcv-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
         .dcv-dot.urgent { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
         .dcv-dot.ok { background: #10b981; }
 
-        /* Modal */
         @keyframes modalIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
         .dcv-modal { animation: modalIn 0.28s cubic-bezier(0.34,1.2,0.64,1) forwards; }
 
-        /* Skeleton */
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         .dcv-skeleton {
           background: linear-gradient(90deg, #f5f3ff 25%, #ede9fe 50%, #f5f3ff 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.6s infinite;
-          border-radius: 8px;
+          background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px;
         }
 
-        /* Scroll rows — hide scrollbar cross-browser */
         .dcv-scroll-row {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          padding-bottom: 4px;
-          scroll-snap-type: x mandatory;
-          -webkit-overflow-scrolling: touch;
+          display: flex; gap: 16px; overflow-x: auto; padding-bottom: 4px;
+          scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
         }
         .dcv-scroll-row::-webkit-scrollbar { display: none; }
         .dcv-scroll-row { -ms-overflow-style: none; scrollbar-width: none; }
         .dcv-scroll-row > * { scroll-snap-align: start; }
 
-        .dcv-pills-row {
-          display: flex;
-          gap: 8px;
-          overflow-x: auto;
-          padding-bottom: 2px;
+        /* Nav arrow buttons — desktop only */
+        .dcv-nav-btn {
+          width: 34px; height: 34px; border-radius: 50%;
+          border: 1.5px solid #ede9fe; background: #fff;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer; color: #7c5cfc; font-size: 12px;
+          transition: all 0.2s; box-shadow: 0 2px 8px rgba(124,92,252,0.08);
+          flex-shrink: 0;
         }
-        .dcv-pills-row::-webkit-scrollbar { display: none; }
-        .dcv-pills-row { -ms-overflow-style: none; scrollbar-width: none; }
+        .dcv-nav-btn:hover:not(:disabled) {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 14px rgba(124,92,252,0.3);
+          transform: scale(1.08);
+        }
+        .dcv-nav-btn:disabled { opacity: 0.25; cursor: default; }
+
+        /* Hidden on mobile, visible on desktop */
+        .dcv-nav-controls { display: none; }
+        @media (min-width: 768px) {
+          .dcv-nav-controls { display: flex; align-items: center; gap: 6px; }
+        }
 
         .dcv-verified { color: #7c5cfc; font-size: 11px; }
 
@@ -386,7 +348,6 @@ export const DiscoverServices: React.FC = () => {
               >
                 <i className="fa-solid fa-xmark" />
               </button>
-
               <div style={{ textAlign: "center", marginBottom: 28 }}>
                 <div
                   style={{
@@ -424,7 +385,6 @@ export const DiscoverServices: React.FC = () => {
                   more to join this plan.
                 </p>
               </div>
-
               <div
                 style={{
                   background: "#fafafe",
@@ -480,7 +440,6 @@ export const DiscoverServices: React.FC = () => {
                   </span>
                 </div>
               </div>
-
               <div
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
@@ -531,7 +490,6 @@ export const DiscoverServices: React.FC = () => {
                   ))}
                 </div>
               </div>
-
               <p
                 style={{
                   textAlign: "center",
@@ -551,21 +509,51 @@ export const DiscoverServices: React.FC = () => {
         )}
 
         {/* ── Header ── */}
-        <p
-          className="dcv-heading"
+        <div
           style={{
-            margin: "0 0 4px",
-            fontSize: 11,
-            fontWeight: 700,
-            textTransform: "uppercase",
-            letterSpacing: "0.12em",
-            color: "#a78bfa",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 14,
           }}
         >
-          Discover &amp; Subscribe
-        </p>
+          <p
+            className="dcv-heading"
+            style={{
+              margin: 0,
+              fontSize: 11,
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              color: "#a78bfa",
+            }}
+          >
+            Discover &amp; Subscribe
+          </p>
 
-        {/* ── Skeleton loading ── */}
+          {!isLoading && products.length > 0 && (
+            <div className="dcv-nav-controls">
+              <button
+                className="dcv-nav-btn"
+                disabled={!canScrollLeft}
+                onClick={() => scroll("left")}
+                aria-label="Previous"
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+              <button
+                className="dcv-nav-btn"
+                disabled={!canScrollRight}
+                onClick={() => scroll("right")}
+                aria-label="Next"
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* ── Skeleton ── */}
         {isLoading ? (
           <div className="dcv-scroll-row">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -647,20 +635,17 @@ export const DiscoverServices: React.FC = () => {
             ))}
           </div>
         ) : products.length > 0 ? (
-          /* ── Horizontal scroll row ── */
-          <div className="dcv-scroll-row">
+          <div ref={scrollRef} className="dcv-scroll-row">
             {products.map((account, idx) => {
               const pct = slotsPercent(account);
               const low = isLow(account);
               const needsFund = user && user.balance < account.price;
-
               return (
                 <div
                   key={account.id}
                   className="dcv-card"
                   style={{ animationDelay: `${idx * 0.05}s` }}
                 >
-                  {/* Card Header */}
                   <div
                     style={{
                       background:
@@ -752,7 +737,6 @@ export const DiscoverServices: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Body */}
                   <div
                     style={{
                       padding: "14px 14px 18px",
@@ -796,7 +780,6 @@ export const DiscoverServices: React.FC = () => {
                       <span className="dcv-cat-badge">{account.category}</span>
                     </div>
 
-                    {/* Slots */}
                     <div>
                       <div
                         style={{
@@ -845,7 +828,6 @@ export const DiscoverServices: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Seller */}
                     {account.owner && (
                       <div
                         style={{
@@ -903,7 +885,6 @@ export const DiscoverServices: React.FC = () => {
                       </div>
                     )}
 
-                    {/* CTA */}
                     <button
                       className={`dcv-join-btn ${needsFund ? "fund" : "primary"}`}
                       disabled={isProcessing === account.id}
@@ -929,7 +910,6 @@ export const DiscoverServices: React.FC = () => {
             })}
           </div>
         ) : (
-          /* ── Empty state ── */
           <div
             style={{
               textAlign: "center",
@@ -970,7 +950,7 @@ export const DiscoverServices: React.FC = () => {
               No active slots found
             </p>
             <p style={{ margin: "5px 0 0", color: "#c4b5fd", fontSize: 12 }}>
-              Try adjusting your search or filters
+              Check back soon for new listings
             </p>
           </div>
         )}
