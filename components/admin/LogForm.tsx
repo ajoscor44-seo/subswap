@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   MasterAccount,
   ProductCategory,
@@ -6,6 +6,8 @@ import {
   Platform,
 } from "@/constants/types";
 import { ServicePicker, logoUrl } from "../ServicePicker";
+import { supabase } from "@/lib/supabase";
+import toast from "react-hot-toast";
 
 const CATEGORY_MAP: Record<string, ProductCategory> = {
   Streaming: ProductCategory.STREAMING,
@@ -62,10 +64,12 @@ const LogFormInner: React.FC<LogFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const [persistCustom, setPersistCustom] = useState(false);
+  const [savingCustom, setSavingCustom] = useState(false);
+
   const set = (patch: Partial<MasterAccount>) =>
     onChange({ ...formData, ...patch });
 
-  // Track initial taken slots to avoid resetting them during updates
   const initialTaken = React.useRef<number | null>(null);
   
   React.useEffect(() => {
@@ -76,7 +80,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
     } else if (!editingId) {
       initialTaken.current = null;
     }
-  }, [editingId]);
+  }, [editingId, formData.total_slots, formData.available_slots]);
 
   const selectedPlatform: Platform | null =
     formData.service_name && formData.icon_url
@@ -95,6 +99,30 @@ const LogFormInner: React.FC<LogFormProps> = ({
       _domain: p.domain,
       _category: p.category,
     } as any);
+  };
+
+  const handleFinalSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (persistCustom && selectedPlatform && !selectedPlatform.domain) {
+      setSavingCustom(true);
+      try {
+        const { error } = await supabase.from("custom_platforms").insert({
+          name: selectedPlatform.name,
+          category: selectedPlatform.category,
+          icon_url: formData.icon_url,
+        });
+        if (error) throw error;
+        toast.success("Platform saved to directory!");
+      } catch (err: any) {
+        console.error("Failed to save custom platform:", err);
+        toast.error("Couldn't save platform to directory, but proceeding with listing.");
+      } finally {
+        setSavingCustom(false);
+      }
+    }
+
+    onSubmit(e);
   };
 
   const isInvite = formData.fulfillment_type === "Invite Link";
@@ -124,7 +152,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
                   alt=""
                   className="h-12 w-12 rounded-2xl object-contain border border-slate-100 shadow-sm bg-slate-50 p-0.5"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).style.opacity = "0";
+                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.service_name || "S")}&background=6366f1&color=fff&size=128`;
                   }}
                 />
               ) : (
@@ -161,36 +189,62 @@ const LogFormInner: React.FC<LogFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-7">
+        <form onSubmit={handleFinalSubmit} className="space-y-7">
           <Section n="1" title="Platform" sub="Choose the subscription service">
             <ServicePicker
               value={selectedPlatform}
               onChange={handlePlatformChange}
+              isAdmin={true}
             />
             {formData.service_name && (
-              <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Field label="Listing label" hint="Override name if needed">
-                  <Input
-                    value={formData.service_name ?? ""}
-                    onChange={(v) => set({ service_name: v })}
-                    placeholder="e.g. Netflix 4K Family"
-                  />
-                </Field>
-                <Field label="Category">
-                  <select
-                    className="field-input"
-                    value={formData.category}
-                    onChange={(e) =>
-                      set({ category: e.target.value as ProductCategory })
-                    }
-                  >
-                    {Object.values(ProductCategory).map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
+              <div className="mt-3 flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Field label="Listing label" hint="Override name if needed">
+                    <Input
+                      value={formData.service_name ?? ""}
+                      onChange={(v) => set({ service_name: v })}
+                      placeholder="e.g. Netflix 4K Family"
+                    />
+                  </Field>
+                  <Field label="Category">
+                    <select
+                      className="field-input"
+                      value={formData.category}
+                      onChange={(e) =>
+                        set({ category: e.target.value as ProductCategory })
+                      }
+                    >
+                      {Object.values(ProductCategory).map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                </div>
+
+                {selectedPlatform && !selectedPlatform.domain && (
+                  <label className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 cursor-pointer group">
+                    <div className="relative flex items-center justify-center">
+                      <input 
+                        type="checkbox" 
+                        className="peer sr-only"
+                        checked={persistCustom}
+                        onChange={e => setPersistCustom(e.target.checked)}
+                      />
+                      <div className="h-5 w-5 rounded-md border-2 border-slate-300 bg-white transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-600" />
+                      <i className="fa-solid fa-check absolute text-[10px] text-white opacity-0 transition-opacity peer-checked:opacity-100" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-xs font-black text-slate-700 group-hover:text-indigo-700 transition-colors">
+                        Remember this platform
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Add "{formData.service_name}" to the searchable directory for next time.
+                      </p>
+                    </div>
+                  </label>
+                )}
               </div>
             )}
           </Section>
@@ -223,13 +277,11 @@ const LogFormInner: React.FC<LogFormProps> = ({
                     onChange={(v) => {
                       const n = parseInt(v) || 0;
                       if (editingId && initialTaken.current !== null) {
-                        // Maintain taken count when editing total slots
                         set({ 
                           total_slots: n, 
                           available_slots: Math.max(0, n - initialTaken.current) 
                         });
                       } else {
-                        // For new listings, available = total
                         set({ total_slots: n, available_slots: n });
                       }
                     }}
@@ -353,10 +405,10 @@ const LogFormInner: React.FC<LogFormProps> = ({
           <div className="flex gap-3 pt-1 pb-1">
             <button
               type="submit"
-              disabled={isLoading || !formData.service_name}
+              disabled={isLoading || savingCustom || !formData.service_name}
               className="flex-1 flex items-center justify-center gap-2.5 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100/40 disabled:opacity-40"
             >
-              {isLoading ? (
+              {(isLoading || savingCustom) ? (
                 <i className="fa-solid fa-spinner fa-spin" />
               ) : (
                 <i className="fa-solid fa-rocket-launch text-xs" />

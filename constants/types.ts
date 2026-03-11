@@ -9,6 +9,7 @@ export type TViewState =
   | "contact"
   | "marketplace"
   | "transactions"
+  | "reset-password"
   | "verify-email";
 
 export type UserRole = "admin" | "user";

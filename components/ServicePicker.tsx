@@ -1,5 +1,6 @@
 import { CATEGORIES, CATEGORY_META, PLATFORMS } from "@/constants/data";
 import { Platform, PlatformCategory } from "@/constants/types";
+import { supabase } from "@/lib/supabase";
 import React, {
   useState,
   useRef,
@@ -10,8 +11,11 @@ import React, {
 
 const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID!;
 
-export const logoUrl = (domain: string, size = 64) =>
-  `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
+export const logoUrl = (domain: string, size = 64) => {
+  if (!domain) return `https://ui-avatars.com/api/?background=random&color=fff&size=${size}`;
+  if (domain.startsWith('http')) return domain;
+  return `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
+}
 
 interface BrandLogoProps {
   domain: string;
@@ -29,17 +33,15 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
   const [state, setState] = useState<"loading" | "loaded" | "error">("loading");
 
   const initials = name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+    ? name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+    : "??";
 
   const bg = useMemo(() => {
     let h = 0;
-    for (const c of domain) h = (h * 31 + c.charCodeAt(0)) % 360;
+    const str = domain || name || "default";
+    for (const c of str) h = (h * 31 + c.charCodeAt(0)) % 360;
     return `hsl(${h},65%,48%)`;
-  }, [domain]);
+  }, [domain, name]);
 
   return (
     <div
@@ -72,21 +74,30 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 export interface ServicePickerProps {
   value: Platform | null;
   onChange: (platform: Platform) => void;
+  isAdmin?: boolean;
 }
 
 export const ServicePicker: React.FC<ServicePickerProps> = ({
   value,
   onChange,
+  isAdmin = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<PlatformCategory | null>(
     null,
   );
+  const [customPlatforms, setCustomPlatforms] = useState<Platform[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const fetchCustomPlatforms = async () => {
+    const { data } = await supabase.from("custom_platforms").select("*");
+    if (data) setCustomPlatforms(data as Platform[]);
+  };
+
   useEffect(() => {
+    fetchCustomPlatforms();
     const handler = (e: MouseEvent) => {
       if (!containerRef.current?.contains(e.target as Node)) {
         setOpen(false);
@@ -101,9 +112,11 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
     if (open) setTimeout(() => inputRef.current?.focus(), 60);
   }, [open]);
 
+  const allPlatforms = useMemo(() => [...PLATFORMS, ...customPlatforms], [customPlatforms]);
+
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
-    return PLATFORMS.filter((p) => {
+    return allPlatforms.filter((p) => {
       const matchQ =
         !q ||
         p.name.toLowerCase().includes(q) ||
@@ -112,9 +125,8 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
       const matchCat = !activeCategory || p.category === activeCategory;
       return matchQ && matchCat;
     });
-  }, [query, activeCategory]);
+  }, [query, activeCategory, allPlatforms]);
 
-  // Grouped only when not searching
   const grouped = useMemo<Record<string, Platform[]>>(() => {
     if (query) return {};
     const map: Record<string, Platform[]> = {};
@@ -197,7 +209,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         />
       </button>
 
-      {/* ── Dropdown panel ── */}
       {open && (
         <div
           className="
@@ -209,7 +220,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
         "
           style={{ maxHeight: 460 }}
         >
-          {/* Search bar */}
           <div className="flex items-center gap-3 px-4 py-3 border-b border-slate-100">
             <i className="fa-solid fa-magnifying-glass text-slate-400 text-sm shrink-0" />
             <input
@@ -234,7 +244,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
-          {/* Category rail — hidden when searching */}
           {!query && (
             <div className="flex items-center gap-1.5 px-3 py-2.5 overflow-x-auto no-scrollbar border-b border-slate-100 shrink-0">
               <Pill
@@ -258,30 +267,34 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             </div>
           )}
 
-          {/* Results */}
           <div className="overflow-y-auto flex-1 p-2">
             {filtered.length === 0 ? (
               <div className="py-14 text-center">
-                <i className="fa-solid fa-face-thinking text-slate-200 text-4xl mb-3 block" />
-                <p className="text-slate-400 font-bold text-sm">
-                  No platforms found
-                </p>
-                <p className="text-slate-300 text-xs mt-1">
-                  Try a different keyword
-                </p>
+                {isAdmin && query ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSelect({ name: query, domain: '', category: 'Streaming' })}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200"
+                  >
+                    Create "{query}" as Custom
+                  </button>
+                ) : (
+                  <>
+                    <i className="fa-solid fa-face-thinking text-slate-200 text-4xl mb-3 block" />
+                    <p className="text-slate-400 font-bold text-sm">No platforms found</p>
+                  </>
+                )}
               </div>
             ) : query ? (
-              // Flat list when searching
               filtered.map((p) => (
                 <PlatformItem
-                  key={p.domain}
+                  key={p.domain + p.name}
                   platform={p}
-                  selected={value?.domain === p.domain}
+                  selected={value?.name === p.name}
                   onSelect={handleSelect}
                 />
               ))
             ) : (
-              // Grouped by category
               Object.entries(grouped).map(([cat, platforms]) => (
                 <div key={cat} className="mb-1">
                   <div className="flex items-center gap-2 px-3 pt-3 pb-1.5">
@@ -297,9 +310,9 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
                   </div>
                   {(platforms as Platform[]).map((p) => (
                     <PlatformItem
-                      key={p.domain}
+                      key={p.domain + p.name}
                       platform={p}
-                      selected={value?.domain === p.domain}
+                      selected={value?.name === p.name}
                       onSelect={handleSelect}
                     />
                   ))}
@@ -308,7 +321,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             )}
           </div>
 
-          {/* Footer */}
           <div className="px-4 py-2.5 border-t border-slate-100 flex items-center justify-between shrink-0">
             <span className="text-[10px] text-slate-400 font-medium">
               {filtered.length} platform{filtered.length !== 1 ? "s" : ""}
@@ -336,8 +348,6 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
     </div>
   );
 };
-
-// ─── Platform row ─────────────────────────────────────────────────────────────
 
 const PlatformItem: React.FC<{
   platform: Platform;
@@ -380,8 +390,6 @@ const PlatformItem: React.FC<{
     )}
   </button>
 );
-
-// ─── Category pill ────────────────────────────────────────────────────────────
 
 const Pill: React.FC<{
   label: string;
