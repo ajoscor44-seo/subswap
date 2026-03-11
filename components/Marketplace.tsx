@@ -42,7 +42,6 @@ export const Marketplace: React.FC = () => {
       if (error) throw error;
     } catch (err) {
       console.error("Error fetching marketplace:", err);
-      toast.error("Failed to fetch marketplace items.");
     } finally {
       setIsLoading(false);
     }

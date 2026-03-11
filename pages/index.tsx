@@ -91,7 +91,6 @@ const View = () => {
           email={email}
           onDismiss={() => {}}
           onResend={resend}
-          autoResend
         />
       </div>
     );

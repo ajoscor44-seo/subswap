@@ -4,6 +4,7 @@ import {
   useState,
   ReactNode,
   useEffect,
+  useRef,
 } from "react";
 import { User } from "@/constants/types";
 import LoginModal from "@/components/LoginModal";
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const welcomeEmailSending = useRef(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,7 +94,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(profile);
 
-      // Best-effort: send welcome email once after email verification.
       try {
         const { data: row, error } = await supabase
           .from("profiles")
@@ -106,7 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         const updates: Record<string, unknown> = {};
 
-        if (!row?.welcome_email_sent) {
+        if (!row?.welcome_email_sent && !welcomeEmailSending.current) {
+          welcomeEmailSending.current = true;
           try {
             await triggerEmail("welcome", {
               email: sess.user.email ?? "",
@@ -118,6 +120,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             updates.welcome_email_sent = true;
           } catch (err) {
             console.error("[auth] welcome email failed", err);
+            welcomeEmailSending.current = false;
           }
         }
 
@@ -154,6 +157,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       clearTimeout(initTimeout);
       if (cancelled) return;
+      if (event === "INITIAL_SESSION") return;
+
       setSession(session);
       setLoading(false);
       if (!session) {
@@ -228,6 +233,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
     setSession(session);
+    window.location.reload();
   };
 
   const refreshProfile = async () => {

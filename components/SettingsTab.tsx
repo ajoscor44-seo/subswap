@@ -5,8 +5,8 @@ import { User } from "@/constants/types";
 // ─── Cloudinary upload hook ────────────────────────────────────────────────────
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-const UPLOAD_PRESET =
-  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || "ml_default";
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_AVATAR_UPLOAD_PRESET!;
+console.log("Cloudinary config:", { CLOUD_NAME, UPLOAD_PRESET });
 
 export const useCloudinaryUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -14,9 +14,7 @@ export const useCloudinaryUpload = () => {
 
   const upload = async (file: File): Promise<string> => {
     if (!CLOUD_NAME)
-      throw new Error(
-        "Cloudinary cloud name is not configured. Set VITE_CLOUDINARY_CLOUD_NAME in your .env file.",
-      );
+      throw new Error("Cloudinary cloud name is not configured.");
     if (!UPLOAD_PRESET)
       throw new Error("Cloudinary upload preset is not configured.");
 
@@ -26,7 +24,6 @@ export const useCloudinaryUpload = () => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    formData.append("folder", "discountzar/avatars");
 
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();

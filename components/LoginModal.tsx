@@ -98,7 +98,6 @@ const LoginModal: React.FC = () => {
           setNeedsVerification(false);
         }}
         onResend={resend}
-        autoResend
       />
     );
   }

@@ -26,15 +26,15 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
-  <svg width="17" height="18" viewBox="0 0 814 1000" fill="currentColor">
-    <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105.7-57.2-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.5 268.5-317.5 99.8 0 182.6 66.1 245.3 66.1 60.1 0 154.8-70 269.1-70 43.4 0 165.8 4 247.7 99.3zm-156.7-175.1c-39.5-47.5-100.5-82.5-164.4-82.5-8.3 0-16.6.6-24.9 1.9 1.3 54.9 28.6 108.9 63.4 145.3 37.1 39.5 99.3 72.8 159.5 72.8 6.4 0 12.8-.6 19.2-1.3-1.9-53.7-24.3-107.6-52.8-136.2z" />
-  </svg>
-);
+// const AppleIcon = () => (
+//   <svg width="17" height="18" viewBox="0 0 814 1000" fill="currentColor">
+//     <path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76 0-103.7 40.8-165.9 40.8s-105.7-57.2-155.5-127.4C46 790.7 0 663 0 541.8c0-207.5 135.4-317.5 268.5-317.5 99.8 0 182.6 66.1 245.3 66.1 60.1 0 154.8-70 269.1-70 43.4 0 165.8 4 247.7 99.3zm-156.7-175.1c-39.5-47.5-100.5-82.5-164.4-82.5-8.3 0-16.6.6-24.9 1.9 1.3 54.9 28.6 108.9 63.4 145.3 37.1 39.5 99.3 72.8 159.5 72.8 6.4 0 12.8-.6 19.2-1.3-1.9-53.7-24.3-107.6-52.8-136.2z" />
+//   </svg>
+// );
 
 const SocialButtons: React.FC<SocialButtonsProps> = ({ onError }) => {
   const [googleLoading, setGoogleLoading] = React.useState(false);
-  const [appleLoading, setAppleLoading] = React.useState(false);
+  // const [appleLoading, setAppleLoading] = React.useState(false);
 
   const handleGoogle = async () => {
     setGoogleLoading(true);
@@ -48,17 +48,17 @@ const SocialButtons: React.FC<SocialButtonsProps> = ({ onError }) => {
     }
   };
 
-  const handleApple = async () => {
-    setAppleLoading(true);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "apple",
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) {
-      onError(error.message);
-      setAppleLoading(false);
-    }
-  };
+  // const handleApple = async () => {
+  //   setAppleLoading(true);
+  //   const { error } = await supabase.auth.signInWithOAuth({
+  //     provider: "apple",
+  //     options: { redirectTo: window.location.origin },
+  //   });
+  //   if (error) {
+  //     onError(error.message);
+  //     setAppleLoading(false);
+  //   }
+  // };
 
   return (
     <div className="flex flex-col gap-3">
@@ -78,7 +78,7 @@ const SocialButtons: React.FC<SocialButtonsProps> = ({ onError }) => {
       </button>
 
       {/* Apple */}
-      <button
+      {/* <button
         type="button"
         onClick={handleApple}
         disabled={appleLoading}
@@ -90,7 +90,7 @@ const SocialButtons: React.FC<SocialButtonsProps> = ({ onError }) => {
           <AppleIcon />
         )}
         Continue with Apple
-      </button>
+      </button> */}
     </div>
   );
 };
