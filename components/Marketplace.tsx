@@ -13,6 +13,7 @@ export const Marketplace: React.FC = () => {
     products,
     productsLoading: isLoading,
     refreshProducts,
+    refreshSubscriptions,
   } = useAuth();
   const { goTo, changeTab } = useNavigator();
   const [filter, setFilter] = useState("All");
@@ -61,7 +62,8 @@ export const Marketplace: React.FC = () => {
 
       // Refresh data
       if (refreshProfile) await refreshProfile();
-      await refreshProducts();
+      if (refreshProducts) await refreshProducts();
+      if (refreshSubscriptions) await refreshSubscriptions();
       
       // Navigate to stacks tab after a short delay
       setTimeout(() => {

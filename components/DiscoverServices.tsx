@@ -13,8 +13,9 @@ export const DiscoverServices: React.FC = () => {
     products,
     productsLoading: isLoading,
     refreshProducts,
+    refreshSubscriptions,
   } = useAuth();
-  const { goTo } = useNavigator();
+  const { goTo, changeTab } = useNavigator();
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   // Scroll controls
@@ -86,10 +87,16 @@ export const DiscoverServices: React.FC = () => {
         masterEmail: account.master_email,
         masterPassword: account.master_password,
         fulfillmentType: account.fulfillment_type,
-      });
-      refreshProfile && (await refreshProfile());
-      await refreshProducts();
-      setTimeout(() => goTo("dashboard"), 1500);
+      }).catch(err => console.error("Email trigger failed:", err));
+
+      if (refreshProfile) await refreshProfile();
+      if (refreshProducts) await refreshProducts();
+      if (refreshSubscriptions) await refreshSubscriptions();
+
+      setTimeout(() => {
+        changeTab("stacks");
+        goTo("dashboard");
+      }, 1500);
     } catch (err: any) {
       toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
@@ -141,7 +148,6 @@ export const DiscoverServices: React.FC = () => {
               type: "Deposit",
               description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
             });
-
             await triggerEmail("wallet_funded", {
               email: user.email,
               username: user.username,
@@ -152,9 +158,12 @@ export const DiscoverServices: React.FC = () => {
             toast.success(`₦${amount.toLocaleString()} added successfully!`);
             setShowFundModal(false);
 
+            if (refreshProfile) await refreshProfile();
+
             if (activeAccount && newBalance >= activeAccount.price) {
               handleJoin(activeAccount);
             } else {
+              changeTab("overview");
               goTo("dashboard");
             }
           } catch (err: any) {
@@ -165,7 +174,7 @@ export const DiscoverServices: React.FC = () => {
         }
       },
       onclose: async () => {
-        await refreshProducts();
+        if (refreshProfile) await refreshProfile();
       },
     });
   };

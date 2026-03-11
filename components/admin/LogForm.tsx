@@ -65,6 +65,19 @@ const LogFormInner: React.FC<LogFormProps> = ({
   const set = (patch: Partial<MasterAccount>) =>
     onChange({ ...formData, ...patch });
 
+  // Track initial taken slots to avoid resetting them during updates
+  const initialTaken = React.useRef<number | null>(null);
+  
+  React.useEffect(() => {
+    if (editingId && formData.total_slots !== undefined && formData.available_slots !== undefined) {
+      if (initialTaken.current === null) {
+        initialTaken.current = formData.total_slots - formData.available_slots;
+      }
+    } else if (!editingId) {
+      initialTaken.current = null;
+    }
+  }, [editingId]);
+
   const selectedPlatform: Platform | null =
     formData.service_name && formData.icon_url
       ? {
@@ -208,8 +221,17 @@ const LogFormInner: React.FC<LogFormProps> = ({
                     type="number"
                     value={String(formData.total_slots ?? "")}
                     onChange={(v) => {
-                      const n = parseInt(v);
-                      set({ total_slots: n, available_slots: n });
+                      const n = parseInt(v) || 0;
+                      if (editingId && initialTaken.current !== null) {
+                        // Maintain taken count when editing total slots
+                        set({ 
+                          total_slots: n, 
+                          available_slots: Math.max(0, n - initialTaken.current) 
+                        });
+                      } else {
+                        // For new listings, available = total
+                        set({ total_slots: n, available_slots: n });
+                      }
                     }}
                     placeholder="5"
                     min="1"

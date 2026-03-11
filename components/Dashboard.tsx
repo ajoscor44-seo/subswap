@@ -10,14 +10,17 @@ import WalletTab from "./WalletTab";
 import OverviewTab from "./OverviewTab";
 import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
-import { toast } from "react-hot-toast";
-import { triggerEmail } from "@/lib/send-email";
 
 export const Dashboard: React.FC = () => {
-  const { user, logout, refreshProfile } = useAuth();
+  const { 
+    user, 
+    logout, 
+    refreshProfile, 
+    subscriptions: contextSubs, 
+    refreshSubscriptions 
+  } = useAuth();
   const { dashboardTab, changeTab, goTo } = useNavigator();
 
-  const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>(
     [],
   );
@@ -32,6 +35,7 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     setSidebarOpen(false);
   }, [dashboardTab]);
+
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
     return () => {
@@ -40,7 +44,8 @@ export const Dashboard: React.FC = () => {
   }, [sidebarOpen]);
 
   const activeSubscriptions = useMemo(() => {
-    return subscriptions.filter((sub) => {
+    if (!contextSubs) return [];
+    return contextSubs.filter((sub) => {
       if (sub.status === "Expired" || sub.status === "Cancelled") return false;
       const date = sub.purchased_at || sub.created_at;
       if (!date) return true;
@@ -49,7 +54,7 @@ export const Dashboard: React.FC = () => {
         new Date()
       );
     });
-  }, [subscriptions]);
+  }, [contextSubs]);
 
   const showStatus = (text: string, type: "success" | "error" = "success") => {
     setStatusMsg({ text, type });
@@ -57,13 +62,12 @@ export const Dashboard: React.FC = () => {
   };
 
   const fetchData = async () => {
+    if (!user) return;
     setIsLoading(true);
     try {
-      const { data: subs } = await supabase
-        .from("user_subscriptions")
-        .select("*, master_accounts(*)")
-        .eq("user_id", user.id);
-      if (subs) setSubscriptions(subs);
+      // We rely on useAuth for subscriptions now, but we can trigger a refresh
+      if (refreshSubscriptions) await refreshSubscriptions();
+      
       const { data: txs } = await supabase
         .from("transactions")
         .select("*")
@@ -71,7 +75,8 @@ export const Dashboard: React.FC = () => {
         .order("created_at", { ascending: false })
         .limit(3);
       if (txs) setRecentTransactions(txs);
-      refreshProfile && (await refreshProfile());
+      
+      if (refreshProfile) await refreshProfile();
     } catch (err: any) {
       console.error("Dashboard sync error:", err);
     } finally {
@@ -81,7 +86,7 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     fetchData();
-  }, [user.id, dashboardTab]);
+  }, [user?.id, dashboardTab]);
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -89,6 +94,7 @@ export const Dashboard: React.FC = () => {
   };
 
   const handleFlutterwavePayment = (amount: number) => {
+    if (!user) return;
     // @ts-ignore — FlutterwaveCheckout is injected by the v3 script tag
     FlutterwaveCheckout({
       public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY!,
@@ -127,13 +133,6 @@ export const Dashboard: React.FC = () => {
               description: `Wallet Top-up: ₦${amount.toLocaleString()}`,
             });
 
-            await triggerEmail("wallet_funded", {
-              email: user.email,
-              username: user.username,
-              amount,
-              newBalance,
-            });
-
             showStatus(
               `₦${amount.toLocaleString()} added to your wallet!`,
               "success",
@@ -148,12 +147,14 @@ export const Dashboard: React.FC = () => {
         }
       },
       onclose: async () => {
-        await refreshProfile();
+        if (refreshProfile) await refreshProfile();
       },
     });
   };
 
-  // ── Sidebar conten ──────────────
+  if (!user) return null;
+
+  // ── Sidebar content ──────────────
   const SidebarContent = () => (
     <>
       {/* Profile */}
@@ -193,7 +194,7 @@ export const Dashboard: React.FC = () => {
                 fontSize: 15,
                 fontWeight: 800,
                 color: "#1a1230",
-                whiteSpace: "nowrap" as const,
+                whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
               }}
@@ -215,7 +216,7 @@ export const Dashboard: React.FC = () => {
                   fontSize: 11,
                   fontFamily: "'Syne',sans-serif",
                   fontWeight: 700,
-                  textTransform: "uppercase" as const,
+                  textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   color: "#10b981",
                 }}
@@ -232,7 +233,7 @@ export const Dashboard: React.FC = () => {
               fontSize: 9,
               fontFamily: "'Syne',sans-serif",
               fontWeight: 700,
-              textTransform: "uppercase" as const,
+              textTransform: "uppercase",
               letterSpacing: "0.1em",
               color: "rgba(255,255,255,0.4)",
               position: "relative",
@@ -269,7 +270,7 @@ export const Dashboard: React.FC = () => {
               fontFamily: "'Syne',sans-serif",
               fontSize: 10,
               fontWeight: 700,
-              textTransform: "uppercase" as const,
+              textTransform: "uppercase",
               letterSpacing: "0.06em",
               cursor: "pointer",
               transition: "all 0.15s",
@@ -297,7 +298,7 @@ export const Dashboard: React.FC = () => {
             fontSize: 9,
             fontFamily: "'Syne',sans-serif",
             fontWeight: 700,
-            textTransform: "uppercase" as const,
+            textTransform: "uppercase",
             letterSpacing: "0.1em",
             color: "#d8d0f8",
           }}
@@ -498,7 +499,7 @@ export const Dashboard: React.FC = () => {
               border: "1.5px solid #f0eef9",
               background: "#fafafe",
               display: "flex",
-              flexDirection: "column" as const,
+              flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               gap: 4,
@@ -542,7 +543,7 @@ export const Dashboard: React.FC = () => {
               alignItems: "center",
               gap: 8,
               flex: 1,
-              justifyContent: "center" as const,
+              justifyContent: "center",
             }}
           >
             <div
@@ -631,7 +632,7 @@ export const Dashboard: React.FC = () => {
                   fontFamily: "'Syne',sans-serif",
                   fontSize: 8,
                   fontWeight: 700,
-                  textTransform: "uppercase" as const,
+                  textTransform: "uppercase",
                   letterSpacing: "0.08em",
                   color: "#c4b5fd",
                   lineHeight: 1,
