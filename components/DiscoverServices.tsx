@@ -1,12 +1,12 @@
-import React, { useState, useMemo } from "react";
-import { ProductCategory, MasterAccount } from "@/constants/types";
+import React, { useState } from "react";
+import { MasterAccount } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
 import { triggerEmail } from "@/lib/send-email";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 
-export const Marketplace: React.FC = () => {
+export const DiscoverServices: React.FC = () => {
   const {
     user,
     refreshProfile,
@@ -15,8 +15,6 @@ export const Marketplace: React.FC = () => {
     refreshProducts,
   } = useAuth();
   const { goTo } = useNavigator();
-  const [filter, setFilter] = useState("All");
-  const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   // Quick Fund State
@@ -58,7 +56,6 @@ export const Marketplace: React.FC = () => {
       });
       refreshProfile && (await refreshProfile());
       await refreshProducts();
-      setTimeout(() => goTo("dashboard"), 1500);
     } catch (err: any) {
       toast.error(err.message || "Purchase failed. Please try again.");
     } finally {
@@ -91,7 +88,13 @@ export const Marketplace: React.FC = () => {
           response.status === "completed"
         ) {
           try {
-            const newBalance = Number(user?.balance || 0) + amount;
+            // Fetch fresh balance before updating
+            const { data: freshProfile } = await supabase
+              .from("profiles")
+              .select("balance")
+              .eq("id", user.id)
+              .single();
+            const newBalance = Number(freshProfile?.balance || 0) + amount;
 
             const { error } = await supabase
               .from("profiles")
@@ -121,8 +124,6 @@ export const Marketplace: React.FC = () => {
             } else {
               goTo("dashboard");
             }
-
-            refreshProfile && (await refreshProfile());
           } catch (err: any) {
             toast.error(err.message || "Failed to update balance");
           }
@@ -136,23 +137,12 @@ export const Marketplace: React.FC = () => {
     });
   };
 
-  const filteredProducts = useMemo(() => {
-    return products.filter((p) => {
-      const matchesFilter = filter === "All" || p.category === filter;
-      const matchesSearch = p.service_name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      return matchesFilter && matchesSearch;
-    });
-  }, [filter, searchQuery, products]);
-
   const slotsPercent = (account: MasterAccount) =>
     Math.round(
       ((account.total_slots - account.available_slots) / account.total_slots) *
         100,
     );
 
-  const isFull = (account: MasterAccount) => account.available_slots === 0;
   const isLow = (account: MasterAccount) =>
     account.available_slots <= 2 && account.available_slots > 0;
 
@@ -161,13 +151,12 @@ export const Marketplace: React.FC = () => {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
-        .mkt-root { font-family: 'DM Sans', sans-serif; }
-        .mkt-root * { box-sizing: border-box; }
-
-        .mkt-heading { font-family: 'Syne', sans-serif; }
+        .dcv-root { font-family: 'DM Sans', sans-serif; }
+        .dcv-root * { box-sizing: border-box; }
+        .dcv-heading { font-family: 'Syne', sans-serif; }
 
         /* Card */
-        .mkt-card {
+        .dcv-card {
           background: #ffffff;
           border: 1.5px solid #f0eef9;
           border-radius: 20px;
@@ -176,16 +165,18 @@ export const Marketplace: React.FC = () => {
           display: flex;
           flex-direction: column;
           position: relative;
+          min-width: 220px;
+          width: 220px;
+          flex-shrink: 0;
         }
-        .mkt-card:hover {
+        .dcv-card:hover {
           box-shadow: 0 24px 48px -8px rgba(99,76,201,0.14), 0 4px 16px -4px rgba(99,76,201,0.08);
           transform: translateY(-4px);
           border-color: #d8d0f8;
         }
 
-        /* Image zone */
-        .mkt-card-img-wrap {
-          width: 80px; height: 80px;
+        .dcv-card-img-wrap {
+          width: 64px; height: 64px;
           border-radius: 50%;
           overflow: hidden;
           border: 3px solid #ede9fe;
@@ -193,34 +184,29 @@ export const Marketplace: React.FC = () => {
           flex-shrink: 0;
           transition: box-shadow 0.3s ease, transform 0.3s ease;
         }
-        .mkt-card:hover .mkt-card-img-wrap {
+        .dcv-card:hover .dcv-card-img-wrap {
           box-shadow: 0 8px 24px rgba(124,92,252,0.25);
           transform: scale(1.05);
         }
-        .mkt-card-img {
-          width: 100%; height: 100%;
-          object-fit: cover;
-          display: block;
-        }
-
+        .dcv-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
         /* Slots bar */
-        .mkt-bar-bg { background: #f0eef9; border-radius: 99px; height: 6px; overflow: hidden; }
-        .mkt-bar-fill {
+        .dcv-bar-bg { background: #f0eef9; border-radius: 99px; height: 5px; overflow: hidden; }
+        .dcv-bar-fill {
           height: 100%; border-radius: 99px;
           background: linear-gradient(90deg, #7c5cfc, #a78bfa);
           transition: width 0.8s cubic-bezier(0.34,1.2,0.64,1);
         }
-        .mkt-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+        .dcv-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
         /* Join button */
-        .mkt-join-btn {
+        .dcv-join-btn {
           width: 100%;
-          padding: 13px;
-          border-radius: 12px;
+          padding: 8px;
+          border-radius: 10px;
           font-family: 'Syne', sans-serif;
           font-weight: 700;
-          font-size: 13px;
+          font-size: 12px;
           letter-spacing: 0.04em;
           text-transform: uppercase;
           border: none;
@@ -228,30 +214,27 @@ export const Marketplace: React.FC = () => {
           transition: all 0.2s ease;
           display: flex; align-items: center; justify-content: center; gap: 8px;
         }
-        .mkt-join-btn.primary {
+        .dcv-join-btn.primary {
           background: linear-gradient(135deg, #7c5cfc 0%, #6366f1 100%);
           color: #fff;
           box-shadow: 0 4px 16px rgba(124,92,252,0.3);
         }
-        .mkt-join-btn.primary:hover {
-          box-shadow: 0 8px 24px rgba(124,92,252,0.4);
-          transform: translateY(-1px);
-        }
-        .mkt-join-btn.fund {
+        .dcv-join-btn.primary:hover { box-shadow: 0 8px 24px rgba(124,92,252,0.4); transform: translateY(-1px); }
+        .dcv-join-btn.fund {
           background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
           color: #fff;
           box-shadow: 0 4px 16px rgba(245,158,11,0.28);
         }
-        .mkt-join-btn.fund:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.38); transform: translateY(-1px); }
-        .mkt-join-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
-        .mkt-join-btn:active:not(:disabled) { transform: scale(0.98) !important; }
+        .dcv-join-btn.fund:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.38); transform: translateY(-1px); }
+        .dcv-join-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
+        .dcv-join-btn:active:not(:disabled) { transform: scale(0.98) !important; }
 
         /* Filter pills */
-        .mkt-pill {
-          padding: 8px 18px;
+        .dcv-pill {
+          padding: 7px 16px;
           border-radius: 99px;
           font-family: 'Syne', sans-serif;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 700;
           text-transform: uppercase;
           letter-spacing: 0.06em;
@@ -261,42 +244,42 @@ export const Marketplace: React.FC = () => {
           color: #9b8fc2;
           white-space: nowrap;
           transition: all 0.2s ease;
+          flex-shrink: 0;
         }
-        .mkt-pill:hover { border-color: #c4b5fd; color: #6d4fc8; }
-        .mkt-pill.active {
+        .dcv-pill:hover { border-color: #c4b5fd; color: #6d4fc8; }
+        .dcv-pill.active {
           background: linear-gradient(135deg, #7c5cfc, #6366f1);
           color: #fff;
           border-color: transparent;
           box-shadow: 0 4px 12px rgba(124,92,252,0.28);
         }
 
-        /* Search box */
-        .mkt-search-wrap { position: relative; }
-        .mkt-search-input {
+        /* Search */
+        .dcv-search-wrap { position: relative; }
+        .dcv-search-input {
           width: 100%;
           background: #fff;
           border: 1.5px solid #ede9fe;
-          border-radius: 14px;
-          padding: 14px 18px 14px 50px;
+          border-radius: 12px;
+          padding: 10px 16px 10px 42px;
           font-family: 'DM Sans', sans-serif;
-          font-size: 14px;
-          font-weight: 400;
+          font-size: 13px;
           color: #1a1230;
           outline: none;
           transition: border-color 0.2s, box-shadow 0.2s;
         }
-        .mkt-search-input::placeholder { color: #b8addb; }
-        .mkt-search-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 4px rgba(124,92,252,0.1); }
-        .mkt-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #b8addb; font-size: 14px; pointer-events: none; }
+        .dcv-search-input::placeholder { color: #c4b5fd; }
+        .dcv-search-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 3px rgba(124,92,252,0.1); }
+        .dcv-search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #c4b5fd; font-size: 13px; pointer-events: none; }
 
-        /* Category badge on card */
-        .mkt-cat-badge {
+        /* Category badge */
+        .dcv-cat-badge {
           display: inline-block;
-          padding: 3px 9px;
+          padding: 2px 8px;
           border-radius: 6px;
           background: #f0eef9;
           color: #7c5cfc;
-          font-size: 10px;
+          font-size: 9px;
           font-family: 'Syne', sans-serif;
           font-weight: 700;
           text-transform: uppercase;
@@ -305,36 +288,55 @@ export const Marketplace: React.FC = () => {
 
         /* Urgency dot */
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
-        .mkt-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
-        .mkt-dot.urgent { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
-        .mkt-dot.ok { background: #10b981; }
+        .dcv-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .dcv-dot.urgent { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
+        .dcv-dot.ok { background: #10b981; }
 
         /* Modal */
         @keyframes modalIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
-        .mkt-modal { animation: modalIn 0.28s cubic-bezier(0.34,1.2,0.64,1) forwards; }
+        .dcv-modal { animation: modalIn 0.28s cubic-bezier(0.34,1.2,0.64,1) forwards; }
 
         /* Skeleton */
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-        .mkt-skeleton {
+        .dcv-skeleton {
           background: linear-gradient(90deg, #f5f3ff 25%, #ede9fe 50%, #f5f3ff 75%);
           background-size: 200% 100%;
           animation: shimmer 1.6s infinite;
           border-radius: 8px;
         }
 
-        /* Verified badge */
-        .mkt-verified { color: #7c5cfc; font-size: 11px; }
+        /* Scroll rows — hide scrollbar cross-browser */
+        .dcv-scroll-row {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          padding-bottom: 4px;
+          scroll-snap-type: x mandatory;
+          -webkit-overflow-scrolling: touch;
+        }
+        .dcv-scroll-row::-webkit-scrollbar { display: none; }
+        .dcv-scroll-row { -ms-overflow-style: none; scrollbar-width: none; }
+        .dcv-scroll-row > * { scroll-snap-align: start; }
 
-        /* No-scroll bar */
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .dcv-pills-row {
+          display: flex;
+          gap: 8px;
+          overflow-x: auto;
+          padding-bottom: 2px;
+        }
+        .dcv-pills-row::-webkit-scrollbar { display: none; }
+        .dcv-pills-row { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Spin */
+        .dcv-verified { color: #7c5cfc; font-size: 11px; }
+
         @keyframes spin { to { transform: rotate(360deg); } }
         .fa-spin { animation: spin 0.8s linear infinite; display: inline-block; }
+
+        @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+        .dcv-card { animation: fadeIn 0.3s ease both; }
       `}</style>
 
-      <div className="mkt-root" style={{ position: "relative" }}>
+      <div className="dcv-root" style={{ position: "relative" }}>
         {/* ── Quick Fund Modal ── */}
         {showFundModal && (
           <div
@@ -351,7 +353,7 @@ export const Marketplace: React.FC = () => {
             }}
           >
             <div
-              className="mkt-modal"
+              className="dcv-modal"
               style={{
                 background: "#fff",
                 borderRadius: 24,
@@ -404,7 +406,7 @@ export const Marketplace: React.FC = () => {
                   />
                 </div>
                 <h3
-                  className="mkt-heading"
+                  className="dcv-heading"
                   style={{
                     margin: "0 0 6px",
                     fontSize: 20,
@@ -457,9 +459,9 @@ export const Marketplace: React.FC = () => {
                     ₦{activeAccount?.price.toLocaleString()}
                   </span>
                 </div>
-                <div className="mkt-bar-bg" style={{ marginBottom: 10 }}>
+                <div className="dcv-bar-bg" style={{ marginBottom: 10 }}>
                   <div
-                    className="mkt-bar-fill"
+                    className="dcv-bar-fill"
                     style={{
                       width: `${Math.min(100, ((user?.balance || 0) / (activeAccount?.price || 1)) * 100)}%`,
                     }}
@@ -483,7 +485,7 @@ export const Marketplace: React.FC = () => {
                 style={{ display: "flex", flexDirection: "column", gap: 10 }}
               >
                 <button
-                  className="mkt-join-btn primary"
+                  className="dcv-join-btn primary"
                   onClick={() => handleFlutterwavePayment(neededAmount)}
                   disabled={isProcessing === "funding"}
                 >
@@ -549,161 +551,147 @@ export const Marketplace: React.FC = () => {
         )}
 
         {/* ── Header ── */}
-        <div>
-          <p
-            className="mkt-heading"
-            style={{
-              margin: "0 0 4px",
-              fontSize: 11,
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.12em",
-              color: "#a78bfa",
-            }}
-          >
-            Browse &amp; Subscribe
-          </p>
-          <h2
-            className="mkt-heading"
-            style={{
-              margin: 0,
-              fontSize: 26,
-              fontWeight: 800,
-              color: "#1a1230",
-              lineHeight: 1.2,
-            }}
-          >
-            Shared Plans Marketplace
-          </h2>
-        </div>
-
-        {/* ── Search + Filters ── */}
-        <div
+        <p
+          className="dcv-heading"
           style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: 14,
-            marginBottom: 32,
-            marginTop: 8,
+            margin: "0 0 4px",
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+            color: "#a78bfa",
           }}
         >
-          <div className="mkt-search-wrap" style={{ maxWidth: 560 }}>
-            <i className="fa-solid fa-magnifying-glass mkt-search-icon" />
-            <input
-              className="mkt-search-input"
-              type="text"
-              placeholder="Search Netflix, Spotify, Canva..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div
-            style={{ display: "flex", gap: 8, overflowX: "auto" }}
-            className="no-scrollbar"
-          >
-            {["All", ...Object.keys(ProductCategory)].map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={`mkt-pill ${filter === f ? "active" : ""}`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
+          Discover &amp; Subscribe
+        </p>
 
-        {/* ── Grid ── */}
+        {/* ── Skeleton loading ── */}
         {isLoading ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
-              gap: 20,
-            }}
-          >
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="dcv-scroll-row">
+            {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
                 style={{
+                  minWidth: 220,
+                  width: 220,
+                  flexShrink: 0,
                   borderRadius: 20,
                   overflow: "hidden",
                   border: "1.5px solid #f0eef9",
                   background: "#fff",
                 }}
               >
-                <div className="mkt-skeleton" style={{ height: 160 }} />
-                <div style={{ padding: "18px 18px 20px" }}>
+                <div
+                  style={{
+                    padding: "20px 16px 16px",
+                    background: "linear-gradient(135deg,#f5f3ff,#ede9fe)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <div
-                    className="mkt-skeleton"
-                    style={{ height: 14, width: "65%", marginBottom: 10 }}
+                    className="dcv-skeleton"
+                    style={{ width: 72, height: 72, borderRadius: "50%" }}
                   />
                   <div
-                    className="mkt-skeleton"
-                    style={{ height: 10, width: "90%", marginBottom: 6 }}
+                    className="dcv-skeleton"
+                    style={{ width: 64, height: 46, borderRadius: 10 }}
+                  />
+                </div>
+                <div
+                  style={{
+                    padding: "14px 14px 18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                  }}
+                >
+                  <div
+                    className="dcv-skeleton"
+                    style={{ height: 14, width: "70%" }}
                   />
                   <div
-                    className="mkt-skeleton"
-                    style={{ height: 10, width: "75%", marginBottom: 20 }}
+                    className="dcv-skeleton"
+                    style={{ height: 9, width: "40%", borderRadius: 6 }}
                   />
                   <div
-                    className="mkt-skeleton"
-                    style={{ height: 44, borderRadius: 12 }}
+                    style={{ display: "flex", flexDirection: "column", gap: 5 }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div
+                        className="dcv-skeleton"
+                        style={{ height: 9, width: "55%" }}
+                      />
+                      <div
+                        className="dcv-skeleton"
+                        style={{ height: 9, width: "15%" }}
+                      />
+                    </div>
+                    <div
+                      className="dcv-skeleton"
+                      style={{ height: 5, borderRadius: 99 }}
+                    />
+                  </div>
+                  <div
+                    className="dcv-skeleton"
+                    style={{ height: 36, borderRadius: 12, marginTop: 4 }}
                   />
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredProducts.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))",
-              gap: 20,
-            }}
-          >
-            {filteredProducts.map((account) => {
+        ) : products.length > 0 ? (
+          /* ── Horizontal scroll row ── */
+          <div className="dcv-scroll-row">
+            {products.map((account, idx) => {
               const pct = slotsPercent(account);
               const low = isLow(account);
               const needsFund = user && user.balance < account.price;
+
               return (
-                <div key={account.id} className="mkt-card">
-                  {/* Card Header — gradient band with circular logo */}
+                <div
+                  key={account.id}
+                  className="dcv-card"
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  {/* Card Header */}
                   <div
                     style={{
                       background:
                         "linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)",
-                      padding: "24px 18px 16px",
+                      padding: "20px 16px 14px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
-                      position: "relative",
                     }}
                   >
-                    {/* Circular image */}
-                    <div className="mkt-card-img-wrap">
+                    <div className="dcv-card-img-wrap">
                       <img
-                        className="mkt-card-img"
+                        className="dcv-card-img"
                         src={account.icon_url}
                         alt={account.service_name}
                       />
                     </div>
-
-                    {/* Price + urgency stacked on the right */}
                     <div
                       style={{
                         textAlign: "right",
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "flex-end",
-                        gap: 6,
+                        gap: 5,
                       }}
                     >
                       <div
                         style={{
                           background: "#fff",
                           borderRadius: 10,
-                          padding: "7px 12px",
+                          padding: "6px 6px",
                           border: "1.5px solid #ede9fe",
                           boxShadow: "0 2px 8px rgba(124,92,252,0.1)",
                         }}
@@ -713,7 +701,7 @@ export const Marketplace: React.FC = () => {
                             margin: 0,
                             fontFamily: "'Syne',sans-serif",
                             fontWeight: 800,
-                            fontSize: 15,
+                            fontSize: 14,
                             color: "#1a1230",
                             lineHeight: 1.1,
                           }}
@@ -723,7 +711,7 @@ export const Marketplace: React.FC = () => {
                         <p
                           style={{
                             margin: 0,
-                            fontSize: 9,
+                            fontSize: 8,
                             fontFamily: "'Syne',sans-serif",
                             fontWeight: 700,
                             textTransform: "uppercase",
@@ -740,16 +728,16 @@ export const Marketplace: React.FC = () => {
                             background: "rgba(245,158,11,0.12)",
                             border: "1px solid rgba(245,158,11,0.28)",
                             borderRadius: 7,
-                            padding: "3px 8px",
+                            padding: "3px 7px",
                             display: "flex",
                             alignItems: "center",
-                            gap: 5,
+                            gap: 4,
                           }}
                         >
-                          <span className="mkt-dot urgent" />
+                          <span className="dcv-dot urgent" />
                           <span
                             style={{
-                              fontSize: 9,
+                              fontSize: 8,
                               fontFamily: "'Syne',sans-serif",
                               fontWeight: 700,
                               textTransform: "uppercase",
@@ -767,11 +755,11 @@ export const Marketplace: React.FC = () => {
                   {/* Body */}
                   <div
                     style={{
-                      padding: "18px 18px 20px",
+                      padding: "14px 14px 18px",
                       display: "flex",
                       flexDirection: "column",
                       flexGrow: 1,
-                      gap: 12,
+                      gap: 10,
                     }}
                   >
                     <div>
@@ -784,28 +772,28 @@ export const Marketplace: React.FC = () => {
                         }}
                       >
                         <h3
-                          className="mkt-heading"
+                          className="dcv-heading"
                           style={{
                             margin: 0,
-                            fontSize: 15,
+                            fontSize: 14,
                             fontWeight: 700,
                             color: "#1a1230",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            maxWidth: "75%",
+                            maxWidth: "80%",
                           }}
                         >
                           {account.service_name}
                         </h3>
                         {account.owner?.is_verified && (
                           <i
-                            className="fa-solid fa-circle-check mkt-verified"
+                            className="fa-solid fa-circle-check dcv-verified"
                             title="Verified seller"
                           />
                         )}
                       </div>
-                      <span className="mkt-cat-badge">{account.category}</span>
+                      <span className="dcv-cat-badge">{account.category}</span>
                     </div>
 
                     {/* Slots */}
@@ -815,34 +803,32 @@ export const Marketplace: React.FC = () => {
                           display: "flex",
                           justifyContent: "space-between",
                           alignItems: "center",
-                          marginBottom: 6,
+                          marginBottom: 5,
                         }}
                       >
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 5,
+                            gap: 4,
                           }}
                         >
                           <span
-                            className={`mkt-dot ${low ? "urgent" : "ok"}`}
+                            className={`dcv-dot ${low ? "urgent" : "ok"}`}
                           />
                           <span
                             style={{
-                              fontSize: 11,
-                              fontFamily: "'DM Sans',sans-serif",
+                              fontSize: 10,
                               color: "#9b8fc2",
                               fontWeight: 500,
                             }}
                           >
-                            {account.available_slots} of {account.total_slots}{" "}
-                            slots open
+                            {account.available_slots}/{account.total_slots} open
                           </span>
                         </div>
                         <span
                           style={{
-                            fontSize: 11,
+                            fontSize: 10,
                             fontFamily: "'Syne',sans-serif",
                             fontWeight: 700,
                             color: low ? "#f59e0b" : "#7c5cfc",
@@ -851,21 +837,21 @@ export const Marketplace: React.FC = () => {
                           {pct}%
                         </span>
                       </div>
-                      <div className="mkt-bar-bg">
+                      <div className="dcv-bar-bg">
                         <div
-                          className={`mkt-bar-fill ${low ? "warn" : ""}`}
+                          className={`dcv-bar-fill ${low ? "warn" : ""}`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
 
-                    {/* Seller info */}
+                    {/* Seller */}
                     {account.owner && (
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 6,
+                          gap: 5,
                         }}
                       >
                         <img
@@ -874,19 +860,22 @@ export const Marketplace: React.FC = () => {
                             `https://ui-avatars.com/api/?name=${encodeURIComponent(account.owner.username || "U")}&background=ede9fe&color=7c5cfc&size=32`
                           }
                           style={{
-                            width: 22,
-                            height: 22,
+                            width: 20,
+                            height: 20,
                             borderRadius: "50%",
                             objectFit: "cover",
                             border: "1.5px solid #ede9fe",
+                            flexShrink: 0,
                           }}
                           alt={account.owner.username}
                         />
                         <span
                           style={{
-                            fontSize: 12,
+                            fontSize: 11,
                             color: "#b8addb",
-                            fontWeight: 400,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
                           }}
                         >
                           @{account.owner.username}
@@ -895,17 +884,18 @@ export const Marketplace: React.FC = () => {
                           <span
                             style={{
                               marginLeft: "auto",
-                              fontSize: 11,
+                              fontSize: 10,
                               color: "#f59e0b",
                               fontWeight: 600,
                               display: "flex",
                               alignItems: "center",
-                              gap: 3,
+                              gap: 2,
+                              flexShrink: 0,
                             }}
                           >
                             <i
                               className="fa-solid fa-star"
-                              style={{ fontSize: 9 }}
+                              style={{ fontSize: 8 }}
                             />
                             {account.owner.merchant_rating.toFixed(1)}
                           </span>
@@ -915,7 +905,7 @@ export const Marketplace: React.FC = () => {
 
                     {/* CTA */}
                     <button
-                      className={`mkt-join-btn ${needsFund ? "fund" : "primary"}`}
+                      className={`dcv-join-btn ${needsFund ? "fund" : "primary"}`}
                       disabled={isProcessing === account.id}
                       onClick={() => handleJoin(account)}
                       style={{ marginTop: "auto" }}
@@ -939,10 +929,11 @@ export const Marketplace: React.FC = () => {
             })}
           </div>
         ) : (
+          /* ── Empty state ── */
           <div
             style={{
               textAlign: "center",
-              padding: "64px 32px",
+              padding: "52px 32px",
               background: "#fafafe",
               borderRadius: 20,
               border: "1.5px dashed #ede9fe",
@@ -950,27 +941,27 @@ export const Marketplace: React.FC = () => {
           >
             <div
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
+                width: 52,
+                height: 52,
+                borderRadius: 14,
                 background: "#f0eef9",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 16px",
+                margin: "0 auto 14px",
               }}
             >
               <i
                 className="fa-solid fa-magnifying-glass"
-                style={{ color: "#c4b5fd", fontSize: 20 }}
+                style={{ color: "#c4b5fd", fontSize: 18 }}
               />
             </div>
             <p
-              className="mkt-heading"
+              className="dcv-heading"
               style={{
                 margin: 0,
                 color: "#b8addb",
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.08em",
@@ -978,7 +969,7 @@ export const Marketplace: React.FC = () => {
             >
               No active slots found
             </p>
-            <p style={{ margin: "6px 0 0", color: "#c4b5fd", fontSize: 13 }}>
+            <p style={{ margin: "5px 0 0", color: "#c4b5fd", fontSize: 12 }}>
               Try adjusting your search or filters
             </p>
           </div>

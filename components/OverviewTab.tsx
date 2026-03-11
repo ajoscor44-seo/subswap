@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Transaction } from "@/constants/types";
 import { Marketplace } from "./Marketplace";
+import { DiscoverServices } from "./DiscoverServices";
 
 function useWindowWidth() {
   const [width, setWidth] = useState(() =>
@@ -428,7 +429,10 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           ))}
         </div>
 
-        {/* ── Row 3: Transactions + Stacks ── */}
+        {/* ── Row 3: Discover Available Slots ── */}
+        <DiscoverServices />
+
+        {/* ── Row 4: Transactions + Stacks ── */}
         <div
           className="ov-row3 ov-fade-3"
           style={{ gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr" }}
@@ -766,23 +770,6 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
           className="ov-fade-4 ov-card ov-quickjoin"
           style={{ padding: "28px 28px 24px" }}
         >
-          <div style={{ marginBottom: 24 }}>
-            <p className="ov-label">Discover</p>
-            <h3
-              className="ov-heading"
-              style={{
-                margin: "0 0 4px",
-                fontSize: 20,
-                fontWeight: 800,
-                color: "#1a1230",
-              }}
-            >
-              Quick Join
-            </h3>
-            <p style={{ margin: 0, fontSize: 13, color: "#9b8fc2" }}>
-              Browse and join a shared plan in seconds.
-            </p>
-          </div>
           <Marketplace />
         </div>
       </div>

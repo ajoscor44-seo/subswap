@@ -139,7 +139,9 @@ export const Dashboard: React.FC = () => {
           showStatus("Payment was not completed.", "error");
         }
       },
-      onclose: () => {},
+      onclose: async () => {
+        await refreshProfile();
+      },
     });
   };
 
