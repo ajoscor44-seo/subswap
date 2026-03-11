@@ -8,7 +8,7 @@ import React, {
   useCallback,
 } from "react";
 
-const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID ?? "";
+const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID!;
 
 export const logoUrl = (domain: string, size = 64) =>
   `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;

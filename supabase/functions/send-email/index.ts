@@ -75,11 +75,14 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    // Admin-only types: caller must be an admin
+    // Admin-only types: caller must be an admin OR it's their own "wallet_funded" event
     if (ADMIN_ONLY_TYPES.includes(type)) {
-      const ok = await isAdmin(authUser.id);
-      if (!ok) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+      const isSelfFunding = type === "wallet_funded" && payload.email === authUser.email;
+      if (!isSelfFunding) {
+        const ok = await isAdmin(authUser.id);
+        if (!ok) {
+          return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+        }
       }
     } else if (type === "welcome") {
       // Welcome: only allow sending to the authenticated user's own email

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { supabase } from "../lib/supabase";
 import { User, Transaction } from "@/constants/types";
 
@@ -43,6 +43,8 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const filters = ["All", "Deposit", "Purchase", "Withdrawal"];
 
@@ -68,13 +70,28 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
     fetchTransactions();
   }, [user]);
 
-  const filtered = transactions.filter((tx) => {
-    const matchesType = activeFilter === "All" || tx.type === activeFilter;
-    const matchesSearch = (tx.description || "")
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesType && matchesSearch;
-  });
+  const filtered = useMemo(() => {
+    return transactions.filter((tx) => {
+      const matchesType = activeFilter === "All" || tx.type === activeFilter;
+      const matchesSearch = (tx.description || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matchesType && matchesSearch;
+    });
+  }, [transactions, activeFilter, searchQuery]);
+
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // If inside dashboard, we might not want to scroll to top of window but top of component
+    // but for simplicity window scroll is fine.
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // Summary stats
   const totalIn = transactions
@@ -241,6 +258,26 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           min-width: 420px;
         }
 
+        /* Pagination */
+        .th-pagination {
+          display: flex; align-items: center; justify-content: center;
+          gap: 8px; margin: 24px 0;
+        }
+        .th-page-btn {
+          width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
+          background: #fff; color: #9b8fc2; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          transition: all 0.2s;
+        }
+        .th-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
+        .th-page-btn.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 10px rgba(124,92,252,0.25);
+        }
+        .th-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
         /* ── Responsive ── */
         @media (max-width: 600px) {
           .th-header-row, .th-data-row { padding: 12px 16px; }
@@ -397,7 +434,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             {filters.map((f) => (
               <button
                 key={f}
-                onClick={() => setActiveFilter(f)}
+                onClick={() => {
+                  setActiveFilter(f);
+                  setCurrentPage(1);
+                }}
                 className={`th-pill ${activeFilter === f ? "active" : ""}`}
               >
                 {f}
@@ -411,7 +451,10 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               type="text"
               placeholder="Search by description..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
@@ -535,9 +578,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     </div>
                   ))}
                 </div>
-              ) : filtered.length > 0 ? (
+              ) : paginatedTransactions.length > 0 ? (
                 <div>
-                  {filtered.map((tx, i) => {
+                  {paginatedTransactions.map((tx, i) => {
                     const cfg = getTypeConfig(tx.type);
                     const isPos = tx.amount > 0;
                     return (
@@ -709,6 +752,37 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               )}
             </div>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="th-pagination">
+              <button
+                className="th-page-btn"
+                disabled={currentPage === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                <i className="fa-solid fa-chevron-left" />
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  className={`th-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                  onClick={() => handlePageChange(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                className="th-page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

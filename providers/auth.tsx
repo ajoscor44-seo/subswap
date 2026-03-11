@@ -30,6 +30,8 @@ const AuthContext = createContext<{
   products: MasterAccount[];
   user: User | null;
   session: Session | null;
+  subscriptions: any[];
+  subscriptionsLoading: boolean;
   /** True when the current session's email has been verified (email_confirmed_at set). */
   emailVerified: boolean;
   signUp: (data: ISignUp) => Promise<AuthError | null>;
@@ -38,6 +40,7 @@ const AuthContext = createContext<{
   refreshSession?: () => Promise<void>;
   refreshProfile?: () => Promise<void>;
   refreshProducts?: () => Promise<void>;
+  refreshSubscriptions?: () => Promise<void>;
   /** Resend the verification email (for the current session user's email). */
   resendVerificationEmail?: (email: string) => Promise<AuthError | null>;
   showLoginModal: boolean;
@@ -49,6 +52,8 @@ const AuthContext = createContext<{
   products: [],
   user: null,
   session: null,
+  subscriptions: [],
+  subscriptionsLoading: false,
   emailVerified: false,
   signUp: async () => Promise.resolve(null),
   login: async () => Promise.resolve(null),
@@ -56,6 +61,7 @@ const AuthContext = createContext<{
   refreshSession: async () => Promise.resolve(),
   resendVerificationEmail: async () => Promise.resolve(null),
   refreshProducts: async () => Promise.resolve(),
+  refreshSubscriptions: async () => Promise.resolve(),
   showLoginModal: false,
   openLoginModal: () => {},
   closeLoginModal: () => {},
@@ -68,6 +74,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<MasterAccount[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
+  const [subscriptions, setSubscriptions] = useState<any[]>([]);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
   const welcomeEmailSending = useRef(false);
 
   const fetchProducts = async () => {
@@ -87,6 +95,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error fetching products:", err);
     } finally {
       setProductsLoading(false);
+    }
+  };
+
+  const fetchSubscriptions = async (userId: string) => {
+    setSubscriptionsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("user_subscriptions")
+        .select("*, master_accounts(*)")
+        .eq("user_id", userId);
+      if (data) setSubscriptions(data);
+      if (error) throw error;
+    } catch (err) {
+      console.error("Error fetching subscriptions:", err);
+    } finally {
+      setSubscriptionsLoading(false);
     }
   };
 
@@ -120,7 +144,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(profile);
 
-      await fetchProducts();
+      await Promise.all([fetchProducts(), fetchSubscriptions(sess.user.id)]);
+      
       try {
         const { data: row, error } = await supabase
           .from("profiles")
@@ -188,6 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setLoading(false);
       if (!session) {
         setUser(null);
+        setSubscriptions([]);
         return;
       }
       void loadProfileAndSync(session);
@@ -270,6 +296,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await fetchProducts();
   };
 
+  const refreshSubscriptions = async () => {
+    if (!session?.user) return;
+    await fetchSubscriptions(session.user.id);
+  };
+
   const resendVerificationEmail = async (
     email: string,
   ): Promise<AuthError | null> => {
@@ -333,6 +364,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     user,
     products,
     session,
+    subscriptions,
+    subscriptionsLoading,
     emailVerified,
     login,
     logout,
@@ -341,6 +374,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshProfile,
     resendVerificationEmail,
     refreshProducts,
+    refreshSubscriptions,
     showLoginModal,
     openLoginModal,
     closeLoginModal,

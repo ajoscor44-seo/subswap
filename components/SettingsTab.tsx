@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { User } from "@/constants/types";
+import { useAuth } from "@/providers/auth";
 
 // ─── Cloudinary upload hook ────────────────────────────────────────────────────
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_AVATAR_UPLOAD_PRESET!;
-console.log("Cloudinary config:", { CLOUD_NAME, UPLOAD_PRESET });
 
 export const useCloudinaryUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -339,6 +339,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   showStatus,
   logout,
 }) => {
+  const { refreshProfile } = useAuth();
   const [name, setName] = useState(user.name || "");
   const [username, setUsername] = useState(user.username || "");
   const [avatarUrl, setAvatarUrl] = useState(
@@ -355,7 +356,10 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       .eq("id", user.id);
 
     if (error) showStatus("Failed to update avatar.", "error");
-    else showStatus("Profile photo updated!", "success");
+    else {
+      showStatus("Profile photo updated!", "success");
+      await refreshProfile();
+    }
   };
 
   const handleSave = async () => {
