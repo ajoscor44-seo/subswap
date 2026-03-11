@@ -92,9 +92,12 @@ const LogFormInner: React.FC<LogFormProps> = ({
       : null;
 
   const handlePlatformChange = (p: Platform) => {
+    const isCustom = !p.domain;
     set({
       service_name: p.name,
-      icon_url: logoUrl(p.domain, 256),
+      icon_url: isCustom 
+        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=6366f1&color=fff&size=128`
+        : logoUrl(p.domain, 256),
       category: CATEGORY_MAP[p.category] ?? ProductCategory.STREAMING,
       _domain: p.domain,
       _category: p.category,
@@ -104,6 +107,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // If it's a custom platform and "Remember" is checked, save it to the directory
     if (persistCustom && selectedPlatform && !selectedPlatform.domain) {
       setSavingCustom(true);
       try {
@@ -223,6 +227,14 @@ const LogFormInner: React.FC<LogFormProps> = ({
                   </Field>
                 </div>
 
+                <Field label="Icon URL" hint="Paste an image URL for the logo">
+                  <Input
+                    value={formData.icon_url ?? ""}
+                    onChange={(v) => set({ icon_url: v })}
+                    placeholder="https://example.com/logo.png"
+                  />
+                </Field>
+
                 {selectedPlatform && !selectedPlatform.domain && (
                   <label className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 cursor-pointer group">
                     <div className="relative flex items-center justify-center">
@@ -240,7 +252,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
                         Remember this platform
                       </p>
                       <p className="text-[10px] text-slate-400 font-medium">
-                        Add "{formData.service_name}" to the searchable directory for next time.
+                        Add "{formData.service_name}" to the searchable directory for all future listings.
                       </p>
                     </div>
                   </label>

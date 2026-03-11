@@ -14,7 +14,8 @@ ADD COLUMN IF NOT EXISTS welcome_email_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE public.master_accounts 
 ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS features TEXT[] DEFAULT '{}',
-ADD COLUMN IF NOT EXISTS original_price DECIMAL(12, 2);
+ADD COLUMN IF NOT EXISTS original_price DECIMAL(12, 2),
+ADD COLUMN IF NOT EXISTS domain TEXT; -- Added domain to persist platform metadata
 
 -- 3. CUSTOM PLATFORMS TABLE (For persistent custom items)
 CREATE TABLE IF NOT EXISTS public.custom_platforms (
@@ -89,6 +90,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 5. REFRESH RLS POLICIES
+DROP POLICY IF EXISTS "Owners can manage their own master accounts" ON public.master_accounts;
 CREATE POLICY "Owners can manage their own master accounts" ON public.master_accounts
 FOR ALL USING (auth.uid() = owner_id);
 

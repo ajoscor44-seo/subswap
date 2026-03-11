@@ -32,8 +32,14 @@ export const PROTECTED: TViewState[] = [
 ];
 
 const parseHash = (): TViewState | null => {
-  const raw = window.location.hash.replace(/^#\/?/, "").trim() as TViewState;
-  return pageViews.includes(raw) ? raw : null;
+  // Handle complex hashes like #/reset-password#access_token=...
+  // Use regex to pull out the first segment after the hash/slash
+  const hash = window.location.hash;
+  const match = hash.match(/^#\/?([^#?\/]+)/);
+  if (!match) return null;
+  
+  const path = match[1] as TViewState;
+  return pageViews.includes(path) ? path : null;
 };
 
 const resolveView = (
@@ -42,6 +48,9 @@ const resolveView = (
   session: ReturnType<typeof useAuth>["session"],
   emailVerified: boolean,
 ): TViewState => {
+  // Always prioritize reset-password if it's in the URL
+  if (hash === "reset-password") return "reset-password";
+  
   if (session && !emailVerified) return "verify-email";
 
   if (!hash) {
@@ -76,9 +85,6 @@ export const NavigatorProvider = ({ children }: { children: ReactNode }) => {
     setIsReady(true);
   }, [authLoading, syncView]);
 
-  // Fail-safe: never let the app be stuck behind the global loader forever.
-  // If auth init hangs for any reason (storage quirks, network stalls), we still render
-  // the public pages and let auth settle later.
   useEffect(() => {
     if (isReady) return;
     const t = setTimeout(() => {
