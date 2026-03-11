@@ -149,7 +149,7 @@ export const Marketplace: React.FC = () => {
           toast.error("Payment was not successful");
         }
       },
-      onclose: () => toast("Payment cancelled", { icon: "👋" }),
+      onclose: () => {},
     });
   };
 

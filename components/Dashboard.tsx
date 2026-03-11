@@ -139,11 +139,11 @@ export const Dashboard: React.FC = () => {
           showStatus("Payment was not completed.", "error");
         }
       },
-      onclose: () => toast("Payment cancelled", { icon: "👋" }),
+      onclose: () => {},
     });
   };
 
-  // ── Sidebar content (reused in desktop aside + mobile drawer) ──────────────
+  // ── Sidebar conten ──────────────
   const SidebarContent = () => (
     <>
       {/* Profile */}
