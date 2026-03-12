@@ -88,8 +88,6 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // If inside dashboard, we might not want to scroll to top of window but top of component
-    // but for simplicity window scroll is fine.
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

@@ -85,8 +85,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async () => {
     setProductsLoading(true);
     try {
+      // SECURITY FIX: Fetch from marketplace_listings view instead of master_accounts
+      // This view hides master_email and master_password columns.
       const { data, error } = await supabase
-        .from("master_accounts")
+        .from("marketplace_listings")
         .select(
           `*, owner:profiles!owner_id (username, is_verified, avatar, merchant_rating)`,
         )
@@ -105,6 +107,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchSubscriptions = async (userId: string) => {
     setSubscriptionsLoading(true);
     try {
+      // Subscribed users can see credentials through the user_subscriptions join
+      // provided they have an active subscription (handled by RLS policies).
       const { data, error } = await supabase
         .from("user_subscriptions")
         .select("*, master_accounts(*)")
@@ -129,6 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const verified = !!sess.user.email_confirmed_at;
       if (!verified) {
         setUser(null);
+        await fetchProducts(); // Allow browsing even if unverified
         return;
       }
 
@@ -199,7 +204,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (cancelled) return;
         if (error) console.error("[auth] getSession failed", error);
         setSession(data.session);
-        if (!data.session) setUser(null);
+        if (!data.session) {
+          setUser(null);
+          void fetchProducts(); // Fetch for anonymous users
+        }
         if (data.session) void loadProfileAndSync(data.session);
       })
       .finally(() => {
@@ -218,6 +226,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (!session) {
         setUser(null);
         setSubscriptions([]);
+        void fetchProducts();
         return;
       }
       void loadProfileAndSync(session);

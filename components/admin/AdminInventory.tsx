@@ -267,7 +267,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Outfit',sans-serif",
+                    fontFamily: "'Outfit', sans-serif",
                     fontSize: 9,
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
@@ -388,7 +388,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                             </span>
                             <span
                               style={{
-                                fontFamily: "'Outfit',sans-serif",
+                                fontFamily: "'Outfit', sans-serif",
                                 fontSize: 9,
                                 fontWeight: 700,
                                 textTransform: "uppercase" as const,
@@ -408,7 +408,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                             padding: "3px 9px",
                             borderRadius: 7,
                             background: "#f5f3ff",
-                            fontFamily: "'Outfit',sans-serif",
+                            fontFamily: "'Outfit', sans-serif",
                             fontSize: 9,
                             fontWeight: 700,
                             textTransform: "uppercase" as const,
@@ -477,7 +477,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                           </div>
                           <span
                             style={{
-                              fontFamily: "'Outfit',sans-serif",
+                              fontFamily: "'Outfit', sans-serif",
                               fontSize: 10,
                               fontWeight: 700,
                               color: "#9b8fc2",
@@ -558,7 +558,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                       />
                       <span
                         style={{
-                          fontFamily: "'Outfit',sans-serif",
+                          fontFamily: "'Outfit', sans-serif",
                           fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase" as const,
