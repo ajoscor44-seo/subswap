@@ -12,12 +12,12 @@ import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
 
 export const Dashboard: React.FC = () => {
-  const { 
-    user, 
-    logout, 
-    refreshProfile, 
-    subscriptions: contextSubs, 
-    refreshSubscriptions 
+  const {
+    user,
+    logout,
+    refreshProfile,
+    subscriptions: contextSubs,
+    refreshSubscriptions,
   } = useAuth();
   const { dashboardTab, changeTab, goTo } = useNavigator();
 
@@ -67,7 +67,7 @@ export const Dashboard: React.FC = () => {
     try {
       // We rely on useAuth for subscriptions now, but we can trigger a refresh
       if (refreshSubscriptions) await refreshSubscriptions();
-      
+
       const { data: txs } = await supabase
         .from("transactions")
         .select("*")
@@ -75,7 +75,7 @@ export const Dashboard: React.FC = () => {
         .order("created_at", { ascending: false })
         .limit(3);
       if (txs) setRecentTransactions(txs);
-      
+
       if (refreshProfile) await refreshProfile();
     } catch (err: any) {
       console.error("Dashboard sync error:", err);

@@ -90,6 +90,7 @@ const Footer: React.FC = () => {
       >
         {/* ── Top CTA band ── */}
         <div
+          hidden={!!user}
           style={{
             background:
               "linear-gradient(135deg, #1a1230 0%, #2d1f6e 50%, #3730a3 100%)",

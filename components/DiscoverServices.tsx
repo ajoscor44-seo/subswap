@@ -87,7 +87,7 @@ export const DiscoverServices: React.FC = () => {
         masterEmail: account.master_email,
         masterPassword: account.master_password,
         fulfillmentType: account.fulfillment_type,
-      }).catch(err => console.error("Email trigger failed:", err));
+      }).catch((err) => console.error("Email trigger failed:", err));
 
       if (refreshProfile) await refreshProfile();
       if (refreshProducts) await refreshProducts();
@@ -897,7 +897,7 @@ export const DiscoverServices: React.FC = () => {
 
                     <button
                       className={`dcv-join-btn ${needsFund ? "fund" : "primary"}`}
-                      disabled={isProcessing === account.id}
+                      disabled={!!isProcessing}
                       onClick={() => handleJoin(account)}
                       style={{ marginTop: "auto" }}
                     >

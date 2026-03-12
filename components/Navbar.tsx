@@ -557,6 +557,10 @@ const Navbar: React.FC = () => {
                                 fontSize: 14,
                                 fontWeight: 800,
                                 color: "#1a1230",
+
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap" as const,
                               }}
                             >
                               @{user.username}

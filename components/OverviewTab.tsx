@@ -614,7 +614,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     marginBottom: 18,
                   }}
                 >
-                  {activeSubscriptions.slice(0, 8).map((sub, i) => (
+                  {activeSubscriptions.slice(0, 7).map((sub, i) => (
                     <img
                       key={i}
                       src={sub.master_accounts?.icon_url}
@@ -627,7 +627,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       }}
                     />
                   ))}
-                  {activeSubscriptions.length > 8 && (
+                  {activeSubscriptions.length > 7 && (
                     <div
                       className="ov-stack-avatar"
                       style={{
@@ -645,7 +645,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                           color: "#7c5cfc",
                         }}
                       >
-                        +{activeSubscriptions.length - 8}
+                        +{activeSubscriptions.length - 7}
                       </span>
                     </div>
                   )}
