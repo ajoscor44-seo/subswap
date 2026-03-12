@@ -6,6 +6,7 @@ import View from "./pages";
 import { Toaster } from "react-hot-toast";
 import { NavigatorProvider } from "./providers/navigator";
 import { Analytics } from "@vercel/analytics/react";
+import InstallPrompt from "./components/InstallPrompt";
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
         <NavigatorProvider>
           <Navbar />
           <View />
+          <InstallPrompt />
           <Toaster />
         </NavigatorProvider>
       </AuthProvider>

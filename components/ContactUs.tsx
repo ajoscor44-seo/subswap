@@ -122,7 +122,7 @@ const ContactUs: React.FC = () => {
 
         .ct-label {
           display: block; margin-bottom: 8px;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.09em;
           color: #b8addb;
@@ -132,7 +132,7 @@ const ContactUs: React.FC = () => {
           width: 100%; padding: 14px;
           border-radius: 13px; border: none; cursor: pointer;
           background: linear-gradient(135deg, #1a1230, #2d1f6e);
-          color: #fff; font-family: 'Syne', sans-serif;
+          color: #fff; font-family: 'Outfit', sans-serif;
           font-size: 12px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.08em;
           box-shadow: 0 4px 16px rgba(26,18,48,0.2);
@@ -337,7 +337,7 @@ const ContactUs: React.FC = () => {
                         <p
                           style={{
                             margin: "0 0 2px",
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 10,
                             fontWeight: 700,
                             textTransform: "uppercase",
@@ -555,7 +555,7 @@ const ContactUs: React.FC = () => {
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontSize: 11,
                       fontWeight: 700,
                       textTransform: "uppercase",

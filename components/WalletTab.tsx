@@ -34,11 +34,11 @@ const WalletTab: React.FC<WalletTabProps> = ({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 
         .wt-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
         .wt-root * { box-sizing: border-box; }
-        .wt-heading { font-family: 'Syne', sans-serif; }
+        .wt-heading { font-family: 'Outfit', sans-serif; }
 
         .wt-card { background: #fff; border: 1.5px solid #f0eef9; border-radius: 20px; transition: box-shadow 0.25s, transform 0.25s; min-width: 0; overflow: hidden; }
 
@@ -52,15 +52,15 @@ const WalletTab: React.FC<WalletTabProps> = ({
 
         .wt-input-wrap { display:flex; align-items:center; border:1.5px solid #ede9fe; border-radius:14px; background:#fafafe; overflow:hidden; transition:border-color 0.2s,box-shadow 0.2s; max-width:100%; min-width:0; }
         .wt-input-wrap.focused { border-color:#7c5cfc; box-shadow:0 0 0 4px rgba(124,92,252,0.1); }
-        .wt-input-prefix { padding:0 4px 0 18px; font-family:'Syne',sans-serif; font-weight:800; font-size:18px; color:#7c5cfc; pointer-events:none; flex-shrink:0; }
-        .wt-input { flex:1; min-width:0; max-width:100%; border:none; background:transparent; padding:16px 12px; font-family:'Syne',sans-serif; font-weight:700; font-size:18px; color:#1a1230; outline:none; }
+        .wt-input-prefix { padding:0 4px 0 18px; font-family:'Outfit',sans-serif; font-weight:800; font-size:18px; color:#7c5cfc; pointer-events:none; flex-shrink:0; }
+        .wt-input { flex:1; min-width:0; max-width:100%; border:none; background:transparent; padding:16px 12px; font-family:'Outfit',sans-serif; font-weight:700; font-size:18px; color:#1a1230; outline:none; }
         .wt-input::placeholder { color:#d8d0f8; font-weight:500; }
 
-        .wt-quick-btn { padding:13px 10px; border-radius:12px; border:1.5px solid #ede9fe; background:#fff; font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#7c5cfc; cursor:pointer; transition:all 0.2s; text-align:center; }
+        .wt-quick-btn { padding:13px 10px; border-radius:12px; border:1.5px solid #ede9fe; background:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; color:#7c5cfc; cursor:pointer; transition:all 0.2s; text-align:center; }
         .wt-quick-btn:hover { border-color:#7c5cfc; background:#f5f3ff; box-shadow:0 4px 12px rgba(124,92,252,0.12); transform:translateY(-1px); }
         .wt-quick-btn.selected { background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(124,92,252,0.3); }
 
-        .wt-pay-btn { width:100%; padding:16px; border-radius:14px; border:none; background:linear-gradient(135deg,#7c5cfc 0%,#6366f1 100%); color:#fff; cursor:pointer; font-family:'Syne',sans-serif; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:0 6px 20px rgba(124,92,252,0.32); }
+        .wt-pay-btn { width:100%; padding:16px; border-radius:14px; border:none; background:linear-gradient(135deg,#7c5cfc 0%,#6366f1 100%); color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:0 6px 20px rgba(124,92,252,0.32); }
         .wt-pay-btn:hover { box-shadow:0 10px 28px rgba(124,92,252,0.42); transform:translateY(-1px); }
         .wt-pay-btn:active { transform:scale(0.98); }
         .wt-pay-btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; box-shadow:none; }
@@ -226,7 +226,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                     <span
                       style={{
                         fontSize: 10,
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontWeight: 700,
                         color: "rgba(255,255,255,0.5)",
                         textTransform: "uppercase",
@@ -264,7 +264,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                   style={{
                     margin: "0 0 2px",
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -307,7 +307,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                   style={{
                     margin: "0 0 2px",
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -363,7 +363,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                     style={{
                       margin: "0 0 2px",
                       fontSize: 10,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.07em",
@@ -418,7 +418,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                     display: "block",
                     marginBottom: 8,
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -449,7 +449,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                     display: "block",
                     marginBottom: 10,
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -528,7 +528,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                 <span
                   style={{
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -546,7 +546,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                 style={{
                   margin: "0 0 12px",
                   fontSize: 10,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.07em",
@@ -580,7 +580,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
                     <span
                       style={{
                         fontSize: 11,
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontWeight: 600,
                         color: "#7c5cfc",
                       }}

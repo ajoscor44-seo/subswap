@@ -188,7 +188,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
               style={{
                 color: "#fff",
                 fontSize: 9,
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontWeight: 700,
               }}
             >
@@ -276,7 +276,7 @@ export const AvatarUploader: React.FC<AvatarUploaderProps> = ({
               style={{
                 margin: 0,
                 fontSize: 12,
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontWeight: 700,
                 color: "#7c5cfc",
               }}
@@ -423,14 +423,14 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         .st-input-wrap { position: relative; }
         .st-input-prefix {
           position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
-          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px;
+          font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px;
           color: #a78bfa; pointer-events: none;
         }
         .st-input-wrap .st-input { padding-left: 30px; }
 
         .st-label {
           display: block; margin-bottom: 8px;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.08em; color: #b8addb;
         }
 
@@ -439,7 +439,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           padding: 13px 28px; border-radius: 12px; border: none;
           background: linear-gradient(135deg, #1a1230, #2d1f6e);
           color: #fff; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 12px;
+          font-family: 'Outfit', sans-serif; font-size: 12px;
           font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
           transition: all 0.2s;
           box-shadow: 0 4px 14px rgba(26,18,48,0.2);
@@ -456,7 +456,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           display: inline-flex; align-items: center; gap: 8px;
           padding: 13px 24px; border-radius: 12px; border: none;
           background: #fef2f2; color: #ef4444; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 12px;
+          font-family: 'Outfit', sans-serif; font-size: 12px;
           font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
           transition: all 0.2s;
         }
@@ -617,7 +617,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     borderRadius: 7,
                     background: "#f0fdf4",
                     border: "1px solid #bbf7d0",
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 9,
                     fontWeight: 700,
                     textTransform: "uppercase",

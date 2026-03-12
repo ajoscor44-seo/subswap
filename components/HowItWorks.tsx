@@ -192,7 +192,7 @@ const StepCard: React.FC<{ step: Step; index: number; inView: boolean }> = ({
           />
           <span
             style={{
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 10,
               fontWeight: 700,
               textTransform: "uppercase",
@@ -517,7 +517,7 @@ export const HowItWorks: React.FC = () => {
                   />
                   <span
                     style={{
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontSize: 10,
                       fontWeight: 700,
                       textTransform: "uppercase",

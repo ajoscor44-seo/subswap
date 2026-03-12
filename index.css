@@ -11,7 +11,7 @@ body {
   color: #1a1230;
 }
 
-/* Utility class for Syne — use on headings, prices, labels */
+/* Utility class for headings, prices, labels */
 .font-display {
-  font-family: "Syne", sans-serif;
+  font-family: "Outfit", sans-serif;
 }

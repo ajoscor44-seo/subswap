@@ -191,11 +191,11 @@ export const DiscoverServices: React.FC = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
         .dcv-root { font-family: 'DM Sans', sans-serif; }
         .dcv-root * { box-sizing: border-box; }
-        .dcv-heading { font-family: 'Syne', sans-serif; }
+        .dcv-heading { font-family: 'Outfit', sans-serif; }
 
         .dcv-card {
           background: #ffffff; border: 1.5px solid #f0eef9; border-radius: 20px;
@@ -229,7 +229,7 @@ export const DiscoverServices: React.FC = () => {
 
         .dcv-join-btn {
           width: 100%; padding: 8px; border-radius: 10px;
-          font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+          font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 12px;
           letter-spacing: 0.04em; text-transform: uppercase; border: none;
           cursor: pointer; transition: all 0.2s ease;
           display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -250,7 +250,7 @@ export const DiscoverServices: React.FC = () => {
         .dcv-cat-badge {
           display: inline-block; padding: 2px 8px; border-radius: 6px;
           background: #f0eef9; color: #7c5cfc; font-size: 9px;
-          font-family: 'Syne', sans-serif; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.06em;
         }
 
@@ -414,7 +414,7 @@ export const DiscoverServices: React.FC = () => {
                   <span
                     style={{
                       fontSize: 11,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontWeight: 700,
                       textTransform: "uppercase",
                       letterSpacing: "0.06em",
@@ -481,7 +481,7 @@ export const DiscoverServices: React.FC = () => {
                         borderRadius: 11,
                         border: "1.5px solid #ede9fe",
                         background: "#fff",
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontSize: 12,
                         fontWeight: 700,
                         color: "#7c5cfc",
@@ -506,7 +506,7 @@ export const DiscoverServices: React.FC = () => {
                   marginTop: 18,
                   fontSize: 10,
                   color: "#c4b5fd",
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
@@ -694,7 +694,7 @@ export const DiscoverServices: React.FC = () => {
                         <p
                           style={{
                             margin: 0,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 800,
                             fontSize: 14,
                             color: "#1a1230",
@@ -707,7 +707,7 @@ export const DiscoverServices: React.FC = () => {
                           style={{
                             margin: 0,
                             fontSize: 8,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 700,
                             textTransform: "uppercase",
                             letterSpacing: "0.08em",
@@ -733,7 +733,7 @@ export const DiscoverServices: React.FC = () => {
                           <span
                             style={{
                               fontSize: 8,
-                              fontFamily: "'Syne',sans-serif",
+                              fontFamily: "'Outfit',sans-serif",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               color: "#f59e0b",
@@ -822,7 +822,7 @@ export const DiscoverServices: React.FC = () => {
                         <span
                           style={{
                             fontSize: 10,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 700,
                             color: low ? "#f59e0b" : "#7c5cfc",
                           }}

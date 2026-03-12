@@ -82,7 +82,7 @@ export const Hero: React.FC = () => {
           padding: 16px 32px; border-radius: 14px; border: none;
           background: linear-gradient(135deg, #1a1230 0%, #2d1f6e 100%);
           color: #fff; cursor: pointer;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 13px; font-weight: 800;
           text-transform: uppercase; letter-spacing: 0.07em;
           box-shadow: 0 8px 24px rgba(26,18,48,0.28);
@@ -103,7 +103,7 @@ export const Hero: React.FC = () => {
           padding: 16px 28px; border-radius: 14px;
           border: 1.5px solid #ede9fe; background: #fff;
           color: #7c5cfc; cursor: pointer;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 13px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.07em;
           transition: all 0.2s;
@@ -165,7 +165,7 @@ export const Hero: React.FC = () => {
           display: inline-flex; align-items: center; gap: 6px;
           padding: 6px 14px; border-radius: 99px;
           background: #f0fdf4; border: 1px solid #bbf7d0;
-          font-family: 'Syne', sans-serif; font-size: 11px;
+          font-family: 'Outfit', sans-serif; font-size: 11px;
           font-weight: 700; color: #16a34a;
           text-transform: uppercase; letter-spacing: 0.06em;
         }
@@ -439,7 +439,7 @@ export const Hero: React.FC = () => {
                   style={{
                     margin: 0,
                     fontSize: 11,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -511,7 +511,7 @@ export const Hero: React.FC = () => {
                       <span
                         style={{
                           fontSize: 11,
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontWeight: 700,
                           color: "#9b8fc2",
                           whiteSpace: "nowrap",

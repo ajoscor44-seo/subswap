@@ -92,7 +92,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         .inv2-add-btn {
           display: inline-flex; align-items: center; gap: 7px;
           padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.08em;
           transition: all 0.2s;
         }
@@ -113,7 +113,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
 
         .inv2-th {
           padding: 12px 18px;
-          font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.1em; color: #b8addb;
           background: #fafafe; border-bottom: 1.5px solid #f0eef9;
           white-space: nowrap;
@@ -140,7 +140,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
           width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
           background: #fff; color: #9b8fc2; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
           transition: all 0.2s;
         }
         .inv2-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
@@ -267,7 +267,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                 </span>
                 <span
                   style={{
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 9,
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
@@ -388,7 +388,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                             </span>
                             <span
                               style={{
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "'Outfit',sans-serif",
                                 fontSize: 9,
                                 fontWeight: 700,
                                 textTransform: "uppercase" as const,
@@ -408,7 +408,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                             padding: "3px 9px",
                             borderRadius: 7,
                             background: "#f5f3ff",
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 9,
                             fontWeight: 700,
                             textTransform: "uppercase" as const,
@@ -477,7 +477,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                           </div>
                           <span
                             style={{
-                              fontFamily: "'Syne',sans-serif",
+                              fontFamily: "'Outfit',sans-serif",
                               fontSize: 10,
                               fontWeight: 700,
                               color: "#9b8fc2",
@@ -558,7 +558,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                       />
                       <span
                         style={{
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase" as const,
