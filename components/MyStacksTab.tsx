@@ -57,7 +57,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
           display: flex; align-items: center; justify-content: center; gap: 8px;
           width: 100%; padding: 13px;
           border-radius: 12px; border: none; cursor: pointer;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 11px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.07em;
           transition: all 0.2s;
@@ -156,7 +156,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
               border: "1.5px solid #ede9fe",
               background: "#fff",
               cursor: "pointer",
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 11,
               fontWeight: 700,
               textTransform: "uppercase",
@@ -312,7 +312,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             borderRadius: 7,
                             background: "#f0fdf4",
                             border: "1px solid #bbf7d0",
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 9,
                             fontWeight: 700,
                             textTransform: "uppercase",
@@ -341,7 +341,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             borderRadius: 7,
                             background: timeData.urgent ? "#fffbeb" : "#f0eef9",
                             border: `1px solid ${timeData.urgent ? "#fde68a" : "#ede9fe"}`,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 9,
                             fontWeight: 700,
                             textTransform: "uppercase",
@@ -371,7 +371,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       <span
                         style={{
                           fontSize: 10,
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: "0.06em",
@@ -383,7 +383,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       <span
                         style={{
                           fontSize: 10,
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontWeight: 700,
                           color: timeData.urgent ? "#d97706" : "#7c5cfc",
                         }}
@@ -415,7 +415,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           style={{
                             margin: "0 0 1px",
                             fontSize: 9,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 700,
                             textTransform: "uppercase",
                             letterSpacing: "0.07em",
@@ -478,7 +478,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             style={{
                               margin: "0 0 1px",
                               fontSize: 9,
-                              fontFamily: "'Syne',sans-serif",
+                              fontFamily: "'Outfit',sans-serif",
                               fontWeight: 700,
                               textTransform: "uppercase",
                               letterSpacing: "0.07em",
@@ -611,7 +611,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                 background: "linear-gradient(135deg, #7c5cfc, #6366f1)",
                 color: "#fff",
                 cursor: "pointer",
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontSize: 12,
                 fontWeight: 700,
                 textTransform: "uppercase",

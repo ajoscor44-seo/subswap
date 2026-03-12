@@ -88,7 +88,7 @@ const ChartBar: React.FC<{
         ) : (
           <span
             style={{
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 11,
               fontWeight: 800,
               color: accent,
@@ -122,7 +122,7 @@ const ChartBar: React.FC<{
           </span>
           <span
             style={{
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 10,
               fontWeight: 700,
               color: accent,
@@ -219,7 +219,7 @@ const Section: React.FC<{
           <p
             style={{
               margin: 0,
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 10,
               fontWeight: 700,
               textTransform: "uppercase" as const,
@@ -375,7 +375,7 @@ export const OnboardingAnalytics: React.FC = () => {
             <h2
               style={{
                 margin: "0 0 4px",
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontSize: 18,
                 fontWeight: 800,
                 color: "#fff",
@@ -424,7 +424,7 @@ export const OnboardingAnalytics: React.FC = () => {
               <p
                 style={{
                   margin: "0 0 2px",
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 28,
                   fontWeight: 800,
                   color: "#fff",
@@ -437,7 +437,7 @@ export const OnboardingAnalytics: React.FC = () => {
               <p
                 style={{
                   margin: 0,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 9,
                   fontWeight: 700,
                   textTransform: "uppercase" as const,
@@ -505,7 +505,7 @@ export const OnboardingAnalytics: React.FC = () => {
               <p
                 style={{
                   margin: "0 0 5px",
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 9,
                   fontWeight: 700,
                   textTransform: "uppercase" as const,

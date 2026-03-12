@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
         }
 
         .ft-col-label {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.1em;
           color: #1a1230; margin: 0 0 16px;
@@ -90,6 +90,7 @@ const Footer: React.FC = () => {
       >
         {/* ── Top CTA band ── */}
         <div
+          hidden={!!user}
           style={{
             background:
               "linear-gradient(135deg, #1a1230 0%, #2d1f6e 50%, #3730a3 100%)",
@@ -163,7 +164,7 @@ const Footer: React.FC = () => {
                 color: "#fff",
                 cursor: "pointer",
                 flexShrink: 0,
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontSize: 12,
                 fontWeight: 700,
                 textTransform: "uppercase",
@@ -252,7 +253,7 @@ const Footer: React.FC = () => {
                     />
                     <span
                       style={{
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontSize: 9,
                         fontWeight: 700,
                         textTransform: "uppercase",
@@ -348,7 +349,7 @@ const Footer: React.FC = () => {
               style={{
                 margin: 0,
                 fontSize: 11,
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontWeight: 700,
                 textTransform: "uppercase",
                 letterSpacing: "0.1em",
@@ -366,7 +367,7 @@ const Footer: React.FC = () => {
               <span
                 style={{
                   fontSize: 11,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",

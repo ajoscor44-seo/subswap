@@ -106,7 +106,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       <style>{`
         .th-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
         .th-root * { box-sizing: border-box; }
-        .th-heading { font-family: 'Syne', sans-serif; }
+        .th-heading { font-family: 'Outfit', sans-serif; }
 
         /* Stat card */
         .th-stat {
@@ -124,7 +124,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         .th-pill {
           padding: 7px 16px;
           border-radius: 99px;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 11px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.06em;
           cursor: pointer; border: 1.5px solid #ede9fe;
@@ -167,14 +167,14 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
         .th-badge {
           display: inline-flex; align-items: center; gap: 5px;
           padding: 4px 10px; border-radius: 8px;
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 9px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.07em;
         }
 
         /* Amount */
-        .th-amount-pos { color: #16a34a; font-family: 'Syne', sans-serif; font-weight: 800; }
-        .th-amount-neg { color: #ef4444; font-family: 'Syne', sans-serif; font-weight: 800; }
+        .th-amount-pos { color: #16a34a; font-family: 'Outfit', sans-serif; font-weight: 800; }
+        .th-amount-neg { color: #ef4444; font-family: 'Outfit', sans-serif; font-weight: 800; }
 
         /* Icon circle */
         .th-icon-circle {
@@ -267,7 +267,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
           background: #fff; color: #9b8fc2; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
           transition: all 0.2s;
         }
         .th-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
@@ -342,7 +342,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 style={{
                   margin: "0 0 4px",
                   fontSize: 10,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.07em",
@@ -368,7 +368,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 style={{
                   margin: "0 0 4px",
                   fontSize: 10,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.07em",
@@ -394,7 +394,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                 style={{
                   margin: "0 0 4px",
                   fontSize: 10,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.07em",
@@ -474,7 +474,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     className="th-col-user"
                     style={{
                       fontSize: 9,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontWeight: 700,
                       textTransform: "uppercase" as const,
                       letterSpacing: "0.08em",
@@ -488,7 +488,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   className="th-col-type"
                   style={{
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.08em",
@@ -501,7 +501,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   className="th-col-amount"
                   style={{
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.08em",
@@ -514,7 +514,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   className="th-col-description"
                   style={{
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.08em",
@@ -527,7 +527,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                   className="th-col-date"
                   style={{
                     fontSize: 9,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
                     letterSpacing: "0.08em",
@@ -690,7 +690,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                             style={{
                               margin: "0 0 2px",
                               fontSize: 11,
-                              fontFamily: "'Syne',sans-serif",
+                              fontFamily: "'Outfit',sans-serif",
                               fontWeight: 700,
                               color: "#1a1230",
                               whiteSpace: "nowrap" as const,

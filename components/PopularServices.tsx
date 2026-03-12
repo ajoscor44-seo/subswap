@@ -53,7 +53,7 @@ export const PopularServices: React.FC = () => {
         }
 
         .ps-name {
-          font-family: 'Syne', sans-serif;
+          font-family: 'Outfit', sans-serif;
           font-size: 12px; font-weight: 700;
           color: #1a1230; letter-spacing: -0.01em;
           margin: 0 0 6px;
@@ -62,7 +62,7 @@ export const PopularServices: React.FC = () => {
         .ps-badge {
           display: inline-flex; align-items: center; gap: 4px;
           padding: 3px 8px; border-radius: 99px;
-          font-family: 'Syne', sans-serif; font-size: 9px;
+          font-family: 'Outfit', sans-serif; font-size: 9px;
           font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
           background: #f0eef9; color: #a78bfa;
         }
@@ -225,7 +225,7 @@ export const PopularServices: React.FC = () => {
                     />
                     <span
                       style={{
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontSize: 10,
                         fontWeight: 700,
                         textTransform: "uppercase",

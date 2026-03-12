@@ -117,7 +117,7 @@ const ComingSoon: React.FC = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap');
 
         @keyframes float {
           from { transform: translateY(0px) scale(1); }
@@ -219,7 +219,7 @@ const ComingSoon: React.FC = () => {
           <h1
             className="reveal delay-2 text-4xl sm:text-5xl md:text-7xl font-black leading-[0.95] tracking-tight mb-6"
             style={{
-              fontFamily: "'Syne', sans-serif",
+              fontFamily: "'Outfit', sans-serif",
               color: "#f0f0ff",
             }}
           >

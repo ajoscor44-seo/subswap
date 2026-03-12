@@ -42,7 +42,7 @@ export const Features: React.FC = () => {
         .ft-stat-badge {
           display: inline-flex; align-items: center; gap: 5px;
           padding: 4px 10px; border-radius: 8px;
-          font-family: 'Syne', sans-serif; font-size: 10px;
+          font-family: 'Outfit', sans-serif; font-size: 10px;
           font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em;
           margin-bottom: 14px;
         }
@@ -279,7 +279,7 @@ export const Features: React.FC = () => {
                   style={{
                     margin: 0,
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.09em",

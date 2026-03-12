@@ -83,7 +83,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         }
         .txn2-filter-btn {
           padding: 7px 14px; border-radius: 9px; border: none; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.08em;
           background: none; color: #b8addb; transition: all 0.18s;
           white-space: nowrap;
@@ -98,7 +98,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
           display: flex; align-items: center; gap: 7px;
           padding: 9px 16px; border-radius: 11px;
           border: 1.5px solid #ede9fe; background: #fff; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.07em; color: #9b8fc2;
           transition: all 0.18s;
         }
@@ -106,7 +106,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
 
         .txn2-th {
           padding: 12px 18px;
-          font-family: 'Syne', sans-serif; font-size: 9px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 9px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.1em; color: #b8addb;
           background: #fafafe; border-bottom: 1.5px solid #f0eef9; white-space: nowrap;
         }
@@ -123,7 +123,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
           width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
           background: #fff; color: #9b8fc2; cursor: pointer;
           display: flex; align-items: center; justify-content: center;
-          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
           transition: all 0.2s;
         }
         .txn2-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
@@ -218,7 +218,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                 <p
                   style={{
                     margin: 0,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 9,
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
@@ -342,7 +342,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                               padding: "3px 9px",
                               borderRadius: 7,
                               background: meta.light,
-                              fontFamily: "'Syne',sans-serif",
+                              fontFamily: "'Outfit',sans-serif",
                               fontSize: 9,
                               fontWeight: 700,
                               textTransform: "uppercase" as const,
@@ -446,7 +446,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                       />
                       <span
                         style={{
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontSize: 11,
                           fontWeight: 700,
                           textTransform: "uppercase" as const,

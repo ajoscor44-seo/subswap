@@ -12,12 +12,12 @@ import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
 
 export const Dashboard: React.FC = () => {
-  const { 
-    user, 
-    logout, 
-    refreshProfile, 
-    subscriptions: contextSubs, 
-    refreshSubscriptions 
+  const {
+    user,
+    logout,
+    refreshProfile,
+    subscriptions: contextSubs,
+    refreshSubscriptions,
   } = useAuth();
   const { dashboardTab, changeTab, goTo } = useNavigator();
 
@@ -67,7 +67,7 @@ export const Dashboard: React.FC = () => {
     try {
       // We rely on useAuth for subscriptions now, but we can trigger a refresh
       if (refreshSubscriptions) await refreshSubscriptions();
-      
+
       const { data: txs } = await supabase
         .from("transactions")
         .select("*")
@@ -75,7 +75,7 @@ export const Dashboard: React.FC = () => {
         .order("created_at", { ascending: false })
         .limit(3);
       if (txs) setRecentTransactions(txs);
-      
+
       if (refreshProfile) await refreshProfile();
     } catch (err: any) {
       console.error("Dashboard sync error:", err);
@@ -214,7 +214,7 @@ export const Dashboard: React.FC = () => {
               <span
                 style={{
                   fontSize: 11,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontWeight: 700,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
@@ -231,7 +231,7 @@ export const Dashboard: React.FC = () => {
             style={{
               margin: "0 0 4px",
               fontSize: 9,
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontWeight: 700,
               textTransform: "uppercase",
               letterSpacing: "0.1em",
@@ -267,7 +267,7 @@ export const Dashboard: React.FC = () => {
               border: "none",
               background: "rgba(255,255,255,0.12)",
               color: "rgba(255,255,255,0.85)",
-              fontFamily: "'Syne',sans-serif",
+              fontFamily: "'Outfit',sans-serif",
               fontSize: 10,
               fontWeight: 700,
               textTransform: "uppercase",
@@ -296,7 +296,7 @@ export const Dashboard: React.FC = () => {
           style={{
             margin: "0 4px 8px 4px",
             fontSize: 9,
-            fontFamily: "'Syne',sans-serif",
+            fontFamily: "'Outfit',sans-serif",
             fontWeight: 700,
             textTransform: "uppercase",
             letterSpacing: "0.1em",
@@ -428,7 +428,7 @@ export const Dashboard: React.FC = () => {
         .db-mobile-nav { display: none; position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1.5px solid #f0eef9; z-index: 85; padding: 8px 8px env(safe-area-inset-bottom,12px); }
         .db-mob-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: none; cursor: pointer; padding: 5px 4px; border-radius: 10px; transition: background 0.15s; flex: 1; }
         .db-mob-btn .db-mob-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.18s; color: #c4b5fd; }
-        .db-mob-btn span { font-size: 9px; font-family: 'Syne',sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #c4b5fd; transition: color 0.15s; }
+        .db-mob-btn span { font-size: 9px; font-family: 'Outfit',sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: #c4b5fd; transition: color 0.15s; }
         .db-mob-btn.active .db-mob-icon { background: linear-gradient(135deg,#7c5cfc,#6366f1); color: #fff; box-shadow: 0 3px 8px rgba(124,92,252,0.3); }
         .db-mob-btn.active span { color: #7c5cfc; }
 
@@ -564,7 +564,7 @@ export const Dashboard: React.FC = () => {
             </div>
             <span
               style={{
-                fontFamily: "'Syne',sans-serif",
+                fontFamily: "'Outfit',sans-serif",
                 fontSize: 14,
                 fontWeight: 800,
                 color: "#1a1230",
@@ -617,7 +617,7 @@ export const Dashboard: React.FC = () => {
               <p
                 style={{
                   margin: "0 0 1px",
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 11,
                   fontWeight: 800,
                   color: "#1a1230",
@@ -629,7 +629,7 @@ export const Dashboard: React.FC = () => {
               <p
                 style={{
                   margin: 0,
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 8,
                   fontWeight: 700,
                   textTransform: "uppercase",

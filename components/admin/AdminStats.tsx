@@ -91,7 +91,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         }
         .ast2-panel-title {
           margin: 0 0 18px; display: flex; align-items: center; gap: 8px;
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.1em; color: #b8addb;
         }
         .ast2-inv-bar-bg {
@@ -133,18 +133,18 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         }
         .ast2-kpi-watermark {
           position: absolute; right: 20px; top: 16px;
-          font-size: 80px; font-family: 'Syne', sans-serif; font-weight: 800;
+          font-size: 80px; font-family: 'Outfit', sans-serif; font-weight: 800;
           line-height: 1; pointer-events: none; z-index: 0;
           color: rgba(255,255,255,0.04);
         }
         .ast2-kpi-label {
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.12em;
           color: rgba(255,255,255,0.35); margin: 0 0 8px;
           position: relative; z-index: 1;
         }
         .ast2-kpi-value {
-          font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800;
+          font-family: 'Outfit', sans-serif; font-size: 36px; font-weight: 800;
           color: #fff; letter-spacing: -0.03em; line-height: 1;
           margin: 0 0 6px; position: relative; z-index: 1;
         }
@@ -181,12 +181,12 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
           background:rgba(124,92,252,0.1); pointer-events:none;
         }
         .ast2-mini-label {
-          font-family:'Syne',sans-serif; font-size:9px; font-weight:700;
+          font-family:'Outfit',sans-serif; font-size:9px; font-weight:700;
           text-transform:uppercase; letter-spacing:0.12em;
           color:rgba(255,255,255,0.3); margin:0 0 6px; position:relative; z-index:1;
         }
         .ast2-mini-value {
-          font-family:'Syne',sans-serif; font-size:26px; font-weight:800;
+          font-family:'Outfit',sans-serif; font-size:26px; font-weight:800;
           color:#fff; letter-spacing:-0.03em; line-height:1;
           margin:0 0 4px; position:relative; z-index:1;
         }
@@ -217,7 +217,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
         .ast2-activity-text { flex:1; min-width:0; overflow:hidden; }
         .ast2-activity-desc { margin:0 0 2px; font-size:12px; font-weight:500; color:#1a1230; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
         .ast2-activity-time { margin:0; font-size:10px; font-family:monospace; color:#c4b5fd; }
-        .ast2-activity-amt  { font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; font-family:'Syne',sans-serif; }
+        .ast2-activity-amt  { font-size:13px; font-weight:700; flex-shrink:0; white-space:nowrap; font-family:'Outfit',sans-serif; }
 
         @media (max-width: 900px) {
           .ast2-kpi-row  { grid-template-columns:1fr 1fr; }
@@ -436,7 +436,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                             color: "#c4b5fd",
                             marginLeft: 8,
                             flexShrink: 0,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 700,
                           }}
                         >
@@ -453,7 +453,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                     <span
                       style={{
                         fontSize: 10,
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontWeight: 700,
                         color: barColor,
                         flexShrink: 0,
@@ -612,7 +612,7 @@ export const AdminStats: React.FC<AdminStatsProps> = ({
                   <p
                     style={{
                       margin: 0,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontSize: 9,
                       fontWeight: 700,
                       textTransform: "uppercase" as const,

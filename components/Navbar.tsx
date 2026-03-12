@@ -65,7 +65,7 @@ const Navbar: React.FC = () => {
           display: flex; align-items: center; gap: 6px;
           padding: 8px 14px; border-radius: 10px; border: none;
           background: none; cursor: pointer;
-          font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.06em;
           color: #9b8fc2; transition: all 0.18s;
         }
@@ -263,7 +263,7 @@ const Navbar: React.FC = () => {
                     <p
                       style={{
                         margin: "0 0 2px",
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontSize: 14,
                         fontWeight: 700,
                         color: "#fff",
@@ -298,7 +298,7 @@ const Navbar: React.FC = () => {
                       cursor: "pointer",
                       background: "rgba(255,255,255,0.12)",
                       flexShrink: 0,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontSize: 10,
                       fontWeight: 700,
                       textTransform: "uppercase" as const,
@@ -321,7 +321,7 @@ const Navbar: React.FC = () => {
               <p
                 style={{
                   margin: "0 20px 6px",
-                  fontFamily: "'Syne',sans-serif",
+                  fontFamily: "'Outfit',sans-serif",
                   fontSize: 9,
                   fontWeight: 700,
                   textTransform: "uppercase" as const,
@@ -375,7 +375,7 @@ const Navbar: React.FC = () => {
                     display: "flex",
                     alignItems: "center",
                     gap: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 11,
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
@@ -404,7 +404,7 @@ const Navbar: React.FC = () => {
                     alignItems: "center",
                     justifyContent: "center",
                     gap: 8,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 12,
                     fontWeight: 700,
                     textTransform: "uppercase" as const,
@@ -462,7 +462,7 @@ const Navbar: React.FC = () => {
                       goTo("dashboard");
                       changeTab("wallet");
                     }}
-                    className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600 font-[Syne] text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all"
+                    className="hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl border border-emerald-100 bg-emerald-50 text-emerald-600 font-[Outfit] text-[10px] font-bold uppercase tracking-widest hover:bg-emerald-100 transition-all"
                   >
                     <i className="fa-solid fa-plus-circle" />
                     Top Up
@@ -499,7 +499,7 @@ const Navbar: React.FC = () => {
                         <p
                           style={{
                             margin: "0 0 1px",
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 13,
                             fontWeight: 800,
                             color: "#1a1230",
@@ -511,7 +511,7 @@ const Navbar: React.FC = () => {
                         <p
                           style={{
                             margin: 0,
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontSize: 9,
                             fontWeight: 700,
                             textTransform: "uppercase" as const,
@@ -540,7 +540,7 @@ const Navbar: React.FC = () => {
                             <p
                               style={{
                                 margin: "0 0 2px",
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "'Outfit',sans-serif",
                                 fontSize: 9,
                                 fontWeight: 700,
                                 textTransform: "uppercase" as const,
@@ -553,10 +553,14 @@ const Navbar: React.FC = () => {
                             <p
                               style={{
                                 margin: 0,
-                                fontFamily: "'Syne',sans-serif",
+                                fontFamily: "'Outfit',sans-serif",
                                 fontSize: 14,
                                 fontWeight: 800,
                                 color: "#1a1230",
+
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap" as const,
                               }}
                             >
                               @{user.username}
@@ -634,7 +638,7 @@ const Navbar: React.FC = () => {
               ) : (
                 <button
                   onClick={openLoginModal}
-                  className="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl border-none cursor-pointer font-[Syne] text-[11px] font-bold uppercase tracking-[0.08em] text-white transition-all hover:-translate-y-px"
+                  className="hidden lg:flex items-center gap-2 px-5 py-2.5 rounded-xl border-none cursor-pointer font-[Outfit] text-[11px] font-bold uppercase tracking-[0.08em] text-white transition-all hover:-translate-y-px"
                   style={{
                     background: "linear-gradient(135deg,#7c5cfc,#6366f1)",
                     boxShadow: "0 4px 14px rgba(124,92,252,0.35)",
@@ -660,7 +664,7 @@ const Navbar: React.FC = () => {
               {!user && !loading && (
                 <button
                   onClick={openLoginModal}
-                  className="lg:hidden flex items-center gap-1.5 px-4 py-2.5 rounded-xl border-none cursor-pointer font-[Syne] text-[10px] font-bold uppercase tracking-[0.07em] text-white"
+                  className="lg:hidden flex items-center gap-1.5 px-4 py-2.5 rounded-xl border-none cursor-pointer font-[Outfit] text-[10px] font-bold uppercase tracking-[0.07em] text-white"
                   style={{
                     background: "linear-gradient(135deg,#7c5cfc,#6366f1)",
                     boxShadow: "0 3px 10px rgba(124,92,252,0.3)",

@@ -47,14 +47,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 
         .ov-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
         .ov-root * { box-sizing: border-box; }
-        .ov-heading { font-family: 'Syne', sans-serif; }
+        .ov-heading { font-family: 'Outfit', sans-serif; }
 
         .ov-label {
-          font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
           text-transform: uppercase; letter-spacing: 0.12em; color: #a78bfa; margin: 0 0 4px;
         }
 
@@ -72,12 +72,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         }
         .ov-hero::before { content:''; position:absolute; top:-60px; right:-60px; width:260px; height:260px; border-radius:50%; background:rgba(255,255,255,0.03); }
         .ov-hero::after  { content:''; position:absolute; bottom:-80px; left:-30px; width:300px; height:300px; border-radius:50%; background:rgba(124,92,252,0.12); }
-        .ov-hero-naira { position:absolute; right:28px; top:28px; font-size:100px; color:rgba(255,255,255,0.04); font-family:'Syne',sans-serif; font-weight:800; line-height:1; pointer-events:none; z-index:0; }
+        .ov-hero-naira { position:absolute; right:28px; top:28px; font-size:100px; color:rgba(255,255,255,0.04); font-family:'Outfit',sans-serif; font-weight:800; line-height:1; pointer-events:none; z-index:0; }
 
         .ov-btn-primary {
           display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:none;
           background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; cursor:pointer;
-          font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
+          font-family:'Outfit',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em;
           transition:all 0.2s; box-shadow:0 4px 16px rgba(124,92,252,0.38);
         }
         .ov-btn-primary:hover { box-shadow:0 8px 24px rgba(124,92,252,0.5); transform:translateY(-1px); }
@@ -85,7 +85,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         .ov-btn-ghost {
           display:inline-flex; align-items:center; gap:8px; padding:12px 22px; border-radius:12px; border:none;
           background:rgba(255,255,255,0.1); backdrop-filter:blur(8px); color:rgba(255,255,255,0.8); cursor:pointer;
-          font-family:'Syne',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; transition:all 0.2s;
+          font-family:'Outfit',sans-serif; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; transition:all 0.2s;
         }
         .ov-btn-ghost:hover { background:rgba(255,255,255,0.18); color:#fff; }
 
@@ -100,7 +100,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         .ov-stack-avatar { width:44px; height:44px; border-radius:50%; border:3px solid #fff; object-fit:cover; box-shadow:0 2px 8px rgba(124,92,252,0.15); transition:transform 0.2s; flex-shrink:0; }
         .ov-stack-avatar:hover { transform:scale(1.12) translateY(-3px); z-index:10; }
 
-        .ov-link { font-family:'Syne',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#7c5cfc; background:none; border:none; cursor:pointer; padding:4px 10px; border-radius:8px; transition:background 0.15s; }
+        .ov-link { font-family:'Outfit',sans-serif; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#7c5cfc; background:none; border:none; cursor:pointer; padding:4px 10px; border-radius:8px; transition:background 0.15s; }
         .ov-link:hover { background:#f0eef9; }
 
         .ov-bar-bg { height:5px; border-radius:99px; background:#f0eef9; overflow:hidden; margin-top:10px; }
@@ -297,7 +297,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <span
                   style={{
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -309,7 +309,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                 <span
                   style={{
                     fontSize: 11,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 800,
                     color: "#7c5cfc",
                   }}
@@ -394,7 +394,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                   style={{
                     margin: "0 0 2px",
                     fontSize: 10,
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontWeight: 700,
                     textTransform: "uppercase",
                     letterSpacing: "0.07em",
@@ -504,7 +504,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                             margin: 0,
                             fontSize: 10,
                             color: "#b8addb",
-                            fontFamily: "'Syne',sans-serif",
+                            fontFamily: "'Outfit',sans-serif",
                             fontWeight: 600,
                             textTransform: "uppercase",
                             letterSpacing: "0.05em",
@@ -614,7 +614,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     marginBottom: 18,
                   }}
                 >
-                  {activeSubscriptions.slice(0, 8).map((sub, i) => (
+                  {activeSubscriptions.slice(0, 7).map((sub, i) => (
                     <img
                       key={i}
                       src={sub.master_accounts?.icon_url}
@@ -627,7 +627,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       }}
                     />
                   ))}
-                  {activeSubscriptions.length > 8 && (
+                  {activeSubscriptions.length > 7 && (
                     <div
                       className="ov-stack-avatar"
                       style={{
@@ -639,13 +639,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                     >
                       <span
                         style={{
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontWeight: 800,
                           fontSize: 11,
                           color: "#7c5cfc",
                         }}
                       >
-                        +{activeSubscriptions.length - 8}
+                        +{activeSubscriptions.length - 7}
                       </span>
                     </div>
                   )}
@@ -698,7 +698,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
                       <span
                         style={{
                           fontSize: 10,
-                          fontFamily: "'Syne',sans-serif",
+                          fontFamily: "'Outfit',sans-serif",
                           fontWeight: 700,
                           color: "#10b981",
                           background: "#f0fdf4",

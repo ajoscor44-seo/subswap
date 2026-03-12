@@ -273,7 +273,7 @@ const AboutUs: React.FC = () => {
                         borderRadius: 8,
                         background: "#f5f3ff",
                         border: "1px solid #ede9fe",
-                        fontFamily: "'Syne',sans-serif",
+                        fontFamily: "'Outfit',sans-serif",
                         fontSize: 10,
                         fontWeight: 700,
                         textTransform: "uppercase",
@@ -405,7 +405,7 @@ const AboutUs: React.FC = () => {
                   <p
                     style={{
                       margin: 0,
-                      fontFamily: "'Syne',sans-serif",
+                      fontFamily: "'Outfit',sans-serif",
                       fontSize: 9,
                       fontWeight: 700,
                       textTransform: "uppercase",
@@ -586,7 +586,7 @@ const AboutUs: React.FC = () => {
                     background: "linear-gradient(135deg,#7c5cfc,#6366f1)",
                     color: "#fff",
                     cursor: "pointer",
-                    fontFamily: "'Syne',sans-serif",
+                    fontFamily: "'Outfit',sans-serif",
                     fontSize: 12,
                     fontWeight: 700,
                     textTransform: "uppercase",
