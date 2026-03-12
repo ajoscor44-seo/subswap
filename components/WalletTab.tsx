@@ -34,7 +34,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 
         .wt-root { font-family: 'DM Sans', sans-serif; color: #1a1230; }
         .wt-root * { box-sizing: border-box; }
@@ -58,7 +58,7 @@ const WalletTab: React.FC<WalletTabProps> = ({
 
         .wt-quick-btn { padding:13px 10px; border-radius:12px; border:1.5px solid #ede9fe; background:#fff; font-family:'Outfit',sans-serif; font-size:13px; font-weight:700; color:#7c5cfc; cursor:pointer; transition:all 0.2s; text-align:center; }
         .wt-quick-btn:hover { border-color:#7c5cfc; background:#f5f3ff; box-shadow:0 4px 12px rgba(124,92,252,0.12); transform:translateY(-1px); }
-        .wt-quick-btn.selected { background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(124,92,252,0.3); }
+        .wt-quick-btn.selected { background:linear-gradient(135deg,#7c5cfc,#6366f1); color:#fff; border-color:transparent; box-shadow:0 4px 14px rgba(124,92,252,0.25); }
 
         .wt-pay-btn { width:100%; padding:16px; border-radius:14px; border:none; background:linear-gradient(135deg,#7c5cfc 0%,#6366f1 100%); color:#fff; cursor:pointer; font-family:'Outfit',sans-serif; font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; display:flex; align-items:center; justify-content:center; gap:10px; transition:all 0.2s; box-shadow:0 6px 20px rgba(124,92,252,0.32); }
         .wt-pay-btn:hover { box-shadow:0 10px 28px rgba(124,92,252,0.42); transform:translateY(-1px); }

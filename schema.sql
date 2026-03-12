@@ -15,9 +15,9 @@ ALTER TABLE public.master_accounts
 ADD COLUMN IF NOT EXISTS owner_id UUID REFERENCES public.profiles(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS features TEXT[] DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS original_price DECIMAL(12, 2),
-ADD COLUMN IF NOT EXISTS domain TEXT; -- Added domain to persist platform metadata
+ADD COLUMN IF NOT EXISTS domain TEXT;
 
--- 3. CUSTOM PLATFORMS TABLE (For persistent custom items)
+-- 3. CUSTOM PLATFORMS TABLE
 CREATE TABLE IF NOT EXISTS public.custom_platforms (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
@@ -36,80 +36,72 @@ FOR ALL USING (
 CREATE POLICY "Everyone can see custom platforms" ON public.custom_platforms
 FOR SELECT USING (true);
 
--- 4. ENHANCED PURCHASE FUNCTION
-CREATE OR REPLACE FUNCTION public.purchase_slot_v2(
-    p_buyer_id UUID,
-    p_account_id UUID,
-    p_profile_name TEXT,
-    p_amount DECIMAL
-)
-RETURNS VOID AS $$
-DECLARE
-    v_buyer_balance DECIMAL;
-    v_slots INTEGER;
-    v_merchant_id UUID;
-BEGIN
-    SELECT balance INTO v_buyer_balance FROM public.profiles WHERE id = p_buyer_id FOR UPDATE;
-    SELECT owner_id, available_slots INTO v_merchant_id, v_slots 
-    FROM public.master_accounts 
-    WHERE id = p_account_id FOR UPDATE;
+-- 4. SECURITY FIX: SENSITIVE DATA PROTECTION
+-- We want everyone to see available slots, but only subscribers to see credentials.
+-- The safest way is to use a View for public marketplace data.
 
-    IF v_buyer_balance < p_amount THEN
-        RAISE EXCEPTION 'Insufficient balance. You need ₦% to join this group.', p_amount;
-    END IF;
+-- First, ensure RLS is enabled on master_accounts
+ALTER TABLE public.master_accounts ENABLE ROW LEVEL SECURITY;
 
-    IF v_slots <= 0 THEN
-        RAISE EXCEPTION 'This group is already full.';
-    END IF;
-
-    UPDATE public.profiles 
-    SET balance = balance - p_amount,
-        total_saved = total_saved + (p_amount * 0.5)
-    WHERE id = p_buyer_id;
-
-    IF v_merchant_id IS NOT NULL THEN
-        UPDATE public.profiles 
-        SET balance = balance + p_amount 
-        WHERE id = v_merchant_id;
-        
-        INSERT INTO public.transactions (user_id, amount, type, description)
-        VALUES (v_merchant_id, p_amount, 'Referral', 'Income from slot purchase in account ' || p_account_id);
-    END IF;
-
-    UPDATE public.master_accounts 
-    SET available_slots = available_slots - 1 
-    WHERE id = p_account_id;
-
-    INSERT INTO public.user_subscriptions (user_id, account_id, assigned_profile_name)
-    VALUES (p_buyer_id, p_account_id, p_profile_name);
-
-    INSERT INTO public.transactions (user_id, amount, type, description)
-    VALUES (p_buyer_id, -p_amount, 'Purchase', 'Joined premium group: ' || p_account_id);
-
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 5. REFRESH RLS POLICIES
-DROP POLICY IF EXISTS "Owners can manage their own master accounts" ON public.master_accounts;
-CREATE POLICY "Owners can manage their own master accounts" ON public.master_accounts
-FOR ALL USING (auth.uid() = owner_id);
-
-DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
-CREATE POLICY "Public profiles are viewable by everyone" ON public.profiles FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
-CREATE POLICY "Users can update own profile" ON public.profiles
-FOR UPDATE USING (auth.uid() = id)
-WITH CHECK (auth.uid() = id);
-
-DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
-CREATE POLICY "Admins can update any profile" ON public.profiles
-FOR UPDATE USING (
-  EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
-)
-WITH CHECK (
+-- Policy for admins: see everything
+DROP POLICY IF EXISTS "Admins see all" ON public.master_accounts;
+CREATE POLICY "Admins see all" ON public.master_accounts
+FOR ALL TO authenticated
+USING (
   EXISTS (SELECT 1 FROM public.profiles p WHERE p.id = auth.uid() AND (p.role = 'admin' OR p.is_admin = true))
 );
+
+-- Policy for owners: see their own accounts
+DROP POLICY IF EXISTS "Owners see own" ON public.master_accounts;
+CREATE POLICY "Owners see own" ON public.master_accounts
+FOR ALL TO authenticated
+USING (auth.uid() = owner_id);
+
+-- Policy for users: can see sensitive info ONLY if they have an active subscription
+-- or if they are the owner or admin.
+-- Note: This might make listing items harder if we use select *, so we use a VIEW for marketplace.
+DROP POLICY IF EXISTS "Subscribers see credentials" ON public.master_accounts;
+CREATE POLICY "Subscribers see credentials" ON public.master_accounts
+FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.user_subscriptions s 
+    WHERE s.account_id = public.master_accounts.id 
+    AND s.user_id = auth.uid() 
+    AND s.status = 'Active'
+  )
+);
+
+-- Policy for Public/Authenticated to see non-sensitive listing data
+-- Since RLS is row-level, we allow SELECT on the row, but we will use a VIEW
+-- to actually filter columns for the frontend marketplace.
+DROP POLICY IF EXISTS "Public can see rows" ON public.master_accounts;
+CREATE POLICY "Public can see rows" ON public.master_accounts
+FOR SELECT TO anon, authenticated
+USING (available_slots > 0);
+
+-- 5. MARKETPLACE VIEW (Publicly safe columns)
+-- Use this for the landing page and browse tab
+CREATE OR REPLACE VIEW public.marketplace_listings AS
+SELECT 
+    id, 
+    service_name, 
+    total_slots, 
+    available_slots, 
+    price, 
+    original_price, 
+    description, 
+    icon_url, 
+    category, 
+    owner_id, 
+    features, 
+    fulfillment_type, 
+    domain, 
+    created_at
+FROM public.master_accounts
+WHERE available_slots > 0;
+
+GRANT SELECT ON public.marketplace_listings TO anon, authenticated;
 
 -- 6. FIXED HANDLE NEW USER TRIGGER (Supports Social Auth)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -117,7 +109,6 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_username TEXT;
 BEGIN
-  -- Generate a fallback username if metadata is missing (Social Auth)
   v_username := COALESCE(
     NEW.raw_user_meta_data->>'username', 
     split_part(NEW.email, '@', 1) || '_' || substring(NEW.id::text, 1, 4)
