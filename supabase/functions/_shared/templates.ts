@@ -8,8 +8,6 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const APP_BASE_URL =
-  (globalThis as any)?.Deno?.env?.get?.("APP_URL") ?? "https://discountzar.com";
 const LOGO_URL = `https://discountzar.com/icons/icon-192x192.png`;
 
 function layout(
@@ -175,8 +173,8 @@ export function purchaseEmail(opts: {
       </td></tr>
     </table>
 
-    <table cellpadding="0" cellspacing="0" style="width:100%;background:#fafafe;border:1.5px solid #f0eef9;border-radius:12px;margin-bottom:20px;"><tbody>
-      ${infoRow("Amount Charged", \`₦\${opts.price.toLocaleString()}\`)}
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafe;border:1.5px solid #f0eef9;border-radius:12px;margin-bottom:20px;"><tbody>
+      ${infoRow("Amount Charged", `₦${Number(opts.price).toLocaleString()}`)}
       ${infoRow("Service", safeServiceName)}
       ${infoRow("Fulfillment", safeFulfillmentType)}
       ${infoRow("Date", new Date().toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" }))}
@@ -185,8 +183,8 @@ export function purchaseEmail(opts: {
     <p style="margin:0 0 6px;font-size:12px;color:#9b8fc2;line-height:1.6;">
       ⚠️ <strong>Keep these credentials private.</strong> Issues? Email <a href="mailto:support@discountzar.com" style="color:#7c5cfc;">support@discountzar.com</a>
     </p>
-    \${btn("Go to Dashboard", "https://discountzar.com")}
-  \`);
+    ${btn("Go to Dashboard", "https://discountzar.com")}
+  `);
 }
 
 export function walletFundedEmail(opts: {
@@ -195,33 +193,36 @@ export function walletFundedEmail(opts: {
   newBalance: number;
 }) {
   const safeUsername = escapeHtml(opts.username);
-  return layout(\`
+  const amount = Number(opts.amount);
+  const newBalance = Number(opts.newBalance);
+
+  return layout(`
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">Wallet credited ✅</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#9b8fc2;line-height:1.7;">
-      Hey <strong style="color:#1a1230;">@\${safeUsername}</strong> — your wallet has been funded.
+      Hey <strong style="color:#1a1230;">@${safeUsername}</strong> — your wallet has been funded.
     </p>
-    <table cellpadding="0" cellspacing="0" style="width:100%;background:linear-gradient(135deg,#052e16,#14532d);border-radius:16px;margin-bottom:24px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#052e16,#14532d);border-radius:16px;margin-bottom:24px;">
       <tr><td style="padding:28px;text-align:center;">
         <p style="margin:0 0 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:rgba(255,255,255,0.35);">Amount Added</p>
-        <p style="margin:0;font-size:40px;font-weight:800;color:#34d399;letter-spacing:-0.03em;">₦\${opts.amount.toLocaleString()}</p>
+        <p style="margin:0;font-size:40px;font-weight:800;color:#34d399;letter-spacing:-0.03em;">₦${amount.toLocaleString()}</p>
       </td></tr>
     </table>
-    <table cellpadding="0" cellspacing="0" style="width:100%;background:#fafafe;border:1.5px solid #f0eef9;border-radius:12px;margin-bottom:24px;"><tbody>
-      \${infoRow("Amount Credited", \`₦\${opts.amount.toLocaleString()}\`)}
-      \${infoRow("New Balance", \`₦\${opts.newBalance.toLocaleString()}\`)}
-      \${infoRow("Date", new Date().toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" }))}
+    <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafafe;border:1.5px solid #f0eef9;border-radius:12px;margin-bottom:24px;"><tbody>
+      ${infoRow("Amount Credited", `₦${amount.toLocaleString()}`)}
+      ${infoRow("New Balance", `₦${newBalance.toLocaleString()}`)}
+      ${infoRow("Date", new Date().toLocaleDateString("en-NG", { day: "numeric", month: "long", year: "numeric" }))}
     </tbody></table>
-    \${btn("Browse Slots", "https://discountzar.com")}
-  \`);
+    ${btn("Browse Slots", "https://discountzar.com")}
+  `);
 }
 
 export function accountBannedEmail(username: string) {
   const safeUsername = escapeHtml(username);
   return layout(
-    \`
+    `
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">Account restricted</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#9b8fc2;line-height:1.7;">
-      Hi <strong style="color:#1a1230;">@\${safeUsername}</strong> — your account has been restricted due to a terms of service violation.
+      Hi <strong style="color:#1a1230;">@${safeUsername}</strong> — your account has been restricted due to a terms of service violation.
     </p>
     <table cellpadding="0" cellspacing="0" style="width:100%;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;margin-bottom:24px;">
       <tr><td style="padding:20px 24px;">
@@ -230,18 +231,18 @@ export function accountBannedEmail(username: string) {
         </p>
       </td></tr>
     </table>
-    \${btn("Contact Support", "mailto:support@discountzar.com")}
-  \`,
+    ${btn("Contact Support", "mailto:support@discountzar.com")}
+  `,
     "This is an important account notice from DiscountZAR.",
   );
 }
 
 export function accountRestoredEmail(username: string) {
   const safeUsername = escapeHtml(username);
-  return layout(\`
+  return layout(`
     <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">Account restored ✅</h1>
     <p style="margin:0 0 20px;font-size:14px;color:#9b8fc2;line-height:1.7;">
-      Hi <strong style="color:#1a1230;">@\${safeUsername}</strong> — your account has been fully restored. Welcome back!
+      Hi <strong style="color:#1a1230;">@${safeUsername}</strong> — your account has been fully restored. Welcome back!
     </p>
     <table cellpadding="0" cellspacing="0" style="width:100%;background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;margin-bottom:24px;">
       <tr><td style="padding:20px 24px;">
@@ -250,8 +251,8 @@ export function accountRestoredEmail(username: string) {
         </p>
       </td></tr>
     </table>
-    \${btn("Log In Now", "https://discountzar.com")}
-  \`);
+    ${btn("Log In Now", "https://discountzar.com")}
+  `);
 }
 
 export function adminMessageEmail(opts: {
@@ -263,17 +264,17 @@ export function adminMessageEmail(opts: {
   const safeSubject = escapeHtml(opts.subject);
   const safeMessage = escapeHtml(opts.message);
   return layout(
-    \`
-    <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">\${safeSubject}</h1>
-    <p style="margin:0 0 20px;font-size:14px;color:#9b8fc2;">Hi <strong style="color:#1a1230;">@\${safeUsername}</strong>,</p>
+    `
+    <h1 style="margin:0 0 8px;font-size:26px;font-weight:800;color:#1a1230;">${safeSubject}</h1>
+    <p style="margin:0 0 20px;font-size:14px;color:#9b8fc2;">Hi <strong style="color:#1a1230;">@${safeUsername}</strong>,</p>
     <div style="padding:20px 24px;background:#fafafe;border:1.5px solid #f0eef9;border-radius:14px;margin-bottom:24px;">
-      <p style="margin:0;font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">\${safeMessage}</p>
+      <p style="margin:0;font-size:14px;color:#475569;line-height:1.8;white-space:pre-wrap;">${safeMessage}</p>
     </div>
-    \${divider()}
+    ${divider()}
     <p style="margin:0;font-size:12px;color:#c4b5fd;">
       Sent by the DiscountZAR support team · <a href="mailto:support@discountzar.com" style="color:#7c5cfc;">support@discountzar.com</a>
     </p>
-  \`,
+  `,
     "You received this message from the DiscountZAR support team.",
   );
 }
