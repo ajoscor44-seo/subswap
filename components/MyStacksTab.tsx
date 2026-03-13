@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useMemo } from "react";
 import { User } from "@/constants/types";
 
 interface MyStacksTabProps {
@@ -39,6 +39,21 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
   changeTab,
   copyToClipboard,
 }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const totalPages = Math.ceil(activeSubscriptions.length / itemsPerPage);
+  
+  const paginatedSubscriptions = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return activeSubscriptions.slice(start, start + itemsPerPage);
+  }, [activeSubscriptions, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <>
       <style>{`
@@ -107,6 +122,25 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
         .dot-pulse { animation: pulse-dot 1.4s ease-in-out infinite; }
+
+        .stk-pagination {
+          display: flex; align-items: center; justify-content: center;
+          gap: 8px; margin-top: 24px;
+        }
+        .stk-page-btn {
+          width: 34px; height: 34px; border-radius: 10px; border: 1.5px solid #f0eef9;
+          background: #fff; color: #9b8fc2; cursor: pointer;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 700;
+          transition: all 0.2s;
+        }
+        .stk-page-btn:hover:not(:disabled) { border-color: #7c5cfc; color: #7c5cfc; }
+        .stk-page-btn.active {
+          background: linear-gradient(135deg, #7c5cfc, #6366f1);
+          color: #fff; border-color: transparent;
+          box-shadow: 0 4px 10px rgba(124,92,252,0.25);
+        }
+        .stk-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
       `}</style>
 
       <div className="bg-white px-5 py-6 flex flex-col rounded-2xl gap-5">
@@ -216,262 +250,200 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
             ))}
           </div>
         ) : activeSubscriptions.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-              gap: 16,
-            }}
-          >
-            {activeSubscriptions.map((sub, idx) => {
-              const timeData = getTimeRemaining(
-                sub.purchased_at || sub.created_at || "",
-              );
-              const progress = getDaysProgress(
-                sub.purchased_at || sub.created_at || "",
-              );
-              const barClass = timeData.urgent
-                ? timeData.label === "Expired"
-                  ? "exp"
-                  : "warn"
-                : "ok";
+          <>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+                gap: 16,
+              }}
+            >
+              {paginatedSubscriptions.map((sub, idx) => {
+                const timeData = getTimeRemaining(
+                  sub.purchased_at || sub.created_at || "",
+                );
+                const progress = getDaysProgress(
+                  sub.purchased_at || sub.created_at || "",
+                );
+                const barClass = timeData.urgent
+                  ? timeData.label === "Expired"
+                    ? "exp"
+                    : "warn"
+                  : "ok";
 
-              return (
-                <div
-                  key={sub.id}
-                  className="stk-card stk-anim"
-                  style={{ animationDelay: `${idx * 50}ms`, padding: 22 }}
-                >
-                  {/* Card header */}
+                return (
                   <div
-                    style={{
-                      display: "flex",
-                      alignItems: "flex-start",
-                      gap: 14,
-                      marginBottom: 18,
-                    }}
+                    key={sub.id}
+                    className="stk-card stk-anim"
+                    style={{ animationDelay: `${idx * 50}ms`, padding: 22 }}
                   >
-                    {/* Circular logo */}
-                    <div
-                      style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: "50%",
-                        overflow: "hidden",
-                        flexShrink: 0,
-                        border: "2.5px solid #ede9fe",
-                        boxShadow: "0 4px 12px rgba(124,92,252,0.15)",
-                      }}
-                    >
-                      <img
-                        src={sub.master_accounts?.icon_url}
-                        style={{
-                          width: "100%",
-                          height: "100%",
-                          objectFit: "cover",
-                          display: "block",
-                        }}
-                        alt={sub.master_accounts?.service_name}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.master_accounts?.service_name || "S")}&background=ede9fe&color=7c5cfc&size=56`;
-                        }}
-                      />
-                    </div>
-
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <h4
-                        className="font-display"
-                        style={{
-                          margin: "0 0 6px",
-                          fontSize: 15,
-                          fontWeight: 700,
-                          color: "#1a1230",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        {sub.master_accounts?.service_name}
-                      </h4>
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 6,
-                          flexWrap: "wrap",
-                        }}
-                      >
-                        {/* Active badge */}
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            padding: "3px 9px",
-                            borderRadius: 7,
-                            background: "#f0fdf4",
-                            border: "1px solid #bbf7d0",
-                            fontFamily: "'Outfit', sans-serif",
-                            fontSize: 9,
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.06em",
-                            color: "#16a34a",
-                          }}
-                        >
-                          <span
-                            style={{
-                              width: 6,
-                              height: 6,
-                              borderRadius: "50%",
-                              background: "#16a34a",
-                            }}
-                            className={timeData.urgent ? "" : "dot-pulse"}
-                          />
-                          Active
-                        </span>
-                        {/* Time badge */}
-                        <span
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: 4,
-                            padding: "3px 9px",
-                            borderRadius: 7,
-                            background: timeData.urgent ? "#fffbeb" : "#f0eef9",
-                            border: `1px solid ${timeData.urgent ? "#fde68a" : "#ede9fe"}`,
-                            fontFamily: "'Outfit', sans-serif",
-                            fontSize: 9,
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.06em",
-                            color: timeData.urgent ? "#d97706" : "#7c5cfc",
-                          }}
-                        >
-                          <i
-                            className="fa-regular fa-clock"
-                            style={{ fontSize: 8 }}
-                          />
-                          {timeData.label}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Time remaining bar */}
-                  <div style={{ marginBottom: 16 }}>
+                    {/* Card header */}
                     <div
                       style={{
                         display: "flex",
-                        justifyContent: "space-between",
-                        marginBottom: 6,
+                        alignItems: "flex-start",
+                        gap: 14,
+                        marginBottom: 18,
                       }}
                     >
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontFamily: "'Outfit', sans-serif",
-                          fontWeight: 700,
-                          textTransform: "uppercase",
-                          letterSpacing: "0.06em",
-                          color: "#b8addb",
-                        }}
-                      >
-                        Subscription period
-                      </span>
-                      <span
-                        style={{
-                          fontSize: 10,
-                          fontFamily: "'Outfit', sans-serif",
-                          fontWeight: 700,
-                          color: timeData.urgent ? "#d97706" : "#7c5cfc",
-                        }}
-                      >
-                        {progress}% elapsed
-                      </span>
-                    </div>
-                    <div className="stk-bar-bg">
+                      {/* Circular logo */}
                       <div
-                        className={`stk-bar-fill ${barClass}`}
-                        style={{ width: `${progress}%` }}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Credentials */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 8,
-                      marginBottom: 16,
-                    }}
-                  >
-                    {/* Email row */}
-                    <div className="stk-credential">
-                      <div>
-                        <p
+                        style={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: "50%",
+                          overflow: "hidden",
+                          flexShrink: 0,
+                          border: "2.5px solid #ede9fe",
+                          boxShadow: "0 4px 12px rgba(124,92,252,0.15)",
+                        }}
+                      >
+                        <img
+                          src={sub.master_accounts?.icon_url}
                           style={{
-                            margin: "0 0 1px",
-                            fontSize: 9,
-                            fontFamily: "'Outfit', sans-serif",
-                            fontWeight: 700,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.07em",
-                            color: "#b8addb",
+                            width: "100%",
+                            height: "100%",
+                            objectFit: "cover",
+                            display: "block",
                           }}
-                        >
-                          Account Email
-                        </p>
-                        <p
+                          alt={sub.master_accounts?.service_name}
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.master_accounts?.service_name || "S")}&background=ede9fe&color=7c5cfc&size=56`;
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4
+                          className="font-display"
                           style={{
-                            margin: 0,
-                            fontSize: 12,
-                            fontFamily: "monospace",
-                            fontWeight: 600,
-                            color: "#475569",
+                            margin: "0 0 6px",
+                            fontSize: 15,
+                            fontWeight: 700,
+                            color: "#1a1230",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
-                            maxWidth: 180,
                           }}
                         >
-                          {sub.master_accounts?.master_email || "—"}
-                        </p>
+                          {sub.master_accounts?.service_name}
+                        </h4>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 6,
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {/* Active badge */}
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              padding: "3px 9px",
+                              borderRadius: 7,
+                              background: "#f0fdf4",
+                              border: "1px solid #bbf7d0",
+                              fontFamily: "'Outfit', sans-serif",
+                              fontSize: 9,
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.06em",
+                              color: "#16a34a",
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                background: "#16a34a",
+                              }}
+                              className={timeData.urgent ? "" : "dot-pulse"}
+                            />
+                            Active
+                          </span>
+                          {/* Time badge */}
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: 4,
+                              padding: "3px 9px",
+                              borderRadius: 7,
+                              background: timeData.urgent ? "#fffbeb" : "#f0eef9",
+                              border: `1px solid ${timeData.urgent ? "#fde68a" : "#ede9fe"}`,
+                              fontFamily: "'Outfit', sans-serif",
+                              fontSize: 9,
+                              fontWeight: 700,
+                              textTransform: "uppercase",
+                              letterSpacing: "0.06em",
+                              color: timeData.urgent ? "#d97706" : "#7c5cfc",
+                            }}
+                          >
+                            <i
+                              className="fa-regular fa-clock"
+                              style={{ fontSize: 8 }}
+                            />
+                            {timeData.label}
+                          </span>
+                        </div>
                       </div>
-                      <button
-                        onClick={() =>
-                          copyToClipboard(sub.master_accounts?.master_email)
-                        }
-                        style={{
-                          background: "none",
-                          border: "none",
-                          cursor: "pointer",
-                          padding: "6px 8px",
-                          borderRadius: 8,
-                          color: "#a78bfa",
-                          transition: "all 0.15s",
-                        }}
-                        onMouseOver={(e) => {
-                          e.currentTarget.style.background = "#f0eef9";
-                          e.currentTarget.style.color = "#7c5cfc";
-                        }}
-                        onMouseOut={(e) => {
-                          e.currentTarget.style.background = "none";
-                          e.currentTarget.style.color = "#a78bfa";
-                        }}
-                        title="Copy email"
-                      >
-                        <i
-                          className="fa-solid fa-copy"
-                          style={{ fontSize: 13 }}
-                        />
-                      </button>
                     </div>
 
-                    {/* Profile name if available */}
-                    {sub.profile_name && (
+                    {/* Time remaining bar */}
+                    <div style={{ marginBottom: 16 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          marginBottom: 6,
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontFamily: "'Outfit', sans-serif",
+                            fontWeight: 700,
+                            textTransform: "uppercase",
+                            letterSpacing: "0.06em",
+                            color: "#b8addb",
+                          }}
+                        >
+                          Subscription period
+                        </span>
+                        <span
+                          style={{
+                            fontSize: 10,
+                            fontFamily: "'Outfit', sans-serif",
+                            fontWeight: 700,
+                            color: timeData.urgent ? "#d97706" : "#7c5cfc",
+                          }}
+                        >
+                          {progress}% elapsed
+                        </span>
+                      </div>
+                      <div className="stk-bar-bg">
+                        <div
+                          className={`stk-bar-fill ${barClass}`}
+                          style={{ width: `${progress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Credentials */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 8,
+                        marginBottom: 16,
+                      }}
+                    >
+                      {/* Email row */}
                       <div className="stk-credential">
                         <div>
                           <p
@@ -485,21 +457,28 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                               color: "#b8addb",
                             }}
                           >
-                            Profile Name
+                            Account Email
                           </p>
                           <p
                             style={{
                               margin: 0,
                               fontSize: 12,
-                              fontWeight: 500,
+                              fontFamily: "monospace",
+                              fontWeight: 600,
                               color: "#475569",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              maxWidth: 180,
                             }}
                           >
-                            {sub.profile_name}
+                            {sub.master_accounts?.master_email || "—"}
                           </p>
                         </div>
                         <button
-                          onClick={() => copyToClipboard(sub.profile_name)}
+                          onClick={() =>
+                            copyToClipboard(sub.master_accounts?.master_email)
+                          }
                           style={{
                             background: "none",
                             border: "none",
@@ -517,6 +496,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             e.currentTarget.style.background = "none";
                             e.currentTarget.style.color = "#a78bfa";
                           }}
+                          title="Copy email"
                         >
                           <i
                             className="fa-solid fa-copy"
@@ -524,40 +504,127 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           />
                         </button>
                       </div>
-                    )}
-                  </div>
 
-                  {/* Action buttons */}
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: 8,
-                    }}
-                  >
-                    <button
-                      className="stk-copy-btn primary"
-                      onClick={() =>
-                        copyToClipboard(sub.master_accounts?.master_password)
-                      }
+                      {/* Profile name if available */}
+                      {sub.profile_name && (
+                        <div className="stk-credential">
+                          <div>
+                            <p
+                              style={{
+                                margin: "0 0 1px",
+                                fontSize: 9,
+                                fontFamily: "'Outfit', sans-serif",
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.07em",
+                                color: "#b8addb",
+                              }}
+                            >
+                              Profile Name
+                            </p>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 12,
+                                fontWeight: 500,
+                                color: "#475569",
+                              }}
+                            >
+                              {sub.profile_name}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(sub.profile_name)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "6px 8px",
+                              borderRadius: 8,
+                              color: "#a78bfa",
+                              transition: "all 0.15s",
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = "#f0eef9";
+                              e.currentTarget.style.color = "#7c5cfc";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.color = "#a78bfa";
+                            }}
+                          >
+                            <i
+                              className="fa-solid fa-copy"
+                              style={{ fontSize: 13 }}
+                            />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action buttons */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "1fr 1fr",
+                        gap: 8,
+                      }}
                     >
-                      <i className="fa-solid fa-key" />
-                      Copy Password
-                    </button>
-                    <button
-                      className="stk-copy-btn secondary"
-                      onClick={() =>
-                        copyToClipboard(sub.master_accounts?.master_email)
-                      }
-                    >
-                      <i className="fa-solid fa-envelope" />
-                      Copy Email
-                    </button>
+                      <button
+                        className="stk-copy-btn primary"
+                        onClick={() =>
+                          copyToClipboard(sub.master_accounts?.master_password)
+                        }
+                      >
+                        <i className="fa-solid fa-key" />
+                        Copy Password
+                      </button>
+                      <button
+                        className="stk-copy-btn secondary"
+                        onClick={() =>
+                          copyToClipboard(sub.master_accounts?.master_email)
+                        }
+                      >
+                        <i className="fa-solid fa-envelope" />
+                        Copy Email
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="stk-pagination">
+                <button
+                  className="stk-page-btn"
+                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                >
+                  <i className="fa-solid fa-chevron-left" />
+                </button>
+
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    className={`stk-page-btn ${currentPage === i + 1 ? "active" : ""}`}
+                    onClick={() => handlePageChange(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+
+                <button
+                  className="stk-page-btn"
+                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                >
+                  <i className="fa-solid fa-chevron-right" />
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div
             style={{
