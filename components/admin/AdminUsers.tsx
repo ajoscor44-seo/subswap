@@ -45,6 +45,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
     const q = search.toLowerCase();
     return users.filter((u) => {
       const matchesSearch =
+        u.id?.toLowerCase().includes(q) ||
         u.username?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
         u.name?.toLowerCase().includes(q);
@@ -261,7 +262,6 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
           text-transform: uppercase; letter-spacing: 0.06em;
         }
 
-        /* Pagination */
         .usr2-pagination {
           display: flex; align-items: center; justify-content: center;
           gap: 8px; margin-top: 24px;
@@ -281,7 +281,6 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
         }
         .usr2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Responsive ── */
         .usr2-chips   { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
         .usr2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
 
@@ -373,7 +372,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
               setSearch(val);
               setCurrentPage(1);
             }}
-            placeholder="Find by name, email, username..."
+            placeholder="Find by ID, name, email, username..."
           />
 
           <div
@@ -570,6 +569,16 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                             }}
                           >
                             {u.email}
+                          </span>
+                          <span
+                            style={{
+                              fontFamily: "monospace",
+                              fontSize: 9,
+                              color: "#d8d0f8",
+                              letterSpacing: "0.04em",
+                            }}
+                          >
+                            {u.id}
                           </span>
                         </div>
                       </div>
@@ -786,7 +795,6 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
             </table>
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="usr2-pagination pb-6">
               <button

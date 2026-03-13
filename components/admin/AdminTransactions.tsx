@@ -31,6 +31,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
     const q = search.toLowerCase();
     return transactions.filter((tx) => {
       const matchesSearch =
+        tx.id?.toLowerCase().includes(q) ||
         tx.description?.toLowerCase().includes(q) ||
         tx.type?.toLowerCase().includes(q) ||
         tx.user_id?.toLowerCase().includes(q);
@@ -40,7 +41,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
       const matchesStart =
         !startDate || txDate >= new Date(startDate).getTime();
       const matchesEnd =
-        !endDate || txDate <= new Date(endDate).getTime() + 86400000; // include full end day
+        !endDate || txDate <= new Date(endDate).getTime() + 86400000;
 
       return matchesSearch && matchesFilter && matchesStart && matchesEnd;
     });
@@ -168,7 +169,6 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         .txn2-tr:hover .txn2-td { background: #fafafe; }
         .txn2-tr:last-child .txn2-td { border-bottom: none; }
 
-        /* Pagination */
         .txn2-pagination {
           display: flex; align-items: center; justify-content: center;
           gap: 8px; margin-top: 24px;
@@ -188,7 +188,6 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         }
         .txn2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Responsive ── */
         .txn2-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
         .txn2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .txn2-toolbar-right { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
@@ -303,7 +302,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
               setSearch(val);
               setCurrentPage(1);
             }}
-            placeholder="Search by description, type, user..."
+            placeholder="Search by ID, description, type, user..."
           />
           <div
             style={{
@@ -477,10 +476,21 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                         </p>
                         <p
                           style={{
-                            margin: 0,
+                            margin: "0 0 1px",
                             fontFamily: "monospace",
                             fontSize: 10,
                             color: "#c4b5fd",
+                            letterSpacing: "0.05em",
+                          }}
+                        >
+                          TX {tx.id}
+                        </p>
+                        <p
+                          style={{
+                            margin: 0,
+                            fontFamily: "monospace",
+                            fontSize: 10,
+                            color: "#d8d0f8",
                             letterSpacing: "0.05em",
                           }}
                         >
@@ -553,7 +563,6 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
             </table>
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="txn2-pagination pb-6">
               <button

@@ -44,7 +44,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
   const itemsPerPage = 6;
 
   const totalPages = Math.ceil(activeSubscriptions.length / itemsPerPage);
-  
+
   const paginatedSubscriptions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return activeSubscriptions.slice(start, start + itemsPerPage);
@@ -59,7 +59,10 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
     const serviceName = sub.master_accounts?.service_name || "Subscription";
     const subId = sub.id;
     const msg = `Hi DiscountZAR Support 👋\n\nI need help with my ${serviceName} subscription.\n\nSubscription ID: ${subId}\nMy username: @${user.username}`;
-    window.open(`https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`, '_blank');
+    window.open(
+      `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
   };
 
   return (
@@ -300,9 +303,10 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                     ? "exp"
                     : "warn"
                   : "ok";
-                
+
                 const isExpanded = expandedId === sub.id;
-                const isOtp = sub.master_accounts?.fulfillment_type === "OTP / Instruction";
+                const isOtp =
+                  sub.master_accounts?.fulfillment_type === "OTP / Instruction";
 
                 return (
                   <div
@@ -348,7 +352,14 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       </div>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 4,
+                          }}
+                        >
                           <h4
                             className="font-display"
                             style={{
@@ -363,8 +374,8 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           >
                             {sub.master_accounts?.service_name}
                           </h4>
-                          <button 
-                            className="stk-support-btn" 
+                          <button
+                            className="stk-support-btn"
                             onClick={() => contactSupport(sub)}
                             title="Contact Admin Support"
                           >
@@ -416,7 +427,9 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                               gap: 4,
                               padding: "3px 9px",
                               borderRadius: 7,
-                              background: timeData.urgent ? "#fffbeb" : "#f0eef9",
+                              background: timeData.urgent
+                                ? "#fffbeb"
+                                : "#f0eef9",
                               border: `1px solid ${timeData.urgent ? "#fde68a" : "#ede9fe"}`,
                               fontFamily: "'Outfit', sans-serif",
                               fontSize: 9,
@@ -610,7 +623,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
                         gap: 8,
-                        marginBottom: 12
+                        marginBottom: 12,
                       }}
                     >
                       <button
@@ -619,7 +632,9 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           copyToClipboard(sub.master_accounts?.master_password)
                         }
                       >
-                        <i className={`fa-solid ${isOtp ? "fa-circle-info" : "fa-key"}`} />
+                        <i
+                          className={`fa-solid ${isOtp ? "fa-circle-info" : "fa-key"}`}
+                        />
                         {isOtp ? "Get Info" : "Copy Password"}
                       </button>
                       <button
@@ -634,38 +649,98 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                     </div>
 
                     {/* Expandable details */}
-                    <button 
+                    <button
                       onClick={() => setExpandedId(isExpanded ? null : sub.id)}
                       style={{
-                        width: '100%', padding: '8px', borderRadius: '10px',
-                        border: '1px solid #f1f5f9', background: '#f8fafc',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        gap: 6, cursor: 'pointer', transition: 'all 0.2s'
+                        width: "100%",
+                        padding: "8px",
+                        borderRadius: "10px",
+                        border: "1px solid #f1f5f9",
+                        background: "#f8fafc",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
                       }}
                     >
-                      <span style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em' }}>
-                        {isExpanded ? 'Hide Details' : 'View Instructions & Notes'}
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          color: "#94a3b8",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        {isExpanded
+                          ? "Hide Details"
+                          : "View Instructions & Notes"}
                       </span>
-                      <i className={`fa-solid fa-chevron-down text-[9px] text-[#94a3b8] transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                      <i
+                        className={`fa-solid fa-chevron-down text-[9px] text-[#94a3b8] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      />
                     </button>
 
                     {isExpanded && (
                       <div className="stk-details-panel">
                         <div style={{ marginBottom: 12 }}>
-                          <p style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', color: '#a78bfa', marginBottom: 4, letterSpacing: '0.05em' }}>
+                          <p
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                              color: "#a78bfa",
+                              marginBottom: 4,
+                              letterSpacing: "0.05em",
+                            }}
+                          >
                             Description & Features
                           </p>
-                          <p style={{ fontSize: '12px', color: '#475569', lineHeight: 1.5, margin: 0 }}>
-                            {sub.master_accounts?.description || "No specific details provided for this plan."}
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              color: "#475569",
+                              lineHeight: 1.5,
+                              margin: 0,
+                            }}
+                          >
+                            {sub.master_accounts?.description ||
+                              "No specific details provided for this plan."}
                           </p>
                         </div>
                         {isOtp && (
                           <div>
-                            <p style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', color: '#f59e0b', marginBottom: 4, letterSpacing: '0.05em' }}>
+                            <p
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                color: "#f59e0b",
+                                marginBottom: 4,
+                                letterSpacing: "0.05em",
+                              }}
+                            >
                               Setup Instructions
                             </p>
-                            <div style={{ padding: '10px', background: '#fffbeb', borderRadius: '8px', border: '1px solid #fef3c7' }}>
-                              <p style={{ fontSize: '12px', color: '#b45309', lineHeight: 1.5, margin: 0, fontFamily: 'monospace' }}>
+                            <div
+                              style={{
+                                padding: "10px",
+                                background: "#fffbeb",
+                                borderRadius: "8px",
+                                border: "1px solid #fef3c7",
+                              }}
+                            >
+                              <p
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#b45309",
+                                  lineHeight: 1.5,
+                                  margin: 0,
+                                  fontFamily: "monospace",
+                                }}
+                              >
                                 {sub.master_accounts?.master_password}
                               </p>
                             </div>
