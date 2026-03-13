@@ -3,8 +3,8 @@ import { Features } from "@/components/Features";
 import Footer from "@/components/Footer";
 import { Hero } from "@/components/Hero";
 import { HowItWorks } from "@/components/HowItWorks";
-import { Marketplace } from "@/components/Marketplace";
 import { PopularServices } from "@/components/PopularServices";
+import { SubscriptionList } from "@/components/sharing/SubscriptionList";
 
 const Home = () => {
   return (
@@ -14,7 +14,7 @@ const Home = () => {
       <HowItWorks />
       <Features />
       <div className="container mx-auto max-w-6xl px-4 py-20" id="marketplace">
-        <Marketplace />
+        <SubscriptionList />
       </div>
       <Faq />
       <Footer />

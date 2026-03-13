@@ -23,6 +23,8 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<TxFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const itemsPerPage = 10;
 
   const filtered = useMemo(() => {
@@ -33,9 +35,16 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
         tx.type?.toLowerCase().includes(q) ||
         tx.user_id?.toLowerCase().includes(q);
       const matchesFilter = filter === "all" || tx.type === filter;
-      return matchesSearch && matchesFilter;
+
+      const txDate = new Date(tx.created_at).getTime();
+      const matchesStart =
+        !startDate || txDate >= new Date(startDate).getTime();
+      const matchesEnd =
+        !endDate || txDate <= new Date(endDate).getTime() + 86400000; // include full end day
+
+      return matchesSearch && matchesFilter && matchesStart && matchesEnd;
     });
-  }, [transactions, search, filter]);
+  }, [transactions, search, filter, startDate, endDate]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedTransactions = useMemo(() => {
@@ -61,6 +70,42 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const exportToCSV = () => {
+    if (filtered.length === 0) return;
+    const headers = [
+      "ID",
+      "User ID",
+      "Type",
+      "Amount",
+      "Description",
+      "Date",
+    ].join(",");
+    const rows = filtered.map((tx) =>
+      [
+        tx.id,
+        tx.user_id,
+        tx.type,
+        tx.amount,
+        `"${(tx.description || "").replace(/"/g, '""')}"`,
+        new Date(tx.created_at).toLocaleString(),
+      ].join(","),
+    );
+
+    const csvContent = [headers, ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `transactions_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -94,7 +139,7 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
           color: #fff; box-shadow: 0 3px 8px rgba(26,18,48,0.2);
         }
 
-        .txn2-refresh {
+        .txn2-refresh, .txn2-export {
           display: flex; align-items: center; gap: 7px;
           padding: 9px 16px; border-radius: 11px;
           border: 1.5px solid #ede9fe; background: #fff; cursor: pointer;
@@ -102,7 +147,16 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
           text-transform: uppercase; letter-spacing: 0.07em; color: #9b8fc2;
           transition: all 0.18s;
         }
-        .txn2-refresh:hover { border-color: #c4b5fd; color: #7c5cfc; }
+        .txn2-refresh:hover, .txn2-export:hover { border-color: #7c5cfc; color: #7c5cfc; }
+        .txn2-export { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+        .txn2-export:hover { background: #dcfce7; border-color: #16a34a; }
+
+        .txn2-date-input {
+          padding: 8px 12px; border-radius: 10px; border: 1.5px solid #ede9fe;
+          font-family: 'DM Sans', sans-serif; font-size: 12px; color: #1a1230;
+          outline: none; background: #fafafe;
+        }
+        .txn2-date-input:focus { border-color: #7c5cfc; }
 
         .txn2-th {
           padding: 12px 18px;
@@ -251,7 +305,37 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
             }}
             placeholder="Search by description, type, user..."
           />
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <input
+                type="date"
+                className="txn2-date-input"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                title="Start Date"
+              />
+              <span style={{ color: "#b8addb" }}>-</span>
+              <input
+                type="date"
+                className="txn2-date-input"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                title="End Date"
+              />
+            </div>
             <div className="txn2-filter-bar">
               {TX_FILTERS.map((f) => (
                 <button
@@ -266,9 +350,15 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                 </button>
               ))}
             </div>
+            <button
+              className="txn2-export"
+              onClick={exportToCSV}
+              title="Export to CSV"
+            >
+              <i className="fa-solid fa-file-export" />
+            </button>
             <button className="txn2-refresh" onClick={onRefresh}>
               <i className="fa-solid fa-rotate" style={{ fontSize: 12 }} />
-              Refresh
             </button>
           </div>
         </div>
@@ -293,11 +383,11 @@ export const AdminTransactions: React.FC<AdminTransactionsProps> = ({
                     ["Timestamp", "right"],
                   ].map(([h, align]) => (
                     <th
-                      key={h}
+                      key={h as string}
                       className="txn2-th"
                       style={{ textAlign: align as any }}
                     >
-                      {h}
+                      {h as string}
                     </th>
                   ))}
                 </tr>
