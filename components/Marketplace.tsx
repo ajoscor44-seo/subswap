@@ -92,7 +92,7 @@ export const Marketplace: React.FC = () => {
         name: user.name || user.username || "",
       },
       customizations: {
-        title: "DiscountZAR Wallet Top-up",
+        title: "DiscountZAR Wallet Top-up (Joscor)",
         description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
         logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
       },

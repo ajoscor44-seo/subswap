@@ -15,12 +15,12 @@ const WA_LINKS = {
 const CONTACT_METHODS = [
   {
     label: "Email Support",
-    value: "support@wsv.com.ng",
+    value: "support@discountzar.com",
     sub: "We reply within 2 hours",
     icon: "fa-solid fa-envelope",
     accent: "#7c5cfc",
     light: "#f5f3ff",
-    href: "mailto:support@wsv.com.ng",
+    href: "mailto:support@discountzar.com",
   },
   {
     label: "WhatsApp Chat",

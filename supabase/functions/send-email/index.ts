@@ -48,7 +48,6 @@ async function resend(to: string, subject: string, html: string, from = FROM_JOS
 }
 
 serve(async (req) => {
-  // CORS for browser calls
   if (req.method === "OPTIONS") {
     return new Response(null, {
       headers: {
@@ -69,40 +68,36 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing type or payload" }), { status: 400 });
     }
 
-    // Require valid JWT for all email types (no unauthenticated sending)
     const authUser = await getAuthUser(req);
     if (!authUser) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
     }
 
-    // Admin-only types: caller must be an admin OR it's their own "wallet_funded" event
+    // Admin-only types: caller must be an admin OR it's their own "wallet_funded" event (case-insensitive)
     if (ADMIN_ONLY_TYPES.includes(type)) {
-      const isSelfFunding = type === "wallet_funded" && payload.email === authUser.email;
+      const isSelfFunding = type === "wallet_funded" && 
+        payload.email?.toLowerCase() === authUser.email?.toLowerCase();
+        
       if (!isSelfFunding) {
         const ok = await isAdmin(authUser.id);
         if (!ok) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
         }
       }
-    } else if (type === "welcome") {
-      // Welcome: only allow sending to the authenticated user's own email
-      if (payload.email !== authUser.email) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
-      }
-    } else if (type === "purchase") {
-      // Purchase: only allow sending to the authenticated user's own email (buyer)
-      if (payload.email !== authUser.email) {
+    } else if (type === "welcome" || type === "purchase") {
+      if (payload.email?.toLowerCase() !== authUser.email?.toLowerCase()) {
         return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
       }
     }
 
+    let result;
     switch (type) {
       case "welcome":
-        await resend(payload.email, "Welcome to DiscountZAR 🎉", welcomeEmail(payload.username));
+        result = await resend(payload.email, "Welcome to DiscountZAR 🎉", welcomeEmail(payload.username));
         break;
 
       case "purchase":
-        await resend(
+        result = await resend(
           payload.email,
           `Your ${payload.serviceName} slot is ready!`,
           purchaseEmail(payload)
@@ -110,7 +105,7 @@ serve(async (req) => {
         break;
 
       case "wallet_funded":
-        await resend(
+        result = await resend(
           payload.email,
           `₦${Number(payload.amount).toLocaleString()} credited to your wallet`,
           walletFundedEmail(payload)
@@ -118,16 +113,16 @@ serve(async (req) => {
         break;
 
       case "account_banned":
-        await resend(
+        result = await resend(
           payload.email,
           "Your DiscountZAR account has been restricted",
           accountBannedEmail(payload.username),
-          FROM_SUPPORT   // ← support@ for moderation
+          FROM_SUPPORT
         );
         break;
 
       case "account_restored":
-        await resend(
+        result = await resend(
           payload.email,
           "Your DiscountZAR account has been restored",
           accountRestoredEmail(payload.username),
@@ -136,11 +131,11 @@ serve(async (req) => {
         break;
 
       case "admin_message":
-        await resend(
+        result = await resend(
           payload.email,
           payload.subject,
           adminMessageEmail(payload),
-          FROM_SUPPORT   // ← support@ for all admin messages
+          FROM_SUPPORT
         );
         break;
 
@@ -148,7 +143,7 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: `Unknown type: ${type}` }), { status: 400 });
     }
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, result }), {
       status: 200,
       headers: { "Access-Control-Allow-Origin": "*" },
     });

@@ -85,8 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchProducts = async () => {
     setProductsLoading(true);
     try {
-      // SECURITY FIX: Fetch from marketplace_listings view instead of master_accounts
-      // This view hides master_email and master_password columns.
       const { data, error } = await supabase
         .from("marketplace_listings")
         .select(
@@ -107,8 +105,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const fetchSubscriptions = async (userId: string) => {
     setSubscriptionsLoading(true);
     try {
-      // Subscribed users can see credentials through the user_subscriptions join
-      // provided they have an active subscription (handled by RLS policies).
       const { data, error } = await supabase
         .from("user_subscriptions")
         .select("*, master_accounts(*)")
@@ -130,10 +126,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, 3000);
 
     const loadProfileAndSync = async (sess: Session) => {
+      // ── Session Expiry Logic (2 Hours) ──
+      const loginTime = localStorage.getItem("ss_login_ts");
+      const now = Date.now();
+      const TWO_HOURS = 2 * 60 * 60 * 1000;
+
+      if (loginTime && now - parseInt(loginTime) > TWO_HOURS) {
+        console.log("[auth] Session expired (2h limit)");
+        void logout();
+        return;
+      }
+
       const verified = !!sess.user.email_confirmed_at;
       if (!verified) {
         setUser(null);
-        await fetchProducts(); // Allow browsing even if unverified
+        await fetchProducts(); 
         return;
       }
 
@@ -206,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(data.session);
         if (!data.session) {
           setUser(null);
-          void fetchProducts(); // Fetch for anonymous users
+          void fetchProducts(); 
         }
         if (data.session) void loadProfileAndSync(data.session);
       })
@@ -220,6 +227,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       clearTimeout(initTimeout);
       if (cancelled) return;
       if (event === "INITIAL_SESSION") return;
+
+      if (event === "SIGNED_IN") {
+        localStorage.setItem("ss_login_ts", Date.now().toString());
+      }
 
       setSession(session);
       setLoading(false);
@@ -256,6 +267,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         "EmailNotConfirmed",
       );
     }
+    localStorage.setItem("ss_login_ts", Date.now().toString());
     window.location.href = "/#/dashboard";
     return null;
   };
@@ -277,11 +289,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       },
     });
     if (error) return error;
-    // Do not redirect: user must verify email first. UI shows verify-email screen.
     return null;
   };
 
   const logout = async () => {
+    localStorage.removeItem("ss_login_ts");
     await supabase.auth.signOut({ scope: "global" });
     window.location.href = "/#/home";
   };
