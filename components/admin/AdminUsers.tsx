@@ -37,6 +37,8 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
   const [fundAmounts, setFundAmounts] = useState<Record<string, string>>({});
   const [filter, setFilter] = useState<"all" | "banned" | "verified">("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const itemsPerPage = 10;
 
   const filtered = useMemo(() => {
@@ -46,11 +48,20 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
         u.username?.toLowerCase().includes(q) ||
         u.email?.toLowerCase().includes(q) ||
         u.name?.toLowerCase().includes(q);
-      if (filter === "banned") return matchesSearch && u.is_banned;
-      if (filter === "verified") return matchesSearch && u.is_verified;
-      return matchesSearch;
+
+      const userDate = new Date(u.created_at).getTime();
+      const matchesStart =
+        !startDate || userDate >= new Date(startDate).getTime();
+      const matchesEnd =
+        !endDate || userDate <= new Date(endDate).getTime() + 86400000;
+
+      if (filter === "banned")
+        return matchesSearch && u.is_banned && matchesStart && matchesEnd;
+      if (filter === "verified")
+        return matchesSearch && u.is_verified && matchesStart && matchesEnd;
+      return matchesSearch && matchesStart && matchesEnd;
     });
-  }, [users, search, filter]);
+  }, [users, search, filter, startDate, endDate]);
 
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const paginatedUsers = useMemo(() => {
@@ -110,6 +121,46 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const exportToCSV = () => {
+    if (filtered.length === 0) return;
+    const headers = [
+      "ID",
+      "Username",
+      "Email",
+      "Name",
+      "Balance",
+      "Verified",
+      "Banned",
+      "Joined At",
+    ].join(",");
+    const rows = filtered.map((u) =>
+      [
+        u.id,
+        `@${u.username}`,
+        u.email,
+        `"${(u.name || "").replace(/"/g, '""')}"`,
+        u.balance,
+        u.is_verified,
+        u.is_banned,
+        new Date(u.created_at).toLocaleString(),
+      ].join(","),
+    );
+
+    const csvContent = [headers, ...rows].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `members_${new Date().toISOString().split("T")[0]}.csv`,
+    );
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       <style>{`
@@ -139,6 +190,23 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
           background: linear-gradient(135deg,#1a1230,#2d1f6e);
           color: #fff; box-shadow: 0 3px 8px rgba(26,18,48,0.2);
         }
+
+        .usr2-export {
+          display: flex; align-items: center; gap: 7px;
+          padding: 9px 16px; border-radius: 11px;
+          border: 1.5px solid #bbf7d0; background: #f0fdf4; cursor: pointer;
+          font-family: 'Outfit', sans-serif; font-size: 10px; font-weight: 700;
+          text-transform: uppercase; letter-spacing: 0.07em; color: #16a34a;
+          transition: all 0.18s;
+        }
+        .usr2-export:hover { border-color: #16a34a; background: #dcfce7; }
+
+        .usr2-date-input {
+          padding: 8px 12px; border-radius: 10px; border: 1.5px solid #ede9fe;
+          font-family: 'DM Sans', sans-serif; font-size: 12px; color: #1a1230;
+          outline: none; background: #fafafe;
+        }
+        .usr2-date-input:focus { border-color: #7c5cfc; }
 
         .usr2-th {
           padding: 12px 18px;
@@ -307,19 +375,61 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
             }}
             placeholder="Find by name, email, username..."
           />
-          <div className="usr2-filter-bar">
-            {FILTERS.map((f) => (
-              <button
-                key={f.id}
-                className={`usr2-filter-btn ${filter === f.id ? "active" : ""}`}
-                onClick={() => {
-                  setFilter(f.id);
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <input
+                type="date"
+                className="usr2-date-input"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
                   setCurrentPage(1);
                 }}
-              >
-                {f.label}
-              </button>
-            ))}
+                title="Joined After"
+              />
+              <span style={{ color: "#b8addb" }}>-</span>
+              <input
+                type="date"
+                className="usr2-date-input"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1);
+                }}
+                title="Joined Before"
+              />
+            </div>
+
+            <div className="usr2-filter-bar">
+              {FILTERS.map((f) => (
+                <button
+                  key={f.id}
+                  className={`usr2-filter-btn ${filter === f.id ? "active" : ""}`}
+                  onClick={() => {
+                    setFilter(f.id);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              className="usr2-export"
+              onClick={exportToCSV}
+              title="Export to CSV"
+            >
+              <i className="fa-solid fa-file-export" />
+            </button>
           </div>
         </div>
 
@@ -344,11 +454,11 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                     ["Actions", "right"],
                   ].map(([h, align]) => (
                     <th
-                      key={h}
+                      key={h as string}
                       className="usr2-th"
                       style={{ textAlign: align as any }}
                     >
-                      {h}
+                      {h as string}
                     </th>
                   ))}
                 </tr>
