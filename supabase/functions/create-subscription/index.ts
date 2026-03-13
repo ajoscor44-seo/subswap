@@ -23,23 +23,15 @@ serve(async (req) => {
 
     if (userError || !user) throw new Error('Unauthorized')
 
-    // Check if user is admin
-    const { data: profile } = await supabaseClient
-      .from('profiles')
-      .select('role, is_admin')
-      .eq('id', user.id)
-      .single()
-
-    const isAdmin = profile?.role === 'admin' || profile?.is_admin === true;
-    if (!isAdmin) throw new Error('Forbidden')
-
     const subscriptionData = await req.json()
 
+    // Insert into master_accounts
+    // Note: We expect the frontend to pass service_name, icon_url, etc.
     const { data, error } = await supabaseClient
-      .from('subscriptions')
+      .from('master_accounts')
       .insert({
         ...subscriptionData,
-        created_by: user.id
+        owner_id: user.id
       })
       .select()
       .single()

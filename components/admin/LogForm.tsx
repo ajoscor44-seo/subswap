@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   MasterAccount,
   ProductCategory,
@@ -8,6 +8,7 @@ import {
 import { ServicePicker, logoUrl } from "../ServicePicker";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";
+import { useCloudinaryUpload } from "../SettingsTab";
 
 const CATEGORY_MAP: Record<string, ProductCategory> = {
   Streaming: ProductCategory.STREAMING,
@@ -64,8 +65,11 @@ const LogFormInner: React.FC<LogFormProps> = ({
   onSubmit,
   onCancel,
 }) => {
+  const [isCustom, setIsCustom] = useState(false);
   const [persistCustom, setPersistCustom] = useState(false);
   const [savingCustom, setSavingCustom] = useState(false);
+  const { upload, uploading } = useCloudinaryUpload();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const set = (patch: Partial<MasterAccount>) =>
     onChange({ ...formData, ...patch });
@@ -83,7 +87,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
   }, [editingId, formData.total_slots, formData.available_slots]);
 
   const selectedPlatform: Platform | null =
-    formData.service_name && formData.icon_url
+    formData.service_name 
       ? {
           name: formData.service_name,
           domain: (formData as any)._domain ?? "",
@@ -92,35 +96,44 @@ const LogFormInner: React.FC<LogFormProps> = ({
       : null;
 
   const handlePlatformChange = (p: Platform) => {
-    const isCustom = !p.domain;
     set({
       service_name: p.name,
-      icon_url: isCustom 
-        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=6366f1&color=fff&size=128`
-        : logoUrl(p.domain, 256),
+      icon_url: p.domain 
+        ? logoUrl(p.domain, 256)
+        : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=6366f1&color=fff&size=128`,
       category: CATEGORY_MAP[p.category] ?? ProductCategory.STREAMING,
       _domain: p.domain,
       _category: p.category,
     } as any);
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await upload(file);
+      set({ icon_url: url });
+      toast.success("Logo uploaded!");
+    } catch (err: any) {
+      toast.error(err.message || "Upload failed");
+    }
+  };
+
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // If it's a custom platform and "Remember" is checked, save it to the directory
-    if (persistCustom && selectedPlatform && !selectedPlatform.domain) {
+    if (isCustom && persistCustom) {
       setSavingCustom(true);
       try {
         const { error } = await supabase.from("custom_platforms").insert({
-          name: selectedPlatform.name,
-          category: selectedPlatform.category,
+          name: formData.service_name,
+          category: formData.category,
           icon_url: formData.icon_url,
+          domain: (formData as any)._domain || ""
         });
         if (error) throw error;
-        toast.success("Platform saved to directory!");
       } catch (err: any) {
-        console.error("Failed to save custom platform:", err);
-        toast.error("Couldn't save platform to directory, but proceeding with listing.");
+        console.error("Persist failed:", err);
       } finally {
         setSavingCustom(false);
       }
@@ -132,407 +145,248 @@ const LogFormInner: React.FC<LogFormProps> = ({
   const isInvite = formData.fulfillment_type === "Invite Link";
   const isOtp = formData.fulfillment_type === "OTP / Instruction";
 
-  const discountPct =
-    (formData.price ?? 0) > 0 &&
-    (formData.original_price ?? 0) > (formData.price ?? 0)
-      ? Math.round(
-          (((formData.original_price ?? 0) - (formData.price ?? 0)) /
-            (formData.original_price ?? 1)) *
-            100,
-        )
-      : null;
-
   return (
     <>
-      <div className="h-1 bg-linear-to-r from-violet-500 via-indigo-500 to-cyan-400 rounded-t-4xl" />
+      <div className="h-1 bg-linear-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-t-4xl" />
 
       <div className="p-7 md:p-9">
+        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="relative">
+            <div className="relative group cursor-pointer" onClick={() => isCustom && fileInputRef.current?.click()}>
               {formData.icon_url ? (
                 <img
                   src={formData.icon_url}
                   alt=""
-                  className="h-12 w-12 rounded-2xl object-contain border border-slate-100 shadow-sm bg-slate-50 p-0.5"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.service_name || "S")}&background=6366f1&color=fff&size=128`;
-                  }}
+                  className="h-14 w-14 rounded-2xl object-contain border border-slate-100 shadow-sm bg-slate-50 p-1"
                 />
               ) : (
-                <div className="h-12 w-12 rounded-2xl bg-linear-to-br from-indigo-100 to-violet-100 flex items-center justify-center">
-                  <i className="fa-solid fa-layer-group text-indigo-400" />
+                <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center border-2 border-dashed border-indigo-200">
+                  <i className="fa-solid fa-image text-indigo-300" />
                 </div>
               )}
-              {formData.service_name && (
-                <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center">
-                  <i
-                    className="fa-solid fa-check text-white"
-                    style={{ fontSize: 7 }}
-                  />
+              {isCustom && (
+                <div className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <i className="fa-solid fa-camera text-white text-xs" />
                 </div>
               )}
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
             </div>
             <div>
-              <h3 className="text-lg font-black text-slate-900">
-                {editingId ? "Edit Log Entry" : "New Log Entry"}
+              <h3 className="text-xl font-black text-slate-900 font-display">
+                {editingId ? "Edit Listing" : "New Listing"}
               </h3>
-              <p className="text-xs text-slate-400 font-medium mt-0.5">
-                {formData.service_name
-                  ? `Configuring ${formData.service_name}`
-                  : "Start by selecting a platform below"}
+              <p className="text-xs text-slate-400 font-medium font-display uppercase tracking-wider">
+                {formData.service_name || "Configure Plan"}
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onCancel}
-            className="h-9 w-9 rounded-xl bg-slate-100 hover:bg-red-50 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all shrink-0"
+            className="h-10 w-10 rounded-2xl bg-slate-50 hover:bg-red-50 hover:text-red-500 text-slate-400 flex items-center justify-center transition-all"
           >
-            <i className="fa-solid fa-xmark" />
+            <i className="fa-solid fa-xmark text-lg" />
           </button>
         </div>
 
-        <form onSubmit={handleFinalSubmit} className="space-y-7">
-          <Section n="1" title="Platform" sub="Choose the subscription service">
-            <ServicePicker
-              value={selectedPlatform}
-              onChange={handlePlatformChange}
-              isAdmin={true}
-            />
-            {formData.service_name && (
-              <div className="mt-3 flex flex-col gap-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Field label="Listing label" hint="Override name if needed">
-                    <Input
-                      value={formData.service_name ?? ""}
-                      onChange={(v) => set({ service_name: v })}
-                      placeholder="e.g. Netflix 4K Family"
-                    />
-                  </Field>
-                  <Field label="Category">
-                    <select
-                      className="field-input"
-                      value={formData.category}
-                      onChange={(e) =>
-                        set({ category: e.target.value as ProductCategory })
-                      }
-                    >
-                      {Object.values(ProductCategory).map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                  </Field>
+        <form onSubmit={handleFinalSubmit} className="space-y-8">
+          {/* Section 1: Platform */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display">
+                1. Platform Details
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer group">
+                <input 
+                  type="checkbox" 
+                  className="peer sr-only" 
+                  checked={isCustom} 
+                  onChange={e => setIsCustom(e.target.checked)} 
+                />
+                <div className="h-4 w-8 rounded-full bg-slate-200 peer-checked:bg-indigo-600 transition-colors relative">
+                  <div className="absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
                 </div>
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-wider">Custom Platform</span>
+              </label>
+            </div>
 
-                <Field label="Icon URL" hint="Paste an image URL for the logo">
-                  <Input
-                    value={formData.icon_url ?? ""}
-                    onChange={(v) => set({ icon_url: v })}
-                    placeholder="https://example.com/logo.png"
+            {isCustom ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Platform Name</label>
+                  <input
+                    required
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="e.g. My Premium App"
+                    value={formData.service_name || ""}
+                    onChange={e => set({ service_name: e.target.value })}
                   />
-                </Field>
-
-                {selectedPlatform && !selectedPlatform.domain && (
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Category</label>
+                  <select
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm appearance-none"
+                    value={formData.category}
+                    onChange={e => set({ category: e.target.value as ProductCategory })}
+                  >
+                    {Object.values(ProductCategory).map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="md:col-span-2">
                   <label className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 cursor-pointer group">
-                    <div className="relative flex items-center justify-center">
-                      <input 
-                        type="checkbox" 
-                        className="peer sr-only"
-                        checked={persistCustom}
-                        onChange={e => setPersistCustom(e.target.checked)}
-                      />
-                      <div className="h-5 w-5 rounded-md border-2 border-slate-300 bg-white transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-600" />
-                      <i className="fa-solid fa-check absolute text-[10px] text-white opacity-0 transition-opacity peer-checked:opacity-100" />
+                    <input 
+                      type="checkbox" 
+                      className="peer sr-only"
+                      checked={persistCustom}
+                      onChange={e => setPersistCustom(e.target.checked)}
+                    />
+                    <div className="h-5 w-5 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-600">
+                      <i className="fa-solid fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-black text-slate-700 group-hover:text-indigo-700 transition-colors">
-                        Remember this platform
-                      </p>
-                      <p className="text-[10px] text-slate-400 font-medium">
-                        Add "{formData.service_name}" to the searchable directory for all future listings.
-                      </p>
+                      <p className="text-xs font-black text-slate-700 group-hover:text-indigo-700 transition-colors">Add to directory</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Make this platform searchable for future listings.</p>
                     </div>
                   </label>
-                )}
+                </div>
               </div>
+            ) : (
+              <ServicePicker
+                value={selectedPlatform}
+                onChange={handlePlatformChange}
+              />
             )}
-          </Section>
+          </section>
 
-          <Section
-            n="2"
-            title="Pricing & Slots"
-            sub="How much members pay and how many can join"
-          >
+          {/* Section 2: Pricing & Seats */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
+              2. Pricing & Capacity
+            </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Your Price / month">
-                <NairaInput
-                  value={formData.price}
-                  onChange={(v) => set({ price: v })}
-                  placeholder="3,500"
-                />
-              </Field>
-              <Field label="Original Price" hint="shows % off">
-                <NairaInput
-                  value={formData.original_price}
-                  onChange={(v) => set({ original_price: v })}
-                  placeholder="12,000"
-                />
-              </Field>
-              <Field label="Total Slots">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Price / mo</label>
                 <div className="relative">
-                  <Input
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-indigo-400">₦</span>
+                  <input
                     type="number"
-                    value={String(formData.total_slots ?? "")}
-                    onChange={(v) => {
-                      const n = parseInt(v) || 0;
-                      if (editingId && initialTaken.current !== null) {
-                        set({ 
-                          total_slots: n, 
-                          available_slots: Math.max(0, n - initialTaken.current) 
-                        });
-                      } else {
-                        set({ total_slots: n, available_slots: n });
-                      }
-                    }}
-                    placeholder="5"
-                    min="1"
-                    max="20"
-                    className="pr-14"
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 pl-8 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    value={formData.price || ""}
+                    onChange={e => set({ price: parseFloat(e.target.value) || 0 })}
                   />
-                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 uppercase tracking-wider select-none">
-                    slots
-                  </span>
-                </div>
-              </Field>
-            </div>
-
-            {discountPct && (
-              <div className="flex items-center gap-3 mt-3 px-4 py-3 bg-emerald-50 border border-emerald-100 rounded-2xl">
-                <div className="h-8 w-8 bg-emerald-500 rounded-xl flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-tag text-white text-xs" />
-                </div>
-                <div>
-                  <p className="text-xs font-black text-emerald-700">
-                    {discountPct}% discount shown to buyers
-                  </p>
-                  <p className="text-[10px] text-emerald-600 font-medium">
-                    Members save ₦
-                    {(
-                      (formData.original_price ?? 0) - (formData.price ?? 0)
-                    ).toLocaleString()}{" "}
-                    / month
-                  </p>
                 </div>
               </div>
-            )}
-
-            <div className="mt-4">
-              <Field label="Fulfillment method">
-                <div className="grid grid-cols-3 gap-2">
-                  {(
-                    ["Password", "Invite Link", "OTP / Instruction"] as const
-                  ).map((opt) => (
-                    <button
-                      key={opt}
-                      type="button"
-                      onClick={() =>
-                        set({ fulfillment_type: opt as FulfillmentType })
-                      }
-                      className={`py-3 px-3 rounded-xl border-2 text-[10px] font-black uppercase tracking-wider transition-all leading-tight text-center ${
-                        formData.fulfillment_type === opt
-                          ? "border-indigo-600 bg-indigo-50 text-indigo-700"
-                          : "border-slate-100 bg-slate-50 text-slate-400 hover:border-slate-200"
-                      }`}
-                    >
-                      <i
-                        className={`fa-solid block mb-1.5 text-sm ${
-                          opt === "Password"
-                            ? "fa-key"
-                            : opt === "Invite Link"
-                              ? "fa-link"
-                              : "fa-qrcode"
-                        }`}
-                      />
-                      {opt}
-                    </button>
-                  ))}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Retail Price</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300">₦</span>
+                  <input
+                    type="number"
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 pl-8 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    value={formData.original_price || ""}
+                    onChange={e => set({ original_price: parseFloat(e.target.value) || 0 })}
+                  />
                 </div>
-              </Field>
-            </div>
-          </Section>
-
-          <Section
-            n="3"
-            title="Credentials"
-            sub="Encrypted — only revealed after successful purchase"
-          >
-            <div className="flex items-start gap-2.5 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl mb-4">
-              <i className="fa-solid fa-shield-halved text-amber-500 mt-0.5 shrink-0" />
-              <p className="text-[11px] font-semibold text-amber-700 leading-relaxed">
-                These details are never shown publicly. Members only see them
-                after a verified purchase.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field
-                label={
-                  isInvite ? "Invite / Activation link" : "Account email or ID"
-                }
-              >
-                <Input
-                  required
-                  value={formData.master_email ?? ""}
-                  onChange={(v) => set({ master_email: v })}
-                  placeholder={isInvite ? "https://..." : "account@email.com"}
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Total Seats</label>
+                <input
+                  type="number"
+                  className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                  value={formData.total_slots || ""}
+                  onChange={e => {
+                    const n = parseInt(e.target.value) || 0;
+                    if (editingId && initialTaken.current !== null) {
+                      set({ total_slots: n, available_slots: Math.max(0, n - initialTaken.current) });
+                    } else {
+                      set({ total_slots: n, available_slots: n });
+                    }
+                  }}
                 />
-              </Field>
-              <Field label={isOtp ? "Setup instructions" : "Account password"}>
-                <Input
+              </div>
+            </div>
+          </section>
+
+          {/* Section 3: Credentials */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
+              3. Delivery Method
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {(["Password", "Invite Link", "OTP / Instruction"] as const).map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => set({ fulfillment_type: opt })}
+                  className={`py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-wider ${
+                    formData.fulfillment_type === opt 
+                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm" 
+                      : "border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200"
+                  }`}
+                >
+                  {opt}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  {isInvite ? "Invite URL" : "Master Email"}
+                </label>
+                <input
+                  required
+                  className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                  value={formData.master_email || ""}
+                  onChange={e => set({ master_email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  {isOtp ? "Instructions" : "Master Password"}
+                </label>
+                <input
                   type={isOtp ? "text" : "password"}
                   required
-                  value={formData.master_password ?? ""}
-                  onChange={(v) => set({ master_password: v })}
-                  placeholder={isOtp ? "Step-by-step guide..." : "••••••••"}
+                  className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                  value={formData.master_password || ""}
+                  onChange={e => set({ master_password: e.target.value })}
                 />
-              </Field>
+              </div>
             </div>
-          </Section>
+          </section>
 
-          <Section
-            n="4"
-            title="Description"
-            sub="Optional — displayed on the marketplace card"
-          >
+          <section className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
+              4. Additional Info
+            </label>
             <textarea
-              className="field-input h-24 resize-none"
-              value={formData.description ?? ""}
-              onChange={(e) => set({ description: e.target.value })}
-              placeholder="e.g. Netflix 4K UHD · Family plan · 5 screens · Stable account, no region issues."
+              className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm h-24 resize-none"
+              placeholder="Features, region notes, etc."
+              value={formData.description || ""}
+              onChange={e => set({ description: e.target.value })}
             />
-          </Section>
+          </section>
 
-          <div className="flex gap-3 pt-1 pb-1">
+          <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={isLoading || savingCustom || !formData.service_name}
-              className="flex-1 flex items-center justify-center gap-2.5 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100/40 disabled:opacity-40"
+              disabled={isLoading || uploading || savingCustom || !formData.service_name}
+              className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100 disabled:opacity-40 flex items-center justify-center gap-3"
             >
-              {(isLoading || savingCustom) ? (
-                <i className="fa-solid fa-spinner fa-spin" />
-              ) : (
-                <i className="fa-solid fa-rocket-launch text-xs" />
-              )}
-              {editingId ? "Save Changes" : "Launch to Marketplace"}
+              {(isLoading || uploading || savingCustom) ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-rocket text-xs" />}
+              {editingId ? "Save Changes" : "Launch Listing"}
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-7 bg-slate-100 text-slate-500 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
+              className="px-8 bg-slate-100 text-slate-500 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all"
             >
               Cancel
             </button>
           </div>
         </form>
       </div>
-
-      <style>{`
-        .field-input {
-          width: 100%;
-          background: #f8fafc;
-          border: 1.5px solid #f1f5f9;
-          padding: 12px 16px;
-          border-radius: 14px;
-          font-weight: 600;
-          font-size: 0.875rem;
-          color: #0f172a;
-          outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
-        }
-        .field-input:focus {
-          border-color: #6366f1;
-          background: #fff;
-          box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
-        }
-        .field-input::placeholder { color: #94a3b8; font-weight: 500; }
-        .field-input option { font-weight: 600; }
-      `}</style>
     </>
   );
 };
-
-const Section: React.FC<{
-  n: string;
-  title: string;
-  sub: string;
-  children: React.ReactNode;
-}> = ({ n, title, sub, children }) => (
-  <div className="space-y-4">
-    <div className="flex items-center gap-3">
-      <div className="h-7 w-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-[11px] font-black shrink-0">
-        {n}
-      </div>
-      <div>
-        <p className="text-sm font-black text-slate-900">{title}</p>
-        <p className="text-[10px] text-slate-400 font-medium">{sub}</p>
-      </div>
-    </div>
-    {children}
-  </div>
-);
-
-const Field: React.FC<{
-  label: string;
-  hint?: string;
-  children: React.ReactNode;
-}> = ({ label, hint, children }) => (
-  <div className="space-y-1.5">
-    <div className="flex items-center justify-between px-0.5">
-      <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-        {label}
-      </label>
-      {hint && (
-        <span className="text-[9px] italic text-slate-300 font-medium">
-          {hint}
-        </span>
-      )}
-    </div>
-    {children}
-  </div>
-);
-
-const Input: React.FC<
-  React.InputHTMLAttributes<HTMLInputElement> & {
-    onChange?: (v: string) => void;
-  }
-> = ({ onChange, className = "", ...props }) => (
-  <input
-    {...props}
-    className={`field-input ${className}`}
-    onChange={
-      onChange ? (e) => onChange(e.target.value) : (props.onChange as any)
-    }
-  />
-);
-
-const NairaInput: React.FC<{
-  value?: number;
-  onChange: (v: number) => void;
-  placeholder?: string;
-}> = ({ value, onChange, placeholder }) => (
-  <div className="relative">
-    <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-sm select-none">
-      ₦
-    </span>
-    <input
-      type="number"
-      min={0}
-      value={value ?? ""}
-      placeholder={placeholder}
-      onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className="field-input pl-8"
-    />
-  </div>
-);
