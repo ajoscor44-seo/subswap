@@ -73,9 +73,9 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const filtered = useMemo(() => {
     return transactions.filter((tx) => {
       const matchesType = activeFilter === "All" || tx.type === activeFilter;
-      const matchesSearch = (tx.description || "")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch = 
+        tx.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.description || "").toLowerCase().includes(searchQuery.toLowerCase());
       return matchesType && matchesSearch;
     });
   }, [transactions, activeFilter, searchQuery]);
@@ -447,7 +447,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <input
               className="th-search-input"
               type="text"
-              placeholder="Search by description..."
+              placeholder="Search by ID or description..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -606,18 +606,21 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                                 style={{ color: cfg.color }}
                               />
                             </div>
-                            <span
-                              style={{
-                                fontFamily: "monospace",
-                                fontSize: 10,
-                                color: "#94a3b8",
-                                whiteSpace: "nowrap" as const,
-                              }}
-                            >
-                              {tx.user_id === user.id
-                                ? "Self"
-                                : `···${tx.user_id.slice(-6)}`}
-                            </span>
+                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                              <span
+                                style={{
+                                  fontFamily: "monospace",
+                                  fontSize: 10,
+                                  color: "#94a3b8",
+                                  whiteSpace: "nowrap" as const,
+                                }}
+                              >
+                                {tx.user_id === user.id
+                                  ? "Self"
+                                  : `···${tx.user_id.slice(-6)}`}
+                              </span>
+                              <span style={{ fontSize: '8px', color: '#cbd5e1', fontFamily: 'monospace' }}>{tx.id}</span>
+                            </div>
                           </div>
                         )}
 
@@ -680,6 +683,7 @@ const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                           >
                             {tx.description || "No description provided"}
                           </p>
+                          {!user.isAdmin && <span style={{ fontSize: '8px', color: '#cbd5e1', fontFamily: 'monospace' }}>{tx.id}</span>}
                         </div>
 
                         {/* Date col */}

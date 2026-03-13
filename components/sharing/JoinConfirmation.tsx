@@ -1,9 +1,11 @@
 import React from "react";
 import { MasterAccount } from "@/constants/types";
-import { calculateProratedSeatPrice } from "@/lib/billing";
 
 interface JoinConfirmationProps {
   subscription: MasterAccount;
+  proratedPrice: number;
+  remainingDays: number;
+  cycleEnd: Date;
   onClose: () => void;
   onConfirm: () => void;
   isProcessing: boolean;
@@ -11,21 +13,13 @@ interface JoinConfirmationProps {
 
 export const JoinConfirmation: React.FC<JoinConfirmationProps> = ({
   subscription,
+  proratedPrice,
+  remainingDays,
+  cycleEnd,
   onClose,
   onConfirm,
   isProcessing,
 }) => {
-  // Calculate proration based on created_at + 30 days
-  const cycleStart = new Date(subscription.created_at);
-  const cycleEnd = new Date(cycleStart.getTime() + 30 * 24 * 60 * 60 * 1000);
-
-  const { proratedPrice, remainingDays } = calculateProratedSeatPrice(
-    subscription.price * (subscription.total_slots || 1),
-    subscription.total_slots || 1,
-    cycleStart,
-    cycleEnd,
-  );
-
   return (
     <div className="fixed inset-0 z-200 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl relative border border-slate-100">
@@ -42,7 +36,7 @@ export const JoinConfirmation: React.FC<JoinConfirmationProps> = ({
               <img
                 src={subscription.icon_url}
                 alt={subscription.service_name}
-                className="h-full w-full object-contain"
+                className="h-14 w-14 object-contain"
               />
             ) : (
               <i className="fa-solid fa-layer-group text-slate-300 text-3xl" />
