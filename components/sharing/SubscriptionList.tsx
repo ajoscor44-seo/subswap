@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { ProductCategory, MasterAccount } from "@/constants/types";
 import { supabase } from "@/lib/supabase";
 import { triggerEmail } from "@/lib/send-email";
@@ -6,6 +6,7 @@ import { toast } from "react-hot-toast";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
 import { JoinConfirmation } from "./JoinConfirmation";
+import { calculateProratedSeatPrice } from "@/lib/billing";
 
 export const SubscriptionList: React.FC = () => {
   const {
@@ -21,10 +22,13 @@ export const SubscriptionList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-  // Prorated Join State
+  // Join Confirmation State
   const [selectedAccount, setSelectedAccount] = useState<MasterAccount | null>(
     null,
   );
+  const [proratedPrice, setProratedPrice] = useState(0);
+  const [remainingDays, setRemainingDays] = useState(0);
+  const [cycleEnd, setCycleEnd] = useState<Date>(new Date());
 
   // Quick Fund State
   const [showFundModal, setShowFundModal] = useState(false);
@@ -39,15 +43,25 @@ export const SubscriptionList: React.FC = () => {
       return;
     }
 
-    // Check balance before showing confirmation
-    if (user.balance < account.price) {
-      setNeededAmount(account.price - user.balance);
+    // Calculate proration based on created_at + 30 days
+    const start = new Date(account.created_at);
+    const end = new Date(start.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    const { proratedPrice: price, remainingDays: days } =
+      calculateProratedSeatPrice(account.price, start, end);
+
+    // Check balance against PRORATED price
+    if (user.balance < price) {
+      setNeededAmount(price - user.balance);
       setActiveAccount(account);
       setShowFundModal(true);
       return;
     }
 
     setSelectedAccount(account);
+    setProratedPrice(price);
+    setRemainingDays(days);
+    setCycleEnd(end);
   };
 
   const handleConfirmJoin = async (account: MasterAccount) => {
@@ -58,7 +72,7 @@ export const SubscriptionList: React.FC = () => {
         p_buyer_id: user?.id,
         p_account_id: account.id,
         p_profile_name: user?.username || user?.name,
-        p_amount: account.price,
+        p_amount: proratedPrice, // Send the prorated amount!
       });
       if (error) throw error;
       toast.success(`Success! Taking you to your new stack...`);
@@ -68,7 +82,7 @@ export const SubscriptionList: React.FC = () => {
         email: user?.email,
         username: user?.username,
         serviceName: account.service_name,
-        price: account.price,
+        price: proratedPrice,
         masterEmail: account.master_email,
         masterPassword: account.master_password,
         fulfillmentType: account.fulfillment_type,
@@ -143,7 +157,7 @@ export const SubscriptionList: React.FC = () => {
 
             if (refreshProfile) await refreshProfile();
 
-            if (activeAccount && newBalance >= activeAccount.price) {
+            if (activeAccount) {
               handleJoinClick(activeAccount);
             } else {
               changeTab("overview");
@@ -162,12 +176,20 @@ export const SubscriptionList: React.FC = () => {
     });
   };
 
+  const contactSupport = (serviceName: string, id: string) => {
+    const msg = `Hi DiscountZAR Support 🚀\n\nI need help with the ${serviceName} subscription listing.\n\nListing ID: ${id}\nMy username: @${user?.username || "Guest"}`;
+    window.open(
+      `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       const matchesFilter = filter === "All" || p.category === filter;
-      const matchesSearch = p.service_name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      const matchesSearch =
+        p.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.service_name.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesFilter && matchesSearch;
     });
   }, [filter, searchQuery, products]);
@@ -183,7 +205,8 @@ export const SubscriptionList: React.FC = () => {
 
   return (
     <>
-      <style>{`
+      <style>
+        {`
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
 
         .mkt-root { font-family: 'DM Sans', sans-serif; }
@@ -205,7 +228,6 @@ export const SubscriptionList: React.FC = () => {
           transform: translateY(-4px); border-color: #d8d0f8;
         }
 
-        /* Image zone */
         .mkt-card-img-wrap {
           width: 80px; height: 80px;
           border-radius: 50%; overflow: hidden;
@@ -219,7 +241,16 @@ export const SubscriptionList: React.FC = () => {
         }
         .mkt-card-img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-        /* Slots bar */
+        .mkt-support-btn {
+          background: linear-gradient(135deg, #f59e0b, #ef4444);
+          color: #fff; border: none; border-radius: 10px;
+          width: 32px; height: 32px; display: flex;
+          align-items: center; justify-content: center;
+          cursor: pointer; transition: all 0.2s;
+          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+        .mkt-support-btn:hover { transform: scale(1.1); box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3); }
+
         .mkt-bar-bg { background: #f0eef9; border-radius: 99px; height: 6px; overflow: hidden; }
         .mkt-bar-fill {
           height: 100%; border-radius: 99px;
@@ -228,7 +259,6 @@ export const SubscriptionList: React.FC = () => {
         }
         .mkt-bar-fill.warn { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
 
-        /* Join button */
         .mkt-join-btn {
           width: 100%; padding: 13px; border-radius: 12px;
           font-family: 'Outfit', sans-serif; font-weight: 700;
@@ -252,7 +282,6 @@ export const SubscriptionList: React.FC = () => {
         .mkt-join-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none !important; }
         .mkt-join-btn:active:not(:disabled) { transform: scale(0.98) !important; }
 
-        /* Filter pills */
         .mkt-pill {
           padding: 8px 18px; border-radius: 99px;
           font-family: 'Outfit', sans-serif; font-size: 11px; font-weight: 700;
@@ -266,7 +295,6 @@ export const SubscriptionList: React.FC = () => {
           color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(124,92,252,0.28);
         }
 
-        /* Search box */
         .mkt-search-wrap { position: relative; }
         .mkt-search-input {
           width: 100%; background: #fff; border: 1.5px solid #ede9fe; border-radius: 14px;
@@ -277,41 +305,35 @@ export const SubscriptionList: React.FC = () => {
         .mkt-search-input:focus { border-color: #7c5cfc; box-shadow: 0 0 0 4px rgba(124,92,252,0.1); }
         .mkt-search-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: #b8addb; font-size: 14px; pointer-events: none; }
 
-        /* Category badge on card */
         .mkt-cat-badge {
           display: inline-block; padding: 3px 9px; border-radius: 6px;
           background: #f0eef9; color: #7c5cfc; font-size: 10px; font-family: 'Outfit', sans-serif;
           font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
         }
 
-        /* Urgency dot */
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.4)} }
         .mkt-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
         .mkt-dot.urgent { background: #f59e0b; animation: pulse-dot 1.4s ease-in-out infinite; }
         .mkt-dot.ok { background: #10b981; }
 
-        /* Modal */
         @keyframes modalIn { from{opacity:0;transform:scale(0.94) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
         .mkt-modal { animation: modalIn 0.28s cubic-bezier(0.34,1.2,0.64,1) forwards; }
 
-        /* Skeleton */
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
         .mkt-skeleton {
           background: linear-gradient(90deg, #f5f3ff 25%, #ede9fe 50%, #f5f3ff 75%);
           background-size: 200% 100%; animation: shimmer 1.6s infinite; border-radius: 8px;
         }
 
-        /* Verified badge */
         .mkt-verified { color: #7c5cfc; font-size: 11px; }
 
-        /* No-scroll bar */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Spin */
         @keyframes spin { to { transform: rotate(360deg); } }
         .fa-spin { animation: spin 0.8s linear infinite; display: inline-block; }
-      `}</style>
+      `}
+      </style>
 
       <div className="mkt-root" style={{ position: "relative" }}>
         {/* ── Quick Fund Modal ── */}
@@ -571,7 +593,7 @@ export const SubscriptionList: React.FC = () => {
             <input
               className="mkt-search-input"
               type="text"
-              placeholder="Search Netflix, Spotify, Canva..."
+              placeholder="Search by ID, Netflix, Spotify, Canva..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -668,7 +690,7 @@ export const SubscriptionList: React.FC = () => {
                       />
                     </div>
 
-                    {/* Price + urgency stacked on the right */}
+                    {/* Price + urgency + support stacked on the right */}
                     <div
                       style={{
                         textAlign: "right",
@@ -678,6 +700,15 @@ export const SubscriptionList: React.FC = () => {
                         gap: 6,
                       }}
                     >
+                      <button
+                        className="mkt-support-btn"
+                        onClick={() =>
+                          contactSupport(account.service_name, account.id)
+                        }
+                        title="Contact Admin Support"
+                      >
+                        <i className="fa-solid fa-headset text-[13px]" />
+                      </button>
                       <div
                         style={{
                           background: "#fff",
@@ -967,6 +998,9 @@ export const SubscriptionList: React.FC = () => {
       {selectedAccount && (
         <JoinConfirmation
           subscription={selectedAccount as any}
+          proratedPrice={proratedPrice}
+          remainingDays={remainingDays}
+          cycleEnd={cycleEnd}
           onClose={() => setSelectedAccount(null)}
           onConfirm={() => handleConfirmJoin(selectedAccount)}
           isProcessing={isProcessing === selectedAccount.id}

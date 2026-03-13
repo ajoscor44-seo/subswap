@@ -40,10 +40,11 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
   copyToClipboard,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const itemsPerPage = 6;
 
   const totalPages = Math.ceil(activeSubscriptions.length / itemsPerPage);
-  
+
   const paginatedSubscriptions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
     return activeSubscriptions.slice(start, start + itemsPerPage);
@@ -54,6 +55,16 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const contactSupport = (sub: any) => {
+    const serviceName = sub.master_accounts?.service_name || "Subscription";
+    const subId = sub.id;
+    const msg = `Hi DiscountZAR Support 👋\n\nI need help with my ${serviceName} subscription.\n\nSubscription ID: ${subId}\nMy username: @${user.username}`;
+    window.open(
+      `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
+  };
+
   return (
     <>
       <style>{`
@@ -62,6 +73,8 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
           border: 1.5px solid #f0eef9;
           border-radius: 20px;
           transition: box-shadow 0.3s ease, transform 0.3s ease;
+          display: flex;
+          flex-direction: column;
         }
         .stk-card:hover {
           box-shadow: 0 16px 40px rgba(124,92,252,0.12);
@@ -97,6 +110,16 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
         }
         .stk-copy-btn:active { transform: scale(0.97); }
 
+        .stk-support-btn {
+          background: linear-gradient(135deg, #f59e0b, #ef4444);
+          color: #fff; border: none; border-radius: 10px;
+          width: 32px; height: 32px; display: flex;
+          align-items: center; justify-content: center;
+          cursor: pointer; transition: all 0.2s;
+          box-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);
+        }
+        .stk-support-btn:hover { transform: scale(1.1); box-shadow: 0 6px 14px rgba(239, 68, 68, 0.3); }
+
         .stk-bar-bg { height: 4px; border-radius: 99px; background: #f0eef9; overflow: hidden; }
         .stk-bar-fill { height: 100%; border-radius: 99px; transition: width 1s cubic-bezier(0.34,1.2,0.64,1); }
         .stk-bar-fill.ok   { background: linear-gradient(90deg, #7c5cfc, #a78bfa); }
@@ -110,6 +133,16 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
           padding: 12px 14px;
           display: flex; justify-content: space-between; align-items: center;
         }
+
+        .stk-details-panel {
+          background: #f8fafc;
+          border-radius: 14px;
+          padding: 14px;
+          margin-top: 12px;
+          border: 1px solid #f1f5f9;
+          animation: slideDown 0.3s ease-out;
+        }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
         @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
         .stk-anim { animation: fadeUp 0.35s ease forwards; }
@@ -271,6 +304,10 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                     : "warn"
                   : "ok";
 
+                const isExpanded = expandedId === sub.id;
+                const isOtp =
+                  sub.master_accounts?.fulfillment_type === "OTP / Instruction";
+
                 return (
                   <div
                     key={sub.id}
@@ -315,20 +352,36 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       </div>
 
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <h4
-                          className="font-display"
+                        <div
                           style={{
-                            margin: "0 0 6px",
-                            fontSize: 15,
-                            fontWeight: 700,
-                            color: "#1a1230",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 4,
                           }}
                         >
-                          {sub.master_accounts?.service_name}
-                        </h4>
+                          <h4
+                            className="font-display"
+                            style={{
+                              margin: 0,
+                              fontSize: 15,
+                              fontWeight: 700,
+                              color: "#1a1230",
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                            }}
+                          >
+                            {sub.master_accounts?.service_name}
+                          </h4>
+                          <button
+                            className="stk-support-btn"
+                            onClick={() => contactSupport(sub)}
+                            title="Contact Admin Support"
+                          >
+                            <i className="fa-solid fa-headset text-[13px]" />
+                          </button>
+                        </div>
                         <div
                           style={{
                             display: "flex",
@@ -374,7 +427,9 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                               gap: 4,
                               padding: "3px 9px",
                               borderRadius: 7,
-                              background: timeData.urgent ? "#fffbeb" : "#f0eef9",
+                              background: timeData.urgent
+                                ? "#fffbeb"
+                                : "#f0eef9",
                               border: `1px solid ${timeData.urgent ? "#fde68a" : "#ede9fe"}`,
                               fontFamily: "'Outfit', sans-serif",
                               fontSize: 9,
@@ -568,6 +623,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
                         gap: 8,
+                        marginBottom: 12,
                       }}
                     >
                       <button
@@ -576,8 +632,10 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           copyToClipboard(sub.master_accounts?.master_password)
                         }
                       >
-                        <i className="fa-solid fa-key" />
-                        Copy Password
+                        <i
+                          className={`fa-solid ${isOtp ? "fa-circle-info" : "fa-key"}`}
+                        />
+                        {isOtp ? "Get Info" : "Copy Password"}
                       </button>
                       <button
                         className="stk-copy-btn secondary"
@@ -589,6 +647,107 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         Copy Email
                       </button>
                     </div>
+
+                    {/* Expandable details */}
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : sub.id)}
+                      style={{
+                        width: "100%",
+                        padding: "8px",
+                        borderRadius: "10px",
+                        border: "1px solid #f1f5f9",
+                        background: "#f8fafc",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 6,
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "10px",
+                          fontWeight: 700,
+                          textTransform: "uppercase",
+                          color: "#94a3b8",
+                          letterSpacing: "0.05em",
+                        }}
+                      >
+                        {isExpanded
+                          ? "Hide Details"
+                          : "View Instructions & Notes"}
+                      </span>
+                      <i
+                        className={`fa-solid fa-chevron-down text-[9px] text-[#94a3b8] transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                      />
+                    </button>
+
+                    {isExpanded && (
+                      <div className="stk-details-panel">
+                        <div style={{ marginBottom: 12 }}>
+                          <p
+                            style={{
+                              fontSize: "9px",
+                              fontWeight: 800,
+                              textTransform: "uppercase",
+                              color: "#a78bfa",
+                              marginBottom: 4,
+                              letterSpacing: "0.05em",
+                            }}
+                          >
+                            Description & Features
+                          </p>
+                          <p
+                            style={{
+                              fontSize: "12px",
+                              color: "#475569",
+                              lineHeight: 1.5,
+                              margin: 0,
+                            }}
+                          >
+                            {sub.master_accounts?.description ||
+                              "No specific details provided for this plan."}
+                          </p>
+                        </div>
+                        {isOtp && (
+                          <div>
+                            <p
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                color: "#f59e0b",
+                                marginBottom: 4,
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              Setup Instructions
+                            </p>
+                            <div
+                              style={{
+                                padding: "10px",
+                                background: "#fffbeb",
+                                borderRadius: "8px",
+                                border: "1px solid #fef3c7",
+                              }}
+                            >
+                              <p
+                                style={{
+                                  fontSize: "12px",
+                                  color: "#b45309",
+                                  lineHeight: 1.5,
+                                  margin: 0,
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                {sub.master_accounts?.master_password}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}

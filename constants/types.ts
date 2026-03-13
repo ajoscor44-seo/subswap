@@ -65,6 +65,7 @@ export interface MasterAccount {
     avatar: string;
     merchant_rating?: number;
   };
+  created_at?: string | Date;
 }
 
 export enum ProductCategory {

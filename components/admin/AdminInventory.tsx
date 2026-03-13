@@ -32,6 +32,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
   const filtered = useMemo(() => {
     return accounts.filter(
       (a) =>
+        a.id?.toLowerCase().includes(search.toLowerCase()) ||
         a.service_name.toLowerCase().includes(search.toLowerCase()) ||
         a.master_email.toLowerCase().includes(search.toLowerCase()) ||
         a.category?.toLowerCase().includes(search.toLowerCase()),
@@ -131,7 +132,6 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         .inv2-action.edit:hover { background: linear-gradient(135deg,#7c5cfc,#6366f1); color: #fff; box-shadow: 0 3px 8px rgba(124,92,252,0.3); }
         .inv2-action.del:hover  { background: #fef2f2; color: #ef4444; }
 
-        /* Pagination */
         .inv2-pagination {
           display: flex; align-items: center; justify-content: center;
           gap: 8px; margin-top: 24px;
@@ -151,7 +151,6 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
         }
         .inv2-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* ── Responsive ── */
         .inv2-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .inv2-chips   { display:flex; gap:8px; flex-wrap:wrap; overflow-x:auto; -webkit-overflow-scrolling:touch; }
 
@@ -191,7 +190,7 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
               setSearch(val);
               setCurrentPage(1);
             }}
-            placeholder="Search logs, emails, categories..."
+            placeholder="Search by ID, service, email, category..."
           />
           <button
             className={`inv2-add-btn ${showForm ? "open" : "closed"}`}
@@ -398,6 +397,17 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
                             >
                               {acc.category}
                             </span>
+                            <span
+                              style={{
+                                fontFamily: "monospace",
+                                fontSize: 9,
+                                color: "#e2deff",
+                                letterSpacing: "0.04em",
+                                display: "block",
+                              }}
+                            >
+                              {acc.id}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -575,7 +585,6 @@ export const AdminInventory: React.FC<AdminInventoryProps> = ({
             </table>
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="inv2-pagination pb-6">
               <button

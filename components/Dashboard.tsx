@@ -730,6 +730,7 @@ export const Dashboard: React.FC = () => {
               )}
               {dashboardTab === "stacks" && (
                 <MyStacksTab
+                  user={user}
                   activeSubscriptions={activeSubscriptions}
                   isLoading={isLoading}
                   changeTab={changeTab}
