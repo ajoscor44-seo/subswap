@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Transaction } from "@/constants/types";
-import { Marketplace } from "./Marketplace";
 import TransactionHistory from "./TransactionHistory";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "@/providers/auth";
@@ -10,6 +9,7 @@ import WalletTab from "./WalletTab";
 import OverviewTab from "./OverviewTab";
 import MyStacksTab from "./MyStacksTab";
 import { NAV_ITEMS } from "@/constants/data";
+import { SubscriptionList } from "./sharing/SubscriptionList";
 
 export const Dashboard: React.FC = () => {
   const {
@@ -730,7 +730,6 @@ export const Dashboard: React.FC = () => {
               )}
               {dashboardTab === "stacks" && (
                 <MyStacksTab
-                  user={user}
                   activeSubscriptions={activeSubscriptions}
                   isLoading={isLoading}
                   changeTab={changeTab}
@@ -746,7 +745,7 @@ export const Dashboard: React.FC = () => {
                     padding: "20px 15px",
                   }}
                 >
-                  <Marketplace />
+                  <SubscriptionList />
                 </div>
               )}
               {dashboardTab === "wallet" && (

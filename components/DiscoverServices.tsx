@@ -5,6 +5,7 @@ import { triggerEmail } from "@/lib/send-email";
 import { toast } from "react-hot-toast";
 import { useAuth } from "@/providers/auth";
 import { useNavigator } from "@/providers/navigator";
+import { JoinConfirmation } from "./sharing/JoinConfirmation";
 
 export const DiscoverServices: React.FC = () => {
   const {
@@ -23,6 +24,11 @@ export const DiscoverServices: React.FC = () => {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
 
+  // Join Confirmation State
+  const [selectedAccount, setSelectedAccount] = useState<MasterAccount | null>(
+    null,
+  );
+
   // Quick Fund State
   const [showFundModal, setShowFundModal] = useState(false);
   const [neededAmount, setNeededAmount] = useState(0);
@@ -37,11 +43,9 @@ export const DiscoverServices: React.FC = () => {
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
   }, []);
 
-  // Re-check after products load and on scroll/resize
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    // Small delay to let DOM settle after render
     const t = setTimeout(checkScroll, 50);
     el.addEventListener("scroll", checkScroll, { passive: true });
     window.addEventListener("resize", checkScroll);
@@ -58,30 +62,37 @@ export const DiscoverServices: React.FC = () => {
     el.scrollBy({ left: dir === "right" ? 260 : -260, behavior: "smooth" });
   };
 
-  const handleJoin = async (account: MasterAccount) => {
+  const handleJoinClick = (account: MasterAccount) => {
     if (!user) {
       toast.error("You need to be logged in to join a plan.");
       return;
     }
+
     if (user.balance < account.price) {
       setNeededAmount(account.price - user.balance);
       setActiveAccount(account);
       setShowFundModal(true);
       return;
     }
+
+    setSelectedAccount(account);
+  };
+
+  const handleConfirmJoin = async (account: MasterAccount) => {
     setIsProcessing(account.id);
+    setSelectedAccount(null);
     try {
       const { error } = await supabase.rpc("purchase_slot_v2", {
-        p_buyer_id: user.id,
+        p_buyer_id: user?.id,
         p_account_id: account.id,
-        p_profile_name: user.username || user.name,
+        p_profile_name: user?.username || user?.name,
         p_amount: account.price,
       });
       if (error) throw error;
       toast.success(`Success! Taking you to your new stack...`);
       await triggerEmail("purchase", {
-        email: user.email,
-        username: user.username,
+        email: user?.email,
+        username: user?.username,
         serviceName: account.service_name,
         price: account.price,
         masterEmail: account.master_email,
@@ -161,7 +172,7 @@ export const DiscoverServices: React.FC = () => {
             if (refreshProfile) await refreshProfile();
 
             if (activeAccount && newBalance >= activeAccount.price) {
-              handleJoin(activeAccount);
+              setSelectedAccount(activeAccount);
             } else {
               changeTab("overview");
               goTo("dashboard");
@@ -276,7 +287,6 @@ export const DiscoverServices: React.FC = () => {
         .dcv-scroll-row { -ms-overflow-style: none; scrollbar-width: none; }
         .dcv-scroll-row > * { scroll-snap-align: start; }
 
-        /* Nav arrow buttons — desktop only */
         .dcv-nav-btn {
           width: 34px; height: 34px; border-radius: 50%;
           border: 1.5px solid #ede9fe; background: #fff;
@@ -293,7 +303,6 @@ export const DiscoverServices: React.FC = () => {
         }
         .dcv-nav-btn:disabled { opacity: 0.25; cursor: default; }
 
-        /* Hidden on mobile, visible on desktop */
         .dcv-nav-controls { display: none; }
         @media (min-width: 768px) {
           .dcv-nav-controls { display: flex; align-items: center; gap: 6px; }
@@ -898,7 +907,7 @@ export const DiscoverServices: React.FC = () => {
                     <button
                       className={`dcv-join-btn ${needsFund ? "fund" : "primary"}`}
                       disabled={!!isProcessing}
-                      onClick={() => handleJoin(account)}
+                      onClick={() => handleJoinClick(account)}
                       style={{ marginTop: "auto" }}
                     >
                       {isProcessing === account.id ? (
@@ -965,6 +974,15 @@ export const DiscoverServices: React.FC = () => {
           </div>
         )}
       </div>
+
+      {selectedAccount && (
+        <JoinConfirmation
+          subscription={selectedAccount as any}
+          onClose={() => setSelectedAccount(null)}
+          onConfirm={() => handleConfirmJoin(selectedAccount)}
+          isProcessing={isProcessing === selectedAccount.id}
+        />
+      )}
     </>
   );
 };

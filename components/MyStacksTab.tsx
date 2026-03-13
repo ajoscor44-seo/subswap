@@ -641,7 +641,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                 height: 60,
                 borderRadius: 16,
                 background: "linear-gradient(135deg, #f0eef9, #ede9fe)",
-                display: "center",
+                display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 margin: "0 auto 16px",

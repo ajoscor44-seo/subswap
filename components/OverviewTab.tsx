@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Transaction } from "@/constants/types";
-import { Marketplace } from "./Marketplace";
 import { DiscoverServices } from "./DiscoverServices";
+import { SubscriptionList } from "./sharing/SubscriptionList";
 
 function useWindowWidth() {
   const [width, setWidth] = useState(() =>
@@ -766,12 +766,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({
         </div>
 
         {/* ── Row 4: Quick Join ── */}
-        <div
-          className="ov-fade-4 ov-card ov-quickjoin"
-          style={{ padding: "28px 28px 24px" }}
-        >
-          <Marketplace />
-        </div>
+        <SubscriptionList />
       </div>
     </>
   );
