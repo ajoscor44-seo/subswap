@@ -41,14 +41,33 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  // Track which password fields are revealed
+  const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(
+    new Set(),
+  );
+  // Track request invite modal state
+  const [requestInviteSubId, setRequestInviteSubId] = useState<string | null>(
+    null,
+  );
+  const [inviteEmail, setInviteEmail] = useState("");
+
   const itemsPerPage = 6;
 
-  const totalPages = Math.ceil(activeSubscriptions.length / itemsPerPage);
+  // Sort newest first
+  const sortedSubscriptions = useMemo(() => {
+    return [...activeSubscriptions].sort((a, b) => {
+      const dateA = new Date(a.purchased_at || a.created_at || 0).getTime();
+      const dateB = new Date(b.purchased_at || b.created_at || 0).getTime();
+      return dateB - dateA;
+    });
+  }, [activeSubscriptions]);
+
+  const totalPages = Math.ceil(sortedSubscriptions.length / itemsPerPage);
 
   const paginatedSubscriptions = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return activeSubscriptions.slice(start, start + itemsPerPage);
-  }, [activeSubscriptions, currentPage]);
+    return sortedSubscriptions.slice(start, start + itemsPerPage);
+  }, [sortedSubscriptions, currentPage]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -63,6 +82,31 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
       `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
       "_blank",
     );
+  };
+
+  const togglePasswordReveal = (subId: string) => {
+    setRevealedPasswords((prev) => {
+      const next = new Set(prev);
+      if (next.has(subId)) {
+        next.delete(subId);
+      } else {
+        next.add(subId);
+      }
+      return next;
+    });
+  };
+
+  const handleRequestInvite = (sub: any) => {
+    if (!inviteEmail.trim()) return;
+    const serviceName = sub.master_accounts?.service_name || "Subscription";
+    const subId = sub.id;
+    const msg = `Hi DiscountZAR Support 👋\n\nI just purchased ${serviceName}\n\nPlease send me an invite link.\n\nInvite email: ${inviteEmail.trim()}\n\nSubscription ID: ${subId}`;
+    window.open(
+      `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
+    setRequestInviteSubId(null);
+    setInviteEmail("");
   };
 
   return (
@@ -107,6 +151,23 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
         .stk-copy-btn.secondary:hover {
           background: #ede9fe;
           border-color: #c4b5fd;
+        }
+        .stk-copy-btn.invite {
+          background: linear-gradient(135deg, #0ea5e9, #6366f1);
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(14,165,233,0.25);
+        }
+        .stk-copy-btn.invite:hover {
+          background: linear-gradient(135deg, #0284c7, #4f46e5);
+          box-shadow: 0 8px 20px rgba(14,165,233,0.35);
+        }
+        .stk-copy-btn.request {
+          background: linear-gradient(135deg, #f59e0b, #ef4444);
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+        }
+        .stk-copy-btn.request:hover {
+          box-shadow: 0 8px 20px rgba(245,158,11,0.35);
         }
         .stk-copy-btn:active { transform: scale(0.97); }
 
@@ -174,7 +235,149 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
           box-shadow: 0 4px 10px rgba(124,92,252,0.25);
         }
         .stk-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Invite request modal overlay */
+        .stk-modal-overlay {
+          position: fixed; inset: 0; z-index: 9999;
+          background: rgba(15,23,42,0.55);
+          backdrop-filter: blur(6px);
+          display: flex; align-items: center; justify-content: center; padding: 16px;
+          animation: fadeUp 0.2s ease;
+        }
+        .stk-modal {
+          background: #fff;
+          border-radius: 20px;
+          padding: 28px;
+          width: 100%; max-width: 400px;
+          box-shadow: 0 24px 60px rgba(26,18,48,0.2);
+        }
       `}</style>
+
+      {/* Request Invite Modal */}
+      {requestInviteSubId &&
+        (() => {
+          const sub = activeSubscriptions.find(
+            (s) => s.id === requestInviteSubId,
+          );
+          if (!sub) return null;
+          return (
+            <div
+              className="stk-modal-overlay"
+              onClick={() => setRequestInviteSubId(null)}
+            >
+              <div className="stk-modal" onClick={(e) => e.stopPropagation()}>
+                <div style={{ marginBottom: 20 }}>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 800,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.12em",
+                      color: "#a78bfa",
+                      margin: "0 0 4px",
+                      fontFamily: "'Outfit', sans-serif",
+                    }}
+                  >
+                    Request Invite
+                  </p>
+                  <h3
+                    style={{
+                      margin: 0,
+                      fontSize: 18,
+                      fontWeight: 800,
+                      color: "#1a1230",
+                      fontFamily: "'Outfit', sans-serif",
+                    }}
+                  >
+                    {sub.master_accounts?.service_name} Invite Link
+                  </h3>
+                  <p
+                    style={{
+                      margin: "6px 0 0",
+                      fontSize: 12,
+                      color: "#94a3b8",
+                      fontFamily: "'Outfit', sans-serif",
+                    }}
+                  >
+                    Enter the email address you want invited to this plan.
+                  </p>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em",
+                      color: "#b8addb",
+                      marginBottom: 6,
+                      fontFamily: "'Outfit', sans-serif",
+                    }}
+                  >
+                    Your Invite Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="you@example.com"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px 14px",
+                      borderRadius: 12,
+                      border: "1.5px solid #ede9fe",
+                      background: "#fafafe",
+                      fontFamily: "'Outfit', sans-serif",
+                      fontSize: 13,
+                      fontWeight: 600,
+                      color: "#1a1230",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = "#7c5cfc";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = "#ede9fe";
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleRequestInvite(sub);
+                    }}
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    className="stk-copy-btn invite"
+                    style={{ flex: 1 }}
+                    onClick={() => handleRequestInvite(sub)}
+                    disabled={!inviteEmail.trim()}
+                  >
+                    <i
+                      className="fa-brands fa-whatsapp"
+                      style={{ fontSize: 14 }}
+                    />
+                    Send Request
+                  </button>
+                  <button
+                    className="stk-copy-btn secondary"
+                    style={{
+                      flex: "0 0 auto",
+                      width: "auto",
+                      padding: "13px 18px",
+                    }}
+                    onClick={() => {
+                      setRequestInviteSubId(null);
+                      setInviteEmail("");
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       <div className="bg-white px-5 py-6 flex flex-col rounded-2xl gap-5">
         {/* ── Header ── */}
@@ -305,8 +508,17 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                   : "ok";
 
                 const isExpanded = expandedId === sub.id;
-                const isOtp =
-                  sub.master_accounts?.fulfillment_type === "OTP / Instruction";
+                const fulfillmentType = sub.master_accounts?.fulfillment_type;
+                const isPassword = fulfillmentType === "Password";
+                const isOtp = fulfillmentType === "OTP / Instruction";
+                const isInvite = fulfillmentType === "Invite Link";
+
+                // Invite link is stored in master_email for Invite Link fulfillment
+                const inviteLink = sub.master_accounts?.master_email;
+                const hasInviteLink =
+                  isInvite && inviteLink && inviteLink.trim() !== "";
+
+                const isPasswordRevealed = revealedPasswords.has(sub.id);
 
                 return (
                   <div
@@ -445,6 +657,57 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             />
                             {timeData.label}
                           </span>
+                          {/* Fulfillment type badge */}
+                          {isInvite && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                padding: "3px 9px",
+                                borderRadius: 7,
+                                background: "#f0f9ff",
+                                border: "1px solid #bae6fd",
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: 9,
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.06em",
+                                color: "#0284c7",
+                              }}
+                            >
+                              <i
+                                className="fa-solid fa-link"
+                                style={{ fontSize: 7 }}
+                              />
+                              Invite
+                            </span>
+                          )}
+                          {isOtp && (
+                            <span
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: 4,
+                                padding: "3px 9px",
+                                borderRadius: 7,
+                                background: "#fffbeb",
+                                border: "1px solid #fde68a",
+                                fontFamily: "'Outfit', sans-serif",
+                                fontSize: 9,
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.06em",
+                                color: "#b45309",
+                              }}
+                            >
+                              <i
+                                className="fa-solid fa-mobile-screen"
+                                style={{ fontSize: 7 }}
+                              />
+                              OTP
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -489,79 +752,17 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       </div>
                     </div>
 
-                    {/* Credentials */}
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: 8,
-                        marginBottom: 16,
-                      }}
-                    >
-                      {/* Email row */}
-                      <div className="stk-credential">
-                        <div>
-                          <p
-                            style={{
-                              margin: "0 0 1px",
-                              fontSize: 9,
-                              fontFamily: "'Outfit', sans-serif",
-                              fontWeight: 700,
-                              textTransform: "uppercase",
-                              letterSpacing: "0.07em",
-                              color: "#b8addb",
-                            }}
-                          >
-                            Account Email
-                          </p>
-                          <p
-                            style={{
-                              margin: 0,
-                              fontSize: 12,
-                              fontFamily: "monospace",
-                              fontWeight: 600,
-                              color: "#475569",
-                              whiteSpace: "nowrap",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              maxWidth: 180,
-                            }}
-                          >
-                            {sub.master_accounts?.master_email || "—"}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            copyToClipboard(sub.master_accounts?.master_email)
-                          }
-                          style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: "6px 8px",
-                            borderRadius: 8,
-                            color: "#a78bfa",
-                            transition: "all 0.15s",
-                          }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = "#f0eef9";
-                            e.currentTarget.style.color = "#7c5cfc";
-                          }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = "none";
-                            e.currentTarget.style.color = "#a78bfa";
-                          }}
-                          title="Copy email"
-                        >
-                          <i
-                            className="fa-solid fa-copy"
-                            style={{ fontSize: 13 }}
-                          />
-                        </button>
-                      </div>
-
-                      {/* Profile name if available */}
-                      {sub.profile_name && (
+                    {/* ── PASSWORD FULFILLMENT: email + password credentials ── */}
+                    {isPassword && (
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                          marginBottom: 16,
+                        }}
+                      >
+                        {/* Email row */}
                         <div className="stk-credential">
                           <div>
                             <p
@@ -575,21 +776,28 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                                 color: "#b8addb",
                               }}
                             >
-                              Profile Name
+                              Account Email
                             </p>
                             <p
                               style={{
                                 margin: 0,
                                 fontSize: 12,
-                                fontWeight: 500,
+                                fontFamily: "monospace",
+                                fontWeight: 600,
                                 color: "#475569",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: 180,
                               }}
                             >
-                              {sub.profile_name}
+                              {sub.master_accounts?.master_email || "—"}
                             </p>
                           </div>
                           <button
-                            onClick={() => copyToClipboard(sub.profile_name)}
+                            onClick={() =>
+                              copyToClipboard(sub.master_accounts?.master_email)
+                            }
                             style={{
                               background: "none",
                               border: "none",
@@ -607,6 +815,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                               e.currentTarget.style.background = "none";
                               e.currentTarget.style.color = "#a78bfa";
                             }}
+                            title="Copy email"
                           >
                             <i
                               className="fa-solid fa-copy"
@@ -614,38 +823,238 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             />
                           </button>
                         </div>
-                      )}
-                    </div>
 
-                    {/* Action buttons */}
+                        {/* Password row — hidden by default, reveal toggle */}
+                        <div className="stk-credential">
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                margin: "0 0 1px",
+                                fontSize: 9,
+                                fontFamily: "'Outfit', sans-serif",
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.07em",
+                                color: "#b8addb",
+                              }}
+                            >
+                              Password
+                            </p>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 12,
+                                fontFamily: "monospace",
+                                fontWeight: 600,
+                                color: "#475569",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: 160,
+                                letterSpacing: isPasswordRevealed
+                                  ? "normal"
+                                  : "0.15em",
+                              }}
+                            >
+                              {isPasswordRevealed
+                                ? sub.master_accounts?.master_password || "—"
+                                : "••••••••••"}
+                            </p>
+                          </div>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button
+                              onClick={() => togglePasswordReveal(sub.id)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "6px 8px",
+                                borderRadius: 8,
+                                color: "#a78bfa",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.background = "#f0eef9";
+                                e.currentTarget.style.color = "#7c5cfc";
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.background = "none";
+                                e.currentTarget.style.color = "#a78bfa";
+                              }}
+                              title={
+                                isPasswordRevealed
+                                  ? "Hide password"
+                                  : "Reveal password"
+                              }
+                            >
+                              <i
+                                className={`fa-solid ${isPasswordRevealed ? "fa-eye-slash" : "fa-eye"}`}
+                                style={{ fontSize: 13 }}
+                              />
+                            </button>
+                            <button
+                              onClick={() =>
+                                copyToClipboard(
+                                  sub.master_accounts?.master_password,
+                                )
+                              }
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "6px 8px",
+                                borderRadius: 8,
+                                color: "#a78bfa",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.background = "#f0eef9";
+                                e.currentTarget.style.color = "#7c5cfc";
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.background = "none";
+                                e.currentTarget.style.color = "#a78bfa";
+                              }}
+                              title="Copy password"
+                            >
+                              <i
+                                className="fa-solid fa-copy"
+                                style={{ fontSize: 13 }}
+                              />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Profile name if available */}
+                        {sub.profile_name && (
+                          <div className="stk-credential">
+                            <div>
+                              <p
+                                style={{
+                                  margin: "0 0 1px",
+                                  fontSize: 9,
+                                  fontFamily: "'Outfit', sans-serif",
+                                  fontWeight: 700,
+                                  textTransform: "uppercase",
+                                  letterSpacing: "0.07em",
+                                  color: "#b8addb",
+                                }}
+                              >
+                                Profile Name
+                              </p>
+                              <p
+                                style={{
+                                  margin: 0,
+                                  fontSize: 12,
+                                  fontWeight: 500,
+                                  color: "#475569",
+                                }}
+                              >
+                                {sub.profile_name}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => copyToClipboard(sub.profile_name)}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                padding: "6px 8px",
+                                borderRadius: 8,
+                                color: "#a78bfa",
+                                transition: "all 0.15s",
+                              }}
+                              onMouseOver={(e) => {
+                                e.currentTarget.style.background = "#f0eef9";
+                                e.currentTarget.style.color = "#7c5cfc";
+                              }}
+                              onMouseOut={(e) => {
+                                e.currentTarget.style.background = "none";
+                                e.currentTarget.style.color = "#a78bfa";
+                              }}
+                            >
+                              <i
+                                className="fa-solid fa-copy"
+                                style={{ fontSize: 13 }}
+                              />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* ── ACTION BUTTONS — vary by fulfillment type ── */}
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
                         gap: 8,
                         marginBottom: 12,
+                        gridTemplateColumns:
+                          isOtp || isInvite ? "1fr" : "1fr 1fr",
                       }}
                     >
-                      <button
-                        className="stk-copy-btn primary"
-                        onClick={() =>
-                          copyToClipboard(sub.master_accounts?.master_password)
-                        }
-                      >
-                        <i
-                          className={`fa-solid ${isOtp ? "fa-circle-info" : "fa-key"}`}
-                        />
-                        {isOtp ? "Get Info" : "Copy Password"}
-                      </button>
-                      <button
-                        className="stk-copy-btn secondary"
-                        onClick={() =>
-                          copyToClipboard(sub.master_accounts?.master_email)
-                        }
-                      >
-                        <i className="fa-solid fa-envelope" />
-                        Copy Email
-                      </button>
+                      {/* PASSWORD */}
+                      {isPassword && (
+                        <>
+                          <button
+                            className="stk-copy-btn primary"
+                            onClick={() =>
+                              copyToClipboard(
+                                sub.master_accounts?.master_password,
+                              )
+                            }
+                          >
+                            <i className="fa-solid fa-key" />
+                            Copy Password
+                          </button>
+                          <button
+                            className="stk-copy-btn secondary"
+                            onClick={() =>
+                              copyToClipboard(sub.master_accounts?.master_email)
+                            }
+                          >
+                            <i className="fa-solid fa-envelope" />
+                            Copy Email
+                          </button>
+                        </>
+                      )}
+
+                      {/* OTP / INSTRUCTION */}
+                      {isOtp && (
+                        <button
+                          className="stk-copy-btn primary"
+                          onClick={() =>
+                            setExpandedId(isExpanded ? null : sub.id)
+                          }
+                        >
+                          <i className="fa-solid fa-circle-info" />
+                          Get Info
+                        </button>
+                      )}
+
+                      {/* INVITE LINK — Case A: has invite link → copy only */}
+                      {isInvite && hasInviteLink && (
+                        <button
+                          className="stk-copy-btn invite"
+                          style={{ gridColumn: "1 / -1" }}
+                          onClick={() => copyToClipboard(inviteLink)}
+                        >
+                          <i className="fa-solid fa-copy" />
+                          Copy Invite Link
+                        </button>
+                      )}
+
+                      {/* INVITE LINK — Case B: no invite link → request flow */}
+                      {isInvite && !hasInviteLink && (
+                        <button
+                          className="stk-copy-btn request"
+                          style={{ gridColumn: "1 / -1" }}
+                          onClick={() => setRequestInviteSubId(sub.id)}
+                        >
+                          <i className="fa-solid fa-paper-plane" />
+                          Request Invite Link
+                        </button>
+                      )}
                     </div>
 
                     {/* Expandable details */}
@@ -685,31 +1094,46 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 
                     {isExpanded && (
                       <div className="stk-details-panel">
-                        <div style={{ marginBottom: 12 }}>
+                        {/* Description */}
+                        {sub.master_accounts?.description && (
+                          <div style={{ marginBottom: isOtp ? 12 : 0 }}>
+                            <p
+                              style={{
+                                fontSize: "9px",
+                                fontWeight: 800,
+                                textTransform: "uppercase",
+                                color: "#a78bfa",
+                                marginBottom: 4,
+                                letterSpacing: "0.05em",
+                              }}
+                            >
+                              Description & Features
+                            </p>
+                            <p
+                              style={{
+                                fontSize: "12px",
+                                color: "#475569",
+                                lineHeight: 1.5,
+                                margin: 0,
+                              }}
+                            >
+                              {sub.master_accounts.description}
+                            </p>
+                          </div>
+                        )}
+                        {!sub.master_accounts?.description && !isOtp && (
                           <p
                             style={{
-                              fontSize: "9px",
-                              fontWeight: 800,
-                              textTransform: "uppercase",
-                              color: "#a78bfa",
-                              marginBottom: 4,
-                              letterSpacing: "0.05em",
-                            }}
-                          >
-                            Description & Features
-                          </p>
-                          <p
-                            style={{
-                              fontSize: "12px",
-                              color: "#475569",
-                              lineHeight: 1.5,
+                              fontSize: 12,
+                              color: "#94a3b8",
                               margin: 0,
                             }}
                           >
-                            {sub.master_accounts?.description ||
-                              "No specific details provided for this plan."}
+                            No specific details provided for this plan.
                           </p>
-                        </div>
+                        )}
+
+                        {/* OTP instructions — stored in master_password */}
                         {isOtp && (
                           <div>
                             <p
@@ -730,6 +1154,10 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                                 background: "#fffbeb",
                                 borderRadius: "8px",
                                 border: "1px solid #fef3c7",
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "flex-start",
+                                gap: 8,
                               }}
                             >
                               <p
@@ -739,10 +1167,40 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                                   lineHeight: 1.5,
                                   margin: 0,
                                   fontFamily: "monospace",
+                                  flex: 1,
                                 }}
                               >
                                 {sub.master_accounts?.master_password}
                               </p>
+                              <button
+                                onClick={() =>
+                                  copyToClipboard(
+                                    sub.master_accounts?.master_password,
+                                  )
+                                }
+                                style={{
+                                  background: "none",
+                                  border: "none",
+                                  cursor: "pointer",
+                                  padding: "4px 6px",
+                                  borderRadius: 6,
+                                  color: "#d97706",
+                                  transition: "all 0.15s",
+                                  flexShrink: 0,
+                                }}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = "#fef3c7";
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = "none";
+                                }}
+                                title="Copy instructions"
+                              >
+                                <i
+                                  className="fa-solid fa-copy"
+                                  style={{ fontSize: 12 }}
+                                />
+                              </button>
                             </div>
                           </div>
                         )}

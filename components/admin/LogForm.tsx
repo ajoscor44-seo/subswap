@@ -75,9 +75,13 @@ const LogFormInner: React.FC<LogFormProps> = ({
     onChange({ ...formData, ...patch });
 
   const initialTaken = React.useRef<number | null>(null);
-  
+
   React.useEffect(() => {
-    if (editingId && formData.total_slots !== undefined && formData.available_slots !== undefined) {
+    if (
+      editingId &&
+      formData.total_slots !== undefined &&
+      formData.available_slots !== undefined
+    ) {
       if (initialTaken.current === null) {
         initialTaken.current = formData.total_slots - formData.available_slots;
       }
@@ -86,19 +90,18 @@ const LogFormInner: React.FC<LogFormProps> = ({
     }
   }, [editingId, formData.total_slots, formData.available_slots]);
 
-  const selectedPlatform: Platform | null =
-    formData.service_name 
-      ? {
-          name: formData.service_name,
-          domain: (formData as any)._domain ?? "",
-          category: (formData as any)._category ?? "Streaming",
-        }
-      : null;
+  const selectedPlatform: Platform | null = formData.service_name
+    ? {
+        name: formData.service_name,
+        domain: (formData as any)._domain ?? "",
+        category: (formData as any)._category ?? "Streaming",
+      }
+    : null;
 
   const handlePlatformChange = (p: Platform) => {
     set({
       service_name: p.name,
-      icon_url: p.domain 
+      icon_url: p.domain
         ? logoUrl(p.domain, 256)
         : `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=6366f1&color=fff&size=128`,
       category: CATEGORY_MAP[p.category] ?? ProductCategory.STREAMING,
@@ -121,7 +124,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
 
   const handleFinalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (isCustom && persistCustom) {
       setSavingCustom(true);
       try {
@@ -129,7 +132,7 @@ const LogFormInner: React.FC<LogFormProps> = ({
           name: formData.service_name,
           category: formData.category,
           icon_url: formData.icon_url,
-          domain: (formData as any)._domain || ""
+          domain: (formData as any)._domain || "",
         });
         if (error) throw error;
       } catch (err: any) {
@@ -144,6 +147,19 @@ const LogFormInner: React.FC<LogFormProps> = ({
 
   const isInvite = formData.fulfillment_type === "Invite Link";
   const isOtp = formData.fulfillment_type === "OTP / Instruction";
+  const isPassword = formData.fulfillment_type === "Password";
+
+  // Per-type field labels and hints
+  const emailLabel = isInvite ? "Invite URL (optional)" : "Master Email";
+  const emailPlaceholder = isInvite
+    ? "https://invite.example.com/... (leave blank if not ready)"
+    : "admin@example.com";
+  const passwordLabel = isOtp
+    ? "Login Instructions / OTP Note"
+    : "Master Password";
+  const passwordPlaceholder = isOtp
+    ? "e.g. Click login and request OTP. Contact admin for the code."
+    : "Enter master password";
 
   return (
     <>
@@ -153,7 +169,10 @@ const LogFormInner: React.FC<LogFormProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <div className="relative group cursor-pointer" onClick={() => isCustom && fileInputRef.current?.click()}>
+            <div
+              className="relative group cursor-pointer"
+              onClick={() => isCustom && fileInputRef.current?.click()}
+            >
               {formData.icon_url ? (
                 <img
                   src={formData.icon_url}
@@ -170,7 +189,13 @@ const LogFormInner: React.FC<LogFormProps> = ({
                   <i className="fa-solid fa-camera text-white text-xs" />
                 </div>
               )}
-              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleLogoUpload} />
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/*"
+                onChange={handleLogoUpload}
+              />
             </div>
             <div>
               <h3 className="text-xl font-black text-slate-900 font-display">
@@ -198,55 +223,71 @@ const LogFormInner: React.FC<LogFormProps> = ({
                 1. Platform Details
               </label>
               <label className="flex items-center gap-2 cursor-pointer group">
-                <input 
-                  type="checkbox" 
-                  className="peer sr-only" 
-                  checked={isCustom} 
-                  onChange={e => setIsCustom(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  className="peer sr-only"
+                  checked={isCustom}
+                  onChange={(e) => setIsCustom(e.target.checked)}
                 />
                 <div className="h-4 w-8 rounded-full bg-slate-200 peer-checked:bg-indigo-600 transition-colors relative">
                   <div className="absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white transition-transform peer-checked:translate-x-4" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-wider">Custom Platform</span>
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-600 transition-colors uppercase tracking-wider">
+                  Custom Platform
+                </span>
               </label>
             </div>
 
             {isCustom ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-top-2 duration-200">
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Platform Name</label>
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                    Platform Name
+                  </label>
                   <input
                     required
                     className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
                     placeholder="e.g. My Premium App"
                     value={formData.service_name || ""}
-                    onChange={e => set({ service_name: e.target.value })}
+                    onChange={(e) => set({ service_name: e.target.value })}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Category</label>
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                    Category
+                  </label>
                   <select
                     className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm appearance-none"
                     value={formData.category}
-                    onChange={e => set({ category: e.target.value as ProductCategory })}
+                    onChange={(e) =>
+                      set({ category: e.target.value as ProductCategory })
+                    }
                   >
-                    {Object.values(ProductCategory).map(c => <option key={c} value={c}>{c}</option>)}
+                    {Object.values(ProductCategory).map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="md:col-span-2">
                   <label className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100 cursor-pointer group">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       className="peer sr-only"
                       checked={persistCustom}
-                      onChange={e => setPersistCustom(e.target.checked)}
+                      onChange={(e) => setPersistCustom(e.target.checked)}
                     />
                     <div className="h-5 w-5 rounded-lg border-2 border-slate-300 bg-white flex items-center justify-center transition-all peer-checked:border-indigo-600 peer-checked:bg-indigo-600">
                       <i className="fa-solid fa-check text-[10px] text-white opacity-0 peer-checked:opacity-100" />
                     </div>
                     <div className="flex-1">
-                      <p className="text-xs font-black text-slate-700 group-hover:text-indigo-700 transition-colors">Add to directory</p>
-                      <p className="text-[10px] text-slate-400 font-medium">Make this platform searchable for future listings.</p>
+                      <p className="text-xs font-black text-slate-700 group-hover:text-indigo-700 transition-colors">
+                        Add to directory
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-medium">
+                        Make this platform searchable for future listings.
+                      </p>
                     </div>
                   </label>
                 </div>
@@ -264,117 +305,263 @@ const LogFormInner: React.FC<LogFormProps> = ({
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
               2. Pricing & Capacity
             </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Price per seat — stored as `price`, the real value */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Price / mo</label>
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  Price Per Seat / mo
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-indigo-400">₦</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-indigo-400">
+                    ₦
+                  </span>
                   <input
                     type="number"
+                    min={0}
                     className="w-full bg-slate-50 border-2 border-slate-50 p-4 pl-8 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="0"
                     value={formData.price || ""}
-                    onChange={e => set({ price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      set({ price: parseFloat(e.target.value) || 0 })
+                    }
                   />
                 </div>
               </div>
+
+              {/* Retail / original price */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Retail Price</label>
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  Retail Price
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300">₦</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-300">
+                    ₦
+                  </span>
                   <input
                     type="number"
+                    min={0}
                     className="w-full bg-slate-50 border-2 border-slate-50 p-4 pl-8 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder="0"
                     value={formData.original_price || ""}
-                    onChange={e => set({ original_price: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) =>
+                      set({ original_price: parseFloat(e.target.value) || 0 })
+                    }
                   />
                 </div>
               </div>
+
+              {/* Total seats */}
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">Total Seats</label>
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  Total Seats
+                </label>
                 <input
                   type="number"
+                  min={1}
                   className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                  placeholder="0"
                   value={formData.total_slots || ""}
-                  onChange={e => {
+                  onChange={(e) => {
                     const n = parseInt(e.target.value) || 0;
                     if (editingId && initialTaken.current !== null) {
-                      set({ total_slots: n, available_slots: Math.max(0, n - initialTaken.current) });
+                      set({
+                        total_slots: n,
+                        available_slots: Math.max(0, n - initialTaken.current),
+                      });
                     } else {
                       set({ total_slots: n, available_slots: n });
                     }
                   }}
                 />
               </div>
+
+              {/* Total price — auto-calculated, read-only for admin reference */}
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                  Total Price / mo
+                  <span className="ml-1 text-[9px] text-indigo-300 normal-case tracking-normal font-medium">
+                    (auto)
+                  </span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-indigo-300">
+                    ₦
+                  </span>
+                  <input
+                    type="text"
+                    disabled
+                    readOnly
+                    className="w-full disabled:opacity-60 bg-indigo-50/60 border-2 border-indigo-100 p-4 pl-8 rounded-xl font-bold outline-none text-sm text-indigo-400 cursor-default"
+                    value={
+                      (formData.price || 0) * (formData.total_slots || 0)
+                        ? `${((formData.price || 0) * (formData.total_slots || 0)).toLocaleString()}`
+                        : ""
+                    }
+                    placeholder="Calculated automatically"
+                  />
+                </div>
+              </div>
             </div>
           </section>
 
-          {/* Section 3: Credentials */}
+          {/* Section 3: Delivery Method */}
           <section className="space-y-4 pt-4 border-t border-slate-100">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
               3. Delivery Method
             </label>
             <div className="grid grid-cols-3 gap-2">
-              {(["Password", "Invite Link", "OTP / Instruction"] as const).map(opt => (
-                <button
-                  key={opt}
-                  type="button"
-                  onClick={() => set({ fulfillment_type: opt })}
-                  className={`py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-wider ${
-                    formData.fulfillment_type === opt 
-                      ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm" 
-                      : "border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200"
-                  }`}
-                >
-                  {opt}
-                </button>
-              ))}
+              {(["Password", "Invite Link", "OTP / Instruction"] as const).map(
+                (opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => set({ fulfillment_type: opt })}
+                    className={`py-3 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-wider ${
+                      formData.fulfillment_type === opt
+                        ? "border-indigo-600 bg-indigo-50 text-indigo-700 shadow-sm"
+                        : "border-slate-50 bg-slate-50 text-slate-400 hover:border-slate-200"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ),
+              )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+
+            {/* Contextual hint per fulfillment type */}
+            {isInvite && (
+              <div className="flex items-start gap-3 px-4 py-3 bg-sky-50 border border-sky-100 rounded-xl">
+                <i className="fa-solid fa-circle-info text-sky-400 mt-0.5 text-sm" />
+                <p className="text-[11px] text-sky-600 font-medium leading-relaxed">
+                  <strong>Invite Link:</strong> Paste the invite URL below. If
+                  you don't have it yet, leave it blank — users will be prompted
+                  to request one via WhatsApp.
+                </p>
+              </div>
+            )}
+            {isOtp && (
+              <div className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl">
+                <i className="fa-solid fa-mobile-screen text-amber-400 mt-0.5 text-sm" />
+                <p className="text-[11px] text-amber-600 font-medium leading-relaxed">
+                  <strong>OTP / Instruction:</strong> The "instruction" field
+                  below stores login steps or OTP instructions shown to users
+                  instead of a password.
+                </p>
+              </div>
+            )}
+            {isPassword && (
+              <div className="flex items-start gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                <i className="fa-solid fa-key text-indigo-400 mt-0.5 text-sm" />
+                <p className="text-[11px] text-indigo-600 font-medium leading-relaxed">
+                  <strong>Password:</strong> Users will see the email and
+                  password credentials directly on their card.
+                </p>
+              </div>
+            )}
+
+            {/*
+              Layout rules:
+              - Password:    [email col1] [password col2]  — 2 columns
+              - Invite Link: [invite url full width]        — 1 column (no password field)
+              - OTP:         [email full width]             — 1 column
+                             [instruction textarea full width]
+            */}
+            <div className="space-y-4 mt-2">
+              {/* Email / Invite URL row */}
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
-                  {isInvite ? "Invite URL" : "Master Email"}
+                  {emailLabel}
                 </label>
-                <input
-                  required
-                  className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
-                  value={formData.master_email || ""}
-                  onChange={e => set({ master_email: e.target.value })}
-                />
+                {isPassword ? (
+                  /* Password: email sits in a 2-col grid with the password field below */
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <input
+                        required
+                        className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                        placeholder="admin@example.com"
+                        value={formData.master_email || ""}
+                        onChange={(e) => set({ master_email: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase block">
+                        {passwordLabel}
+                      </label>
+                      <input
+                        type="password"
+                        required
+                        className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                        placeholder="Enter master password"
+                        value={formData.master_password || ""}
+                        onChange={(e) =>
+                          set({ master_password: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* Invite Link or OTP: email/url spans full width */
+                  <input
+                    required={!isInvite}
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
+                    placeholder={emailPlaceholder}
+                    value={formData.master_email || ""}
+                    onChange={(e) => set({ master_email: e.target.value })}
+                  />
+                )}
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
-                  {isOtp ? "Instructions" : "Master Password"}
-                </label>
-                <input
-                  type={isOtp ? "text" : "password"}
-                  required
-                  className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm"
-                  value={formData.master_password || ""}
-                  onChange={e => set({ master_password: e.target.value })}
-                />
-              </div>
+
+              {/* OTP instruction textarea — full width, below email */}
+              {isOtp && (
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                    {passwordLabel}
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm resize-none"
+                    placeholder={passwordPlaceholder}
+                    value={formData.master_password || ""}
+                    onChange={(e) => set({ master_password: e.target.value })}
+                  />
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="space-y-1.5">
+          {/* Section 4: Description & Instructions */}
+          <section className="space-y-4 pt-4 border-t border-slate-100">
             <label className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-500 font-display block">
               4. Additional Info
             </label>
-            <textarea
-              className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm h-24 resize-none"
-              placeholder="Features, region notes, etc."
-              value={formData.description || ""}
-              onChange={e => set({ description: e.target.value })}
-            />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-slate-400 ml-1 uppercase">
+                Description
+              </label>
+              <textarea
+                className="w-full bg-slate-50 border-2 border-slate-50 p-4 rounded-xl font-bold focus:border-indigo-500 focus:bg-white outline-none transition-all text-sm h-24 resize-none"
+                placeholder="Features, plan details, region notes, etc."
+                value={formData.description || ""}
+                onChange={(e) => set({ description: e.target.value })}
+              />
+            </div>
           </section>
 
           <div className="flex gap-3 pt-2">
             <button
               type="submit"
-              disabled={isLoading || uploading || savingCustom || !formData.service_name}
+              disabled={
+                isLoading || uploading || savingCustom || !formData.service_name
+              }
               className="flex-1 bg-slate-900 text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-indigo-100 disabled:opacity-40 flex items-center justify-center gap-3"
             >
-              {(isLoading || uploading || savingCustom) ? <i className="fa-solid fa-spinner fa-spin" /> : <i className="fa-solid fa-rocket text-xs" />}
+              {isLoading || uploading || savingCustom ? (
+                <i className="fa-solid fa-spinner fa-spin" />
+              ) : (
+                <i className="fa-solid fa-rocket text-xs" />
+              )}
               {editingId ? "Save Changes" : "Launch Listing"}
             </button>
             <button
