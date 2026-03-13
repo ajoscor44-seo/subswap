@@ -292,7 +292,7 @@ const Footer: React.FC = () => {
                 style={{ display: "flex", flexDirection: "column", gap: 12 }}
               >
                 {[
-                  { icon: "fa-envelope", text: "support@wsv.com.ng" },
+                  { icon: "fa-envelope", text: "support@discountzar.com" },
                   { icon: "fa-headset", text: "24/7 Live Chat" },
                   { icon: "fa-location-dot", text: "Lagos, Nigeria" },
                 ].map((item, i) => (

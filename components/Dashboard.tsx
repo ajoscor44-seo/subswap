@@ -108,7 +108,7 @@ export const Dashboard: React.FC = () => {
         name: user.name || user.username,
       },
       customizations: {
-        title: "DiscountZAR Wallet Top-up",
+        title: "DiscountZAR Wallet Top-up (Joscor)",
         description: `Payment for ₦${amount.toLocaleString()} wallet credit`,
         logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
       },
