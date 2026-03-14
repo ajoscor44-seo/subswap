@@ -41,11 +41,9 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  // Track which password fields are revealed
   const [revealedPasswords, setRevealedPasswords] = useState<Set<string>>(
     new Set(),
   );
-  // Track request invite modal state
   const [requestInviteSubId, setRequestInviteSubId] = useState<string | null>(
     null,
   );
@@ -53,7 +51,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 
   const itemsPerPage = 6;
 
-  // Sort newest first
   const sortedSubscriptions = useMemo(() => {
     return [...activeSubscriptions].sort((a, b) => {
       const dateA = new Date(a.purchased_at || a.created_at || 0).getTime();
@@ -101,6 +98,18 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
     const serviceName = sub.master_accounts?.service_name || "Subscription";
     const subId = sub.id;
     const msg = `Hi DiscountZAR Support 👋\n\nI just purchased ${serviceName}\n\nPlease send me an invite link.\n\nInvite email: ${inviteEmail.trim()}\n\nSubscription ID: ${subId}`;
+    window.open(
+      `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
+      "_blank",
+    );
+    setRequestInviteSubId(null);
+    setInviteEmail("");
+  };
+
+  const handleGetOTP = (sub: any) => {
+    const serviceName = sub.master_accounts?.service_name || "Subscription";
+    const subId = sub.id;
+    const msg = `Hi DiscountZAR Support 👋\n\nI just purchased ${serviceName}\n\nPlease send me an OTP.\n\nInvite email: ${sub.master_accounts.master_email?.trim()}\n\nSubscription ID: ${subId}`;
     window.open(
       `https://wa.me/2347053428345?text=${encodeURIComponent(msg)}`,
       "_blank",
@@ -167,6 +176,14 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
           box-shadow: 0 4px 14px rgba(245,158,11,0.25);
         }
         .stk-copy-btn.request:hover {
+          box-shadow: 0 8px 20px rgba(245,158,11,0.35);
+        }
+        .stk-copy-btn.otp {
+          background: linear-gradient(135deg, #f59e0b, #d97706);
+          color: #fff;
+          box-shadow: 0 4px 14px rgba(245,158,11,0.25);
+        }
+        .stk-copy-btn.otp:hover {
           box-shadow: 0 8px 20px rgba(245,158,11,0.35);
         }
         .stk-copy-btn:active { transform: scale(0.97); }
@@ -236,7 +253,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
         }
         .stk-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        /* Invite request modal overlay */
         .stk-modal-overlay {
           position: fixed; inset: 0; z-index: 9999;
           background: rgba(15,23,42,0.55);
@@ -513,12 +529,13 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                 const isOtp = fulfillmentType === "OTP / Instruction";
                 const isInvite = fulfillmentType === "Invite Link";
 
-                // Invite link is stored in master_email for Invite Link fulfillment
                 const inviteLink = sub.master_accounts?.master_email;
                 const hasInviteLink =
                   isInvite && inviteLink && inviteLink.trim() !== "";
-
                 const isPasswordRevealed = revealedPasswords.has(sub.id);
+
+                // OTP account email (the shared account email the user logs into)
+                const otpEmail = sub.master_accounts?.master_email;
 
                 return (
                   <div
@@ -535,7 +552,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         marginBottom: 18,
                       }}
                     >
-                      {/* Circular logo */}
                       <div
                         style={{
                           width: 56,
@@ -602,7 +618,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             flexWrap: "wrap",
                           }}
                         >
-                          {/* Active badge */}
                           <span
                             style={{
                               display: "inline-flex",
@@ -631,7 +646,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             />
                             Active
                           </span>
-                          {/* Time badge */}
                           <span
                             style={{
                               display: "inline-flex",
@@ -657,7 +671,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                             />
                             {timeData.label}
                           </span>
-                          {/* Fulfillment type badge */}
                           {isInvite && (
                             <span
                               style={{
@@ -752,7 +765,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       </div>
                     </div>
 
-                    {/* ── PASSWORD FULFILLMENT: email + password credentials ── */}
+                    {/* ── PASSWORD credentials ── */}
                     {isPassword && (
                       <div
                         style={{
@@ -824,7 +837,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           </button>
                         </div>
 
-                        {/* Password row — hidden by default, reveal toggle */}
+                        {/* Password row */}
                         <div className="stk-credential">
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <p
@@ -925,7 +938,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                           </div>
                         </div>
 
-                        {/* Profile name if available */}
+                        {/* Profile name */}
                         {sub.profile_name && (
                           <div className="stk-credential">
                             <div>
@@ -983,14 +996,82 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                       </div>
                     )}
 
-                    {/* ── ACTION BUTTONS — vary by fulfillment type ── */}
+                    {/* ── OTP credentials: show account email with copy ── */}
+                    {isOtp && otpEmail && (
+                      <div style={{ marginBottom: 16 }}>
+                        <div className="stk-credential">
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <p
+                              style={{
+                                margin: "0 0 1px",
+                                fontSize: 9,
+                                fontFamily: "'Outfit', sans-serif",
+                                fontWeight: 700,
+                                textTransform: "uppercase",
+                                letterSpacing: "0.07em",
+                                color: "#b8addb",
+                              }}
+                            >
+                              Account Email
+                            </p>
+                            <p
+                              style={{
+                                margin: 0,
+                                fontSize: 12,
+                                fontFamily: "monospace",
+                                fontWeight: 600,
+                                color: "#475569",
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                maxWidth: 200,
+                              }}
+                            >
+                              {otpEmail}
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => copyToClipboard(otpEmail)}
+                            style={{
+                              background: "none",
+                              border: "none",
+                              cursor: "pointer",
+                              padding: "6px 8px",
+                              borderRadius: 8,
+                              color: "#a78bfa",
+                              transition: "all 0.15s",
+                              flexShrink: 0,
+                            }}
+                            onMouseOver={(e) => {
+                              e.currentTarget.style.background = "#fffbeb";
+                              e.currentTarget.style.color = "#d97706";
+                            }}
+                            onMouseOut={(e) => {
+                              e.currentTarget.style.background = "none";
+                              e.currentTarget.style.color = "#a78bfa";
+                            }}
+                            title="Copy account email"
+                          >
+                            <i
+                              className="fa-solid fa-copy"
+                              style={{ fontSize: 13 }}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ── ACTION BUTTONS ── */}
                     <div
                       style={{
                         display: "grid",
                         gap: 8,
                         marginBottom: 12,
-                        gridTemplateColumns:
-                          isOtp || isInvite ? "1fr" : "1fr 1fr",
+                        gridTemplateColumns: isOtp
+                          ? "1fr 1fr"
+                          : isInvite
+                            ? "1fr"
+                            : "1fr 1fr",
                       }}
                     >
                       {/* PASSWORD */}
@@ -1019,20 +1100,27 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         </>
                       )}
 
-                      {/* OTP / INSTRUCTION */}
+                      {/* OTP — copy email + Get OTP side by side */}
                       {isOtp && (
-                        <button
-                          className="stk-copy-btn primary"
-                          onClick={() =>
-                            setExpandedId(isExpanded ? null : sub.id)
-                          }
-                        >
-                          <i className="fa-solid fa-circle-info" />
-                          Get Info
-                        </button>
+                        <>
+                          <button
+                            className="stk-copy-btn secondary"
+                            onClick={() => copyToClipboard(otpEmail)}
+                          >
+                            <i className="fa-solid fa-envelope" />
+                            Copy Email
+                          </button>
+                          <button
+                            className="stk-copy-btn otp"
+                            onClick={() => handleGetOTP(sub)}
+                          >
+                            <i className="fa-solid fa-mobile-screen" />
+                            Get OTP
+                          </button>
+                        </>
                       )}
 
-                      {/* INVITE LINK — Case A: has invite link → copy only */}
+                      {/* INVITE LINK — Case A: has invite link */}
                       {isInvite && hasInviteLink && (
                         <button
                           className="stk-copy-btn invite"
@@ -1044,7 +1132,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                         </button>
                       )}
 
-                      {/* INVITE LINK — Case B: no invite link → request flow */}
+                      {/* INVITE LINK — Case B: no invite link yet */}
                       {isInvite && !hasInviteLink && (
                         <button
                           className="stk-copy-btn request"
@@ -1094,7 +1182,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
 
                     {isExpanded && (
                       <div className="stk-details-panel">
-                        {/* Description */}
                         {sub.master_accounts?.description && (
                           <div style={{ marginBottom: isOtp ? 12 : 0 }}>
                             <p
@@ -1211,7 +1298,7 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
               })}
             </div>
 
-            {/* Pagination Controls */}
+            {/* Pagination */}
             {totalPages > 1 && (
               <div className="stk-pagination">
                 <button
@@ -1221,7 +1308,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                 >
                   <i className="fa-solid fa-chevron-left" />
                 </button>
-
                 {[...Array(totalPages)].map((_, i) => (
                   <button
                     key={i + 1}
@@ -1231,7 +1317,6 @@ export const MyStacksTab: React.FC<MyStacksTabProps> = ({
                     {i + 1}
                   </button>
                 ))}
-
                 <button
                   className="stk-page-btn"
                   disabled={currentPage === totalPages}

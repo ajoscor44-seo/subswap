@@ -172,7 +172,7 @@ export const DiscoverServices: React.FC = () => {
       customizations: {
         title: "DiscountZAR Wallet Top-up (Joscor)",
         description: `Quick Fund for ${activeAccount?.service_name || "Marketplace"}`,
-        logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
+        logo: "https://discountzar.com/icons/icon-96x96.png",
       },
       callback: async (response: any) => {
         if (
