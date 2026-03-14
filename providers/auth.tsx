@@ -12,7 +12,6 @@ import { supabase } from "@/lib/supabase";
 import { ISignUp } from "@/constants/interfaces";
 import { AuthError, Session } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
-import { triggerEmail } from "@/lib/send-email";
 
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   let t: ReturnType<typeof setTimeout> | null = null;
@@ -32,7 +31,6 @@ const AuthContext = createContext<{
   session: Session | null;
   subscriptions: any[];
   subscriptionsLoading: boolean;
-  /** True when the current session's email has been verified (email_confirmed_at set). */
   emailVerified: boolean;
   signUp: (data: ISignUp) => Promise<AuthError | null>;
   login: (email: string, password: string) => Promise<AuthError | null>;
@@ -43,7 +41,6 @@ const AuthContext = createContext<{
   refreshProfile?: () => Promise<void>;
   refreshProducts?: () => Promise<void>;
   refreshSubscriptions?: () => Promise<void>;
-  /** Resend the verification email (for the current session user's email). */
   resendVerificationEmail?: (email: string) => Promise<AuthError | null>;
   showLoginModal: boolean;
   openLoginModal: () => void;
@@ -80,7 +77,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [productsLoading, setProductsLoading] = useState(false);
   const [subscriptions, setSubscriptions] = useState<any[]>([]);
   const [subscriptionsLoading, setSubscriptionsLoading] = useState(false);
-  const welcomeEmailSending = useRef(false);
+
+  // ─── welcome email is now sent by the DB trigger (handle_new_user)
+  // via pg_net — no client-side welcome email logic needed at all.
+  // This eliminates the Google OAuth race condition where the profile
+  // row didn't exist yet when loadProfileAndSync first ran.
 
   const fetchProducts = async () => {
     setProductsLoading(true);
@@ -118,6 +119,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const fetchUserProfileWithRetry = async (
+    userId: string,
+    retries = 3,
+  ): Promise<User | null> => {
+    for (let i = 0; i < retries; i++) {
+      const profile = await fetchUserProfile(userId);
+      if (profile) return profile;
+      if (i < retries - 1) {
+        console.log(
+          `[auth] Profile not found, retrying in 2s... (${i + 1}/${retries})`,
+        );
+        await new Promise((res) => setTimeout(res, 2000));
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
     let cancelled = false;
 
@@ -126,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }, 3000);
 
     const loadProfileAndSync = async (sess: Session) => {
-      // ── Session Expiry Logic (2 Hours) ──
+      // ── 2-hour session enforcement ──
       const loginTime = localStorage.getItem("ss_login_ts");
       const now = Date.now();
       const TWO_HOURS = 2 * 60 * 60 * 1000;
@@ -139,17 +157,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const verified = !!sess.user.email_confirmed_at;
       if (!verified) {
+        // Email/password signup not yet confirmed — show nothing until verified
         setUser(null);
         await fetchProducts();
         return;
       }
 
+      // Use retry logic for profile fetch — important for new signups where
+      // the handle_new_user trigger may not have committed the profile row yet
       const profile = await withTimeout(
-        fetchUserProfile(sess.user.id),
-        8000,
+        fetchUserProfileWithRetry(sess.user.id),
+        10000,
         "fetchUserProfile",
       ).catch((err) => {
-        console.error("[auth] profile fetch failed", err);
+        console.error("[auth] profile fetch failed after retries", err);
         return null;
       });
 
@@ -159,50 +180,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setUser(profile);
-
       await Promise.all([fetchProducts(), fetchSubscriptions(sess.user.id)]);
 
-      try {
-        const { data: row, error } = await supabase
-          .from("profiles")
-          .select("welcome_email_sent")
-          .eq("id", sess.user.id)
-          .single();
-        if (error) {
-          console.error("[auth] read profile flags failed", error);
-          return;
-        }
-
-        const updates: Record<string, unknown> = {};
-
-        if (!row?.welcome_email_sent && !welcomeEmailSending.current) {
-          welcomeEmailSending.current = true;
-          try {
-            await triggerEmail("welcome", {
-              email: sess.user.email ?? "",
-              username:
-                sess.user.user_metadata?.username ??
-                profile.username ??
-                "there",
-            });
-            updates.welcome_email_sent = true;
-          } catch (err) {
-            console.error("[auth] welcome email failed", err);
-            welcomeEmailSending.current = false;
-          }
-        }
-
-        if (Object.keys(updates).length > 0) {
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update(updates)
-            .eq("id", sess.user.id);
-          if (updateError)
-            console.error("[auth] update profile flags failed", updateError);
-        }
-      } catch (err) {
-        console.error("[auth] post-verify sync failed", err);
-      }
+      // ── Welcome email is handled by the DB trigger, not here ──
+      // Removed client-side welcome email block. The handle_new_user
+      // Postgres trigger calls the send-email Edge Function via pg_net
+      // the moment the auth.users row is created, which covers both
+      // email/password signups and Google/OAuth (where the client-side
+      // race condition was causing misses).
     };
 
     supabase.auth
@@ -214,8 +199,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (!data.session) {
           setUser(null);
           void fetchProducts();
+        } else {
+          void loadProfileAndSync(data.session);
         }
-        if (data.session) void loadProfileAndSync(data.session);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -262,7 +248,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (data?.user && !data.user.email_confirmed_at) {
       await supabase.auth.signOut();
       return new AuthError(
-        "Please verify your email before signing in. Check your inbox for the verification link.",
+        "Please verify your email before signing in.",
         400,
         "EmailNotConfirmed",
       );
@@ -282,16 +268,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: {
-        data: {
-          username,
-          name,
-          phone,
-        },
-      },
+      options: { data: { username, name, phone } },
     });
-    if (error) return error;
-    return null;
+    return error;
   };
 
   const logout = async () => {
@@ -300,29 +279,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = "/#/home";
   };
 
-  const resetPassword = async (email: string): Promise<AuthError | null> => {
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/#/reset-password`,
-    });
-    return error;
-  };
+  const resetPassword = async (email: string) =>
+    (
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/#/reset-password`,
+      })
+    ).error;
 
-  const updatePassword = async (
-    password: string,
-  ): Promise<AuthError | null> => {
-    const { error } = await supabase.auth.updateUser({ password });
-    return error;
-  };
+  const updatePassword = async (password: string) =>
+    (await supabase.auth.updateUser({ password })).error;
 
   const refreshSession = async () => {
     const {
       data: { session },
       error,
     } = await supabase.auth.getSession();
-    if (error) {
-      console.error("Refresh Session: Error refreshing session", error);
-      return;
-    }
+    if (error) return;
     setSession(session);
     window.location.reload();
   };
@@ -338,19 +310,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshSubscriptions = async () => {
-    if (!session?.user) return;
-    await fetchSubscriptions(session.user.id);
+    if (session?.user) await fetchSubscriptions(session.user.id);
   };
 
-  const resendVerificationEmail = async (
-    email: string,
-  ): Promise<AuthError | null> => {
-    const { error } = await supabase.auth.resend({
-      type: "signup",
-      email,
-    });
-    return error;
-  };
+  const resendVerificationEmail = async (email: string) =>
+    (await supabase.auth.resend({ type: "signup", email })).error;
 
   const fetchUserProfile = async (userId: string): Promise<User | null> => {
     const { data, error } = await supabase
@@ -358,23 +322,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("id", userId)
       .single();
-
-    if (error) {
-      console.error("Error fetching user profile");
-      return null;
-    }
-
+    if (error || !data) return null;
     if (data.is_banned) {
       await logout();
-      toast.error(
-        "Your account has been banned. Please contact support for assistance.",
-      );
+      toast.error("Your account has been banned.");
       return null;
     }
-
-    const isAdmin = data.role === "admin" || data.is_admin === true;
-
-    const profile: User = {
+    return {
       id: data.id,
       email: data.email,
       name: data.name || data.email.split("@")[0],
@@ -383,22 +337,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data.avatar ||
         `https://ui-avatars.com/api/?name=${data.username}&background=ede9fe&color=7c5cfc&size=36`,
       balance: Number(data.balance) || 0,
-      isAdmin,
+      isAdmin: data.role === "admin" || data.is_admin === true,
       isVerified: Boolean(data.is_verified),
       hasDeposited: Boolean(data.has_deposited),
       totalSaved: Number(data.total_saved) || 0,
-      is_banned: Boolean(data.is_banned),
       joinedAt: data.created_at,
       phoneNumber: data.phone_number || session?.user?.phone,
     };
-
-    return profile;
   };
 
   const openLoginModal = () => setShowLoginModal(true);
   const closeLoginModal = () => setShowLoginModal(false);
-
-  const emailVerified = !!session?.user?.email_confirmed_at;
 
   const data = {
     loading,
@@ -408,7 +357,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     session,
     subscriptions,
     subscriptionsLoading,
-    emailVerified,
+    emailVerified: !!session?.user?.email_confirmed_at,
     login,
     logout,
     signUp,
