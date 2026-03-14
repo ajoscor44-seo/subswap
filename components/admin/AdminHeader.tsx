@@ -53,7 +53,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         .ah-spin { animation: spin 0.8s linear infinite; }
       `}</style>
 
-      <header className="ah-root bg-white border-b border-[#f0eef9] sticky top-0 z-50">
+      <header className="ah-root bg-white border-b border-[#f0eef9] sticky top-0 z-48">
         <div className="max-w-7xl mx-auto px-4 h-20 flex items-center justify-between">
           <div className="flex items-center gap-10">
             <div className="flex items-center gap-3">

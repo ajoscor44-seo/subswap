@@ -34,6 +34,15 @@ async function isAdmin(userId: string): Promise<boolean> {
   return profile?.role === "admin" || profile?.is_admin === true;
 }
 
+/** Returns true if the request is authenticated with the service role key.
+ *  DB triggers (pg_net) use the service role key as their Bearer token.
+ *  We trust these calls unconditionally — they originate server-side. */
+function isServiceRole(req: Request): boolean {
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+  return token === SUPABASE_SERVICE_KEY;
+}
+
 async function resend(to: string, subject: string, html: string, from = FROM_JOSCOR) {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -61,46 +70,72 @@ serve(async (req) => {
     if (req.method !== "POST") {
       return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
     }
-    const body = await req.json();
-    const { type, payload } = body;
 
-    if (!type || typeof payload !== "object") {
+    const body = await req.json();
+    const { type } = body;
+
+    if (!type) {
       return new Response(JSON.stringify({ error: "Missing type or payload" }), { status: 400 });
     }
 
-    const authUser = await getAuthUser(req);
-    if (!authUser) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    // ── Normalise payload ────────────────────────────────────────────────────
+    // Client calls send: { type, payload: { email, ... } }
+    // DB trigger sends:  { type, email, username, ... }  (flat, no payload key)
+    // We support both so the trigger never needs to know about the wrapper.
+    const payload: Record<string, any> =
+      body.payload && typeof body.payload === "object"
+        ? body.payload          // standard client call
+        : { ...body, type: undefined }; // flatten trigger call, strip `type`
+
+    if (!payload || typeof payload !== "object" || Object.keys(payload).length === 0) {
+      return new Response(JSON.stringify({ error: "Missing type or payload" }), { status: 400 });
     }
 
-    // Admin-only types: caller must be an admin OR it's their own "wallet_funded" event (case-insensitive)
-    if (ADMIN_ONLY_TYPES.includes(type)) {
-      const isSelfFunding = type === "wallet_funded" && 
-        payload.email?.toLowerCase() === authUser.email?.toLowerCase();
-        
-      if (!isSelfFunding) {
-        const ok = await isAdmin(authUser.id);
-        if (!ok) {
+    // ── Auth ─────────────────────────────────────────────────────────────────
+    // Service role key = DB trigger or trusted server call → skip all checks.
+    // Otherwise validate the user JWT and apply per-type access rules.
+    const fromServiceRole = isServiceRole(req);
+
+    if (!fromServiceRole) {
+      const authUser = await getAuthUser(req);
+      if (!authUser) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+      }
+
+      if (ADMIN_ONLY_TYPES.includes(type)) {
+        const isSelfFunding =
+          type === "wallet_funded" &&
+          payload.email?.toLowerCase() === authUser.email?.toLowerCase();
+
+        if (!isSelfFunding) {
+          const ok = await isAdmin(authUser.id);
+          if (!ok) {
+            return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
+          }
+        }
+      } else if (type === "welcome" || type === "purchase") {
+        if (payload.email?.toLowerCase() !== authUser.email?.toLowerCase()) {
           return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
         }
       }
-    } else if (type === "welcome" || type === "purchase") {
-      if (payload.email?.toLowerCase() !== authUser.email?.toLowerCase()) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403 });
-      }
     }
 
+    // ── Send ─────────────────────────────────────────────────────────────────
     let result;
     switch (type) {
       case "welcome":
-        result = await resend(payload.email, "Welcome to DiscountZAR 🎉", welcomeEmail(payload.username));
+        result = await resend(
+          payload.email,
+          "Welcome to DiscountZAR 🎉",
+          welcomeEmail(payload.username),
+        );
         break;
 
       case "purchase":
         result = await resend(
           payload.email,
           `Your ${payload.serviceName} slot is ready!`,
-          purchaseEmail(payload)
+          purchaseEmail(payload),
         );
         break;
 
@@ -108,7 +143,7 @@ serve(async (req) => {
         result = await resend(
           payload.email,
           `₦${Number(payload.amount).toLocaleString()} credited to your wallet`,
-          walletFundedEmail(payload)
+          walletFundedEmail(payload),
         );
         break;
 
@@ -117,7 +152,7 @@ serve(async (req) => {
           payload.email,
           "Your DiscountZAR account has been restricted",
           accountBannedEmail(payload.username),
-          FROM_SUPPORT
+          FROM_SUPPORT,
         );
         break;
 
@@ -126,7 +161,7 @@ serve(async (req) => {
           payload.email,
           "Your DiscountZAR account has been restored",
           accountRestoredEmail(payload.username),
-          FROM_SUPPORT
+          FROM_SUPPORT,
         );
         break;
 
@@ -135,7 +170,7 @@ serve(async (req) => {
           payload.email,
           payload.subject,
           adminMessageEmail(payload),
-          FROM_SUPPORT
+          FROM_SUPPORT,
         );
         break;
 
