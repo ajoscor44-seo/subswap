@@ -602,7 +602,7 @@ export const SubscriptionList: React.FC = () => {
             style={{ display: "flex", gap: 8, overflowX: "auto" }}
             className="no-scrollbar"
           >
-            {["All", ...Object.keys(ProductCategory)].map((f) => (
+            {["All", ...Object.values(ProductCategory)].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
