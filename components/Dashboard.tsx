@@ -110,7 +110,7 @@ export const Dashboard: React.FC = () => {
       customizations: {
         title: "DiscountZAR Wallet Top-up (Joscor)",
         description: `Payment for ₦${amount.toLocaleString()} wallet credit`,
-        logo: "https://ui-avatars.com/api/?name=DiscountZAR&background=6366f1&color=fff",
+        logo: "https://discountzar.com/icons/icon-96x96.png",
       },
       callback: async (response: any) => {
         if (
