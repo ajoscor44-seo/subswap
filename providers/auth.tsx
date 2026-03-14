@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const verified = !!sess.user.email_confirmed_at;
       if (!verified) {
         setUser(null);
-        await fetchProducts(); 
+        await fetchProducts();
         return;
       }
 
@@ -161,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(profile);
 
       await Promise.all([fetchProducts(), fetchSubscriptions(sess.user.id)]);
-      
+
       try {
         const { data: row, error } = await supabase
           .from("profiles")
@@ -213,7 +213,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(data.session);
         if (!data.session) {
           setUser(null);
-          void fetchProducts(); 
+          void fetchProducts();
         }
         if (data.session) void loadProfileAndSync(data.session);
       })
@@ -277,6 +277,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     password,
     username,
     name,
+    phone,
   }: ISignUp): Promise<AuthError | null> => {
     const { error } = await supabase.auth.signUp({
       email,
@@ -285,6 +286,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         data: {
           username,
           name,
+          phone,
         },
       },
     });
@@ -305,7 +307,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return error;
   };
 
-  const updatePassword = async (password: string): Promise<AuthError | null> => {
+  const updatePassword = async (
+    password: string,
+  ): Promise<AuthError | null> => {
     const { error } = await supabase.auth.updateUser({ password });
     return error;
   };
@@ -385,6 +389,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       totalSaved: Number(data.total_saved) || 0,
       is_banned: Boolean(data.is_banned),
       joinedAt: data.created_at,
+      phoneNumber: data.phone_number || session?.user?.phone,
     };
 
     return profile;

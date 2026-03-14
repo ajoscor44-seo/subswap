@@ -115,7 +115,7 @@ const LoginModal: React.FC = () => {
         {/* Close */}
         <button
           onClick={closeLoginModal}
-          className="absolute top-4 right-4 h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all z-10"
+          className="absolute top-4 right-4 h-10 w-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-50 hover:bg-red-50 transition-all z-10"
         >
           <i className="fa-solid fa-xmark" />
         </button>
@@ -152,24 +152,34 @@ const LoginModal: React.FC = () => {
           )}
 
           {mode === "signup" && (
-            <div className="flex flex-col md:flex-row gap-4">
+            <>
+              <div className="flex flex-col md:flex-row gap-4">
+                <InputField
+                  label="Name"
+                  type="text"
+                  required
+                  placeholder="Bolu Akilu"
+                  value={form.name}
+                  onChange={setField("name")}
+                />
+                <InputField
+                  label="Username"
+                  type="text"
+                  required
+                  placeholder="nigerian_saver"
+                  value={form.username}
+                  onChange={setField("username")}
+                />
+              </div>
               <InputField
-                label="Name"
-                type="text"
+                label="Phone Number"
+                type="tel"
                 required
-                placeholder="Bolu Akilu"
-                value={form.name}
-                onChange={setField("name")}
+                placeholder="e.g. +234 800 000 0000"
+                value={form.phone}
+                onChange={setField("phone")}
               />
-              <InputField
-                label="Username"
-                type="text"
-                required
-                placeholder="nigerian_saver"
-                value={form.username}
-                onChange={setField("username")}
-              />
-            </div>
+            </>
           )}
 
           <InputField
