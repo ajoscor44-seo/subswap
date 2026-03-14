@@ -39,6 +39,7 @@ export interface User {
   is_banned?: boolean;
   merchantRating?: number;
   joinedAt?: Date | string;
+  phoneNumber?: string;
 }
 
 export type FulfillmentType = "Password" | "Invite Link" | "OTP / Instruction";
@@ -136,6 +137,7 @@ export interface FormState {
   name: string;
   username: string;
   password: string;
+  phone: string;
 }
 
 export interface OnboardingState {
@@ -156,6 +158,7 @@ export const DEFAULT_FORM: FormState = {
   name: "",
   username: "",
   password: "",
+  phone: "",
 };
 
 export const DEFAULT_ONBOARDING: OnboardingState = {

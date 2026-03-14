@@ -342,6 +342,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const { refreshProfile } = useAuth();
   const [name, setName] = useState(user.name || "");
   const [username, setUsername] = useState(user.username || "");
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber || "");
   const [avatarUrl, setAvatarUrl] = useState(
     user.avatar ||
       `https://ui-avatars.com/api/?name=${user.username}&background=ede9fe&color=7c5cfc&size=36`,
@@ -379,10 +380,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           name: name.trim(),
           username: username.trim(),
           avatar: avatarUrl,
+          phone_number: phoneNumber.trim(),
         })
         .eq("id", user.id);
       if (error) throw error;
       showStatus("Profile updated successfully!", "success");
+      await refreshProfile();
     } catch (err: any) {
       showStatus(err.message || "Failed to save changes.", "error");
     } finally {
@@ -553,6 +556,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     placeholder="username"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="st-label">Phone Number</label>
+                <input
+                  className="st-input"
+                  type="tel"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  placeholder="e.g. +234 800 000 0000"
+                />
               </div>
             </div>
           </div>

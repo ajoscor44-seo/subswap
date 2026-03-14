@@ -109,22 +109,25 @@ RETURNS TRIGGER AS $$
 DECLARE
   v_username TEXT;
 BEGIN
+  -- Generate a fallback username if metadata is missing (Social Auth)
   v_username := COALESCE(
     NEW.raw_user_meta_data->>'username', 
     split_part(NEW.email, '@', 1) || '_' || substring(NEW.id::text, 1, 4)
   );
 
-  INSERT INTO public.profiles (id, email, name, username, role)
+  INSERT INTO public.profiles (id, email, name, username, phone_number, role)
   VALUES (
     NEW.id,
     NEW.email,
     COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
     v_username,
+    COALESCE(NEW.raw_user_meta_data->>'phone_number', NEW.phone),
     'user'
   )
   ON CONFLICT (id) DO UPDATE SET
     email = EXCLUDED.email,
-    name = COALESCE(public.profiles.name, EXCLUDED.name);
+    name = COALESCE(public.profiles.name, EXCLUDED.name),
+    phone_number = COALESCE(public.profiles.phone_number, EXCLUDED.phone_number);
     
   RETURN NEW;
 END;
