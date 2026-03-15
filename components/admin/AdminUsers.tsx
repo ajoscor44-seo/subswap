@@ -447,6 +447,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                 <tr>
                   {[
                     ["Member", "left"],
+                    ["Contact", "left"],
                     ["Status", "left"],
                     ["Balance", "right"],
                     ["Fund Wallet", "left"],
@@ -529,15 +530,16 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                             }}
                           >
                             <span
-                              className="font-display"
+                              className="font-display capitalize"
                               style={{
                                 fontSize: 13,
                                 fontWeight: 700,
                                 color: "#1a1230",
                               }}
                             >
-                              @{u.username}
+                              {u.name}
                             </span>
+
                             {u.id === currentUserId && (
                               <span
                                 style={{
@@ -558,6 +560,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                             )}
                           </div>
                           <span
+                            className="font-display"
                             style={{
                               fontSize: 11,
                               color: "#b8addb",
@@ -568,21 +571,50 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({
                               whiteSpace: "nowrap" as const,
                             }}
                           >
-                            {u.email}
-                          </span>
-                          <span
-                            style={{
-                              fontFamily: "monospace",
-                              fontSize: 9,
-                              color: "#d8d0f8",
-                              letterSpacing: "0.04em",
-                            }}
-                          >
-                            {u.id}
+                            @{u.username}
                           </span>
                         </div>
                       </div>
                     </td>
+
+                    {/* Contact */}
+                    <td className="usr2-td">
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 8,
+                        }}
+                      >
+                        <p
+                          style={{
+                            fontSize: 11,
+                            color: "#b8addb",
+                            display: "block",
+                            maxWidth: 180,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap" as const,
+                          }}
+                        >
+                          {u.email}
+                        </p>
+                        <p
+                          style={{
+                            fontSize: 11,
+                            color: "#b8addb",
+                            display: "block",
+                            maxWidth: 180,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap" as const,
+                          }}
+                        >
+                          {u.phone_number || "No phone"}
+                        </p>
+                      </div>
+                    </td>
+
                     {/* Status badges */}
                     <td className="usr2-td">
                       <div

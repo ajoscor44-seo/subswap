@@ -12,12 +12,12 @@ import React, {
 const CLIENT_ID = import.meta.env.VITE_BRANDFETCH_CLIENT_ID!;
 
 export const logoUrl = (domain: string, size = 64, name?: string) => {
-  if (!domain || domain === 'custom' || domain === '') {
+  if (!domain || domain === "custom" || domain === "") {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || "S")}&background=6366f1&color=fff&size=${size}`;
   }
-  if (domain.startsWith('http')) return domain;
+  if (domain.startsWith("http")) return domain;
   return `https://cdn.brandfetch.io/${domain}/w/${size * 2}/h/${size * 2}/fallback/lettermark/type/icon?c=${CLIENT_ID}`;
-}
+};
 
 interface BrandLogoProps {
   domain?: string;
@@ -38,7 +38,12 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
   const initials = useMemo(() => {
     if (!name) return "??";
-    return name.split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
+    return name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0])
+      .join("")
+      .toUpperCase();
   }, [name]);
 
   const bg = useMemo(() => {
@@ -119,7 +124,10 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
     if (open) setTimeout(() => inputRef.current?.focus(), 60);
   }, [open]);
 
-  const allPlatforms = useMemo(() => [...PLATFORMS, ...customPlatforms], [customPlatforms]);
+  const allPlatforms = useMemo(
+    () => [...PLATFORMS, ...customPlatforms],
+    [customPlatforms],
+  );
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().trim();
@@ -174,7 +182,12 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
       >
         {value ? (
           <>
-            <BrandLogo domain={value.domain} name={value.name} iconUrl={value.icon_url} size={44} />
+            <BrandLogo
+              domain={value.domain}
+              name={value.name}
+              iconUrl={value.icon_url}
+              size={44}
+            />
             <div className="flex-1 min-w-0">
               <p className="font-black text-slate-900 text-sm leading-tight truncate">
                 {value.name}
@@ -182,13 +195,18 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
               <div className="flex items-center gap-2 mt-1">
                 <span
                   className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
-                  style={{ background: (meta?.color || "#6366f1") + "18", color: meta?.color || "#6366f1" }}
+                  style={{
+                    background: (meta?.color || "#6366f1") + "18",
+                    color: meta?.color || "#6366f1",
+                  }}
                 >
-                  <i className={`fa-solid ${meta?.icon || "fa-layer-group"} mr-1`} />
+                  <i
+                    className={`fa-solid ${meta?.icon || "fa-layer-group"} mr-1`}
+                  />
                   {value.category}
                 </span>
                 <span className="text-[10px] text-slate-400 font-medium">
-                  {value.domain || 'Custom'}
+                  {value.domain || "Custom"}
                 </span>
               </div>
             </div>
@@ -278,15 +296,25 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             {isAdmin && query && (
               <button
                 type="button"
-                onClick={() => handleSelect({ name: query, domain: '', category: 'Streaming' })}
+                onClick={() =>
+                  handleSelect({
+                    name: query,
+                    domain: "",
+                    category: "Streaming",
+                  })
+                }
                 className="w-full flex items-center gap-3 px-3 py-4 rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 text-left mb-2 group hover:border-indigo-400 hover:bg-indigo-50 transition-all"
               >
                 <div className="h-9 w-9 rounded-lg bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-200">
                   <i className="fa-solid fa-plus" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-black text-indigo-700 leading-tight">Create Custom Platform</p>
-                  <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">Use "{query}"</p>
+                  <p className="text-sm font-black text-indigo-700 leading-tight">
+                    Create Custom Platform
+                  </p>
+                  <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-wider mt-0.5">
+                    Use "{query}"
+                  </p>
                 </div>
               </button>
             )}
@@ -294,7 +322,9 @@ export const ServicePicker: React.FC<ServicePickerProps> = ({
             {filtered.length === 0 && !query ? (
               <div className="py-14 text-center">
                 <i className="fa-solid fa-face-thinking text-slate-200 text-4xl mb-3 block" />
-                <p className="text-slate-400 font-bold text-sm">No platforms found</p>
+                <p className="text-slate-400 font-bold text-sm">
+                  No platforms found
+                </p>
               </div>
             ) : query ? (
               filtered.map((p) => (
@@ -377,7 +407,12 @@ const PlatformItem: React.FC<{
       }
     `}
   >
-    <BrandLogo domain={platform.domain} name={platform.name} iconUrl={platform.icon_url} size={36} />
+    <BrandLogo
+      domain={platform.domain}
+      name={platform.name}
+      iconUrl={platform.icon_url}
+      size={36}
+    />
 
     <div className="flex-1 min-w-0">
       <p
