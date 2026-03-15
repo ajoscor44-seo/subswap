@@ -1,10 +1,5 @@
 import React, { useState, useRef } from "react";
-import {
-  MasterAccount,
-  ProductCategory,
-  FulfillmentType,
-  Platform,
-} from "@/constants/types";
+import { MasterAccount, ProductCategory, Platform } from "@/constants/types";
 import { ServicePicker, logoUrl } from "../ServicePicker";
 import { supabase } from "@/lib/supabase";
 import toast from "react-hot-toast";

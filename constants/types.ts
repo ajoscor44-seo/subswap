@@ -75,7 +75,7 @@ export enum ProductCategory {
   VPN = "Privacy & Security",
   AI = "AI & Writing",
   DESIGN = "Design",
-  MARKETING = "Marketing",
+  MARKETING = "SEO & Marketing",
   PRODUCTIVITY = "Productivity",
   GAMING = "Gaming",
   SOCIAL = "Social",
